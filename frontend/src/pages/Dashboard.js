@@ -207,7 +207,7 @@ const Dashboard = () => {
                                             </div>
                                         </div>
                                     </AccordionTrigger>
-                                    <AccordionContent className="text-slate-600 leading-relaxed pb-6">
+                                    <AccordionContent className="text-slate-600 leading-relaxed pb-6 whitespace-pre-wrap">
                                         {dim.reasoning}
                                     </AccordionContent>
                                 </AccordionItem>
