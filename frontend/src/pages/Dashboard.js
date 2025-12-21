@@ -5,7 +5,7 @@ import { BrandRadarChart, ScoreCard } from '../components/AnalysisComponents';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Printer, ArrowLeft } from "lucide-react";
+import { Printer, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const Dashboard = () => {
@@ -86,6 +86,50 @@ const Dashboard = () => {
                             {brand.verdict}
                          </Badge>
                     </div>
+
+                    {/* Overall Strategic Verdict Section */}
+                    <Card className="border-l-4 border-l-slate-900">
+                        <CardHeader>
+                            <CardTitle className="text-sm uppercase text-slate-500 tracking-widest">Overall Strategic Verdict</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <h3 className="text-xl font-serif font-semibold text-slate-900 mb-6 italic">
+                                "{brand.strategic_classification || "Analysis unavailable"}"
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 className="flex items-center text-sm font-bold text-emerald-700 uppercase mb-4">
+                                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                                        What the Name Delivers
+                                    </h4>
+                                    <ul className="space-y-3">
+                                        {brand.pros && brand.pros.map((pro, i) => (
+                                            <li key={i} className="flex items-start text-sm text-slate-700">
+                                                <span className="mr-2 text-emerald-500">✓</span>
+                                                {pro}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                
+                                <div>
+                                    <h4 className="flex items-center text-sm font-bold text-red-700 uppercase mb-4">
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        What the Name Sacrifices
+                                    </h4>
+                                    <ul className="space-y-3">
+                                        {brand.cons && brand.cons.map((con, i) => (
+                                            <li key={i} className="flex items-start text-sm text-slate-700">
+                                                <span className="mr-2 text-red-500">×</span>
+                                                {con}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Column: Scores */}
