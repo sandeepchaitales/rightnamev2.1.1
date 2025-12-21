@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { BrandRadarChart, ScoreCard, CompetitionAnalysis, TrademarkRiskTable, DomainAvailabilityCard } from '../components/AnalysisComponents';
+import { BrandRadarChart, ScoreCard, CompetitionAnalysis, TrademarkRiskTable, DomainAvailabilityCard, FinalAssessmentCard } from '../components/AnalysisComponents';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -226,7 +226,23 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* 5. Detailed Cards */}
+                {/* 5. Final Assessment & Recommendations - NEW SECTION */}
+                {brand.final_assessment && (
+                    <section className="w-full">
+                        <div className="flex items-center space-x-4 mb-8">
+                            <div className="h-10 w-1.5 bg-gradient-to-b from-indigo-500 to-violet-500 rounded-full"></div>
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900">Final Recommendation</h3>
+                                <p className="text-slate-500 font-medium">Executive Verdict & Next Steps</p>
+                            </div>
+                        </div>
+                        <div className="w-full">
+                            <FinalAssessmentCard assessment={brand.final_assessment} />
+                        </div>
+                    </section>
+                )}
+
+                {/* 6. Detailed Cards */}
                 <section>
                      <div className="flex items-center space-x-4 mb-8">
                          <div className="h-10 w-1.5 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-full"></div>

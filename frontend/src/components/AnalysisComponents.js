@@ -5,6 +5,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Lightbulb, AlertTriangle } from "lucide-react";
 
 export const BrandRadarChart = ({ data }) => {
   return (
@@ -218,6 +219,79 @@ export const DomainAvailabilityCard = ({ analysis }) => {
                         <span className="font-bold block text-xs uppercase tracking-wider text-blue-400 mb-1">Strategy</span> 
                         {analysis.strategy_note}
                     </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+export const FinalAssessmentCard = ({ assessment }) => {
+    if (!assessment) return null;
+
+    return (
+        <Card className="playful-card border-0 ring-4 ring-indigo-50 shadow-2xl">
+            <CardHeader className="bg-indigo-900 text-white p-8">
+                <div className="flex items-center gap-3 mb-2">
+                    <Lightbulb className="w-6 h-6 text-yellow-400" />
+                    <CardTitle className="text-2xl font-black tracking-tight">Final Assessment & Recommendations</CardTitle>
+                </div>
+                <p className="text-indigo-200 font-medium">Strategic Roadmap & Go-to-Market Verdict</p>
+            </CardHeader>
+            
+            <CardContent className="p-0">
+                {/* Verdict Section */}
+                <div className="p-8 border-b border-slate-100">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h3 className="text-xl font-black text-slate-900">Verdict</h3>
+                        <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-1 text-sm font-bold border-0">
+                            Suitability Score: {assessment.suitability_score}/10
+                        </Badge>
+                    </div>
+                    <p className="text-lg font-medium text-slate-700 leading-relaxed border-l-4 border-indigo-500 pl-6 italic bg-slate-50/50 py-4 pr-4 rounded-r-xl">
+                        "{assessment.verdict_statement}"
+                    </p>
+                </div>
+
+                {/* Score Breakdown */}
+                <div className="p-8 bg-slate-50/50 border-b border-slate-100">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Component Breakdown</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {assessment.dimension_breakdown.map((item, i) => {
+                            const [key, val] = Object.entries(item)[0];
+                            return (
+                                <div key={i} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                                    <div className="text-2xl font-black text-slate-900 mb-1">{val}/10</div>
+                                    <div className="text-xs font-bold text-slate-500 uppercase">{key}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Recommendations Grid */}
+                <div className="p-8 bg-white">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-emerald-600 mb-6 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4" /> Strategic Recommendations
+                    </h4>
+                    <div className="grid md:grid-cols-3 gap-6 mb-8">
+                        {assessment.recommendations.map((rec, i) => (
+                            <div key={i} className="bg-emerald-50/30 p-6 rounded-2xl border border-emerald-100/50 hover:border-emerald-200 transition-colors">
+                                <h5 className="font-bold text-slate-900 mb-3 text-lg">{rec.title}</h5>
+                                <p className="text-sm text-slate-600 font-medium leading-relaxed">{rec.content}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Alternative Path */}
+                    {assessment.alternative_path && (
+                        <div className="mt-8 bg-amber-50 p-6 rounded-2xl border border-amber-100 flex items-start gap-4">
+                            <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-1" />
+                            <div>
+                                <h5 className="font-bold text-amber-900 mb-2">Alternative Path</h5>
+                                <p className="text-sm text-amber-800 font-medium leading-relaxed">{assessment.alternative_path}</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
