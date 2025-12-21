@@ -43,6 +43,74 @@ trademark_probability_model:
   description: Non-legal probabilistic trademark conflict model.
   consolidation_logic: Highest-risk country defines global risk.
 
+FORMATTING REQUIREMENTS FOR 'reasoning' FIELDS:
+For each dimension, the 'reasoning' string MUST strictly follow the specific structure below. Use line breaks (\\n) to separate sections.
+
+1. Brand Distinctiveness & Memorability:
+   Strengths:
+   - Phonetic clarity: X/10 (Details)
+   - Spelling memorability: X/10 (Details)
+   - Distinctiveness ratio: X/10 (Details)
+   Weaknesses:
+   - Domain availability: X/10 (Details)
+   - Other issues...
+   Verdict: Summary.
+
+2. Cultural & Linguistic Resonance:
+   [Target Market 1] Market (Score/10):
+   - Cultural associations...
+   - Heritage signal...
+   - Tier-1 vs Tier-2 analysis...
+   [Target Market 2 / Global] Market (Score/10):
+   - International resonance...
+   - Negative meaning check...
+   Net Assessment: Summary of appeal across markets.
+
+3. Premiumisation & Trust Curve:
+   Trust Building Factors:
+   - Founder heritage signal: [WEAK/STRONG/ABSENT] (Score)
+   - Science/methodology signal: (Score)
+   - Authenticity/tradition signal: (Score)
+   - Simplicity & confidence: (Score)
+   Premium Support Potential:
+   - Can support mid-premium pricing? [YES/NO]
+   - Can support ultra-luxury? [YES/UNLIKELY]
+   - Price premium potential: X%
+   Critical Issue: Any trust barriers?
+   Mitigation: How to fix it.
+
+4. Scalability & Brand Architecture:
+   Sub-Brand Extension Test:
+   ✅ [Brand] Category A (Score/10)
+   ✅ [Brand] Category B (Score/10)
+   ~ [Brand] Category C (Score/10)
+   Verdict: Summary of extensibility.
+   Timeline Resilience: Will it feel dated?
+
+5. Trademark & Legal Sensitivity:
+   Registrability:
+   - Country A: [HIGH/MED/LOW] - % Prob
+   - Country B: [HIGH/MED/LOW] - % Prob
+   Conflict Risk:
+   - Exact matches: [ZERO/SOME]
+   - Phonetic conflicts: [ZERO/SOME]
+   Negative Association Check:
+   - Language A: Meaning
+   - Language B: Meaning
+   Verdict: Summary of legal risk.
+
+6. Consumer Perception Mapping:
+   Positioning Reality:
+   [Attribute] | Current | Target | Gap
+   Authenticity | [Val] | [Val] | [HIGH/LOW]
+   Trust | [Val] | [Val] | [HIGH/LOW]
+   Perceived vs. Actual:
+   - Consumers perceive: ...
+   - Category expects: ...
+   Perception Testing Expectations:
+   - Metric A: % (PASS/FAIL)
+   - Metric B: % (PASS/FAIL)
+
 Output JSON Structure:
 {
   "executive_summary": "High-level strategic overview of the brands in the context of the markets.",
@@ -63,12 +131,12 @@ Output JSON Structure:
       ],
       "positioning_fit": "Analysis of fit with Mass/Premium/Ultra.",
       "dimensions": [
-        {"name": "Brand Distinctiveness & Memorability", "score": 9.0, "reasoning": "Detailed analysis..."},
-        {"name": "Cultural & Linguistic Resonance", "score": 8.5, "reasoning": "Detailed analysis..."},
-        {"name": "Premiumisation & Trust Curve", "score": 8.0, "reasoning": "Detailed analysis..."},
-        {"name": "Scalability & Brand Architecture", "score": 9.0, "reasoning": "Detailed analysis..."},
-        {"name": "Trademark & Legal Sensitivity", "score": 7.0, "reasoning": "Detailed analysis..."},
-        {"name": "Consumer Perception Mapping", "score": 8.0, "reasoning": "Detailed analysis..."}
+        {"name": "Brand Distinctiveness & Memorability", "score": 9.0, "reasoning": "Strengths:\\n- Phonetic clarity: 7/10..."},
+        {"name": "Cultural & Linguistic Resonance", "score": 8.5, "reasoning": "Indian Market (5.5/10):\\n- Weak Sanskrit connection..."},
+        {"name": "Premiumisation & Trust Curve", "score": 8.0, "reasoning": "Trust Building Factors:\\n..."},
+        {"name": "Scalability & Brand Architecture", "score": 9.0, "reasoning": "Sub-Brand Extension Test:\\n..."},
+        {"name": "Trademark & Legal Sensitivity", "score": 7.0, "reasoning": "Registrability:\\n..."},
+        {"name": "Consumer Perception Mapping", "score": 8.0, "reasoning": "Positioning Reality:\\n..."}
       ],
       "trademark_risk": {
         "risk_level": "Low/Medium/High/Critical",
