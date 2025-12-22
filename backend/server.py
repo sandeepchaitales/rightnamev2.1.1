@@ -67,12 +67,12 @@ async def root():
 @api_router.post("/evaluate", response_model=BrandEvaluationResponse)
 async def evaluate_brands(request: BrandEvaluationRequest):
     if LlmChat and EMERGENT_KEY:
-        # Increase max_tokens to prevent JSON truncation
+        # Removed max_tokens causing TypeError. GPT-4o default output is usually sufficient (4096 tokens).
         llm_chat = LlmChat(
             api_key=EMERGENT_KEY,
             session_id=f"rightname_{uuid.uuid4()}",
             system_message=SYSTEM_PROMPT
-        ).with_model("openai", "gpt-4o", max_tokens=16000)
+        ).with_model("openai", "gpt-4o")
     else:
         raise HTTPException(status_code=500, detail="LLM Integration not initialized (Check EMERGENT_LLM_KEY)")
     
@@ -139,7 +139,7 @@ async def evaluate_brands(request: BrandEvaluationRequest):
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0]
             
-            # Sanitization: sometimes LLM outputs invalid control chars
+            # Sanitization
             content = content.strip()
             
             data = json.loads(content)
@@ -161,17 +161,14 @@ async def evaluate_brands(request: BrandEvaluationRequest):
                 logging.error(f"LLM Budget Exceeded: {error_msg}")
                 raise HTTPException(status_code=402, detail="Emergent Key Budget Exceeded. Please add credits.")
             
-            if "502" in error_msg or "BadGateway" in error_msg or "ServiceUnavailable" in error_msg:
+            # Retry on 502/Gateway/Service errors AND JSON/Validation errors
+            if any(x in error_msg for x in ["502", "BadGateway", "ServiceUnavailable", "Expecting", "JSON", "validation error"]):
                 wait_time = (2 ** attempt) + random.uniform(0, 1)
-                logging.warning(f"LLM 502 Error (Attempt {attempt+1}/{max_retries}). Retrying in {wait_time:.2f}s...")
+                logging.warning(f"LLM Error (Attempt {attempt+1}/{max_retries}): {error_msg}. Retrying in {wait_time:.2f}s...")
                 await asyncio.sleep(wait_time)
                 continue
             
             logging.error(f"LLM Error: {error_msg}")
-            # If JSON error, retry might not help unless we tweak prompt, but worth a shot if it's random truncation
-            if "Expecting" in error_msg or "JSON" in error_msg:
-                 logging.warning(f"JSON Parsing Error (Attempt {attempt+1}/{max_retries}). Retrying...")
-                 continue
             break
             
     raise HTTPException(status_code=500, detail=f"Analysis failed: {str(last_error)}")
