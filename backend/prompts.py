@@ -143,7 +143,7 @@ Return ONLY valid JSON.
           "existing_conflicts": {"likelihood": 4, "severity": 9, "zone": "Yellow", "commentary": "Detailed reasoning..."},
           "phonetic_similarity": {"likelihood": 3, "severity": 7, "zone": "Green", "commentary": "Detailed reasoning..."},
           "relevant_classes": {"likelihood": 5, "severity": 5, "zone": "Yellow", "commentary": "Detailed reasoning..."},
-          "rebranding_probability": {"likelihood": 1, "severity": 10, "zone": "Green", "commentary": "Detailed reasoning..."}
+          "rebranding_probability": {"likelihood": 1, "severity": 10, "zone": "Green", "commentary": "Detailed reasoning..."},
           "overall_assessment": "Full legal strategy recommendation."
       },
       
