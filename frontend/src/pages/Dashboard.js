@@ -321,7 +321,7 @@ const Dashboard = () => {
                                 </CardHeader>
                                 <CardContent className="pt-6">
                                     <div className="text-sm text-slate-600 leading-loose whitespace-pre-wrap font-medium text-justify">
-                                        {dim.reasoning}
+                                        {parseMarkdownBold(dim.reasoning)}
                                     </div>
                                 </CardContent>
                             </Card>
