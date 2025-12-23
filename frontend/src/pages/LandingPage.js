@@ -257,7 +257,7 @@ const LandingPage = () => {
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Brand Name(s)</Label>
                                 <Input 
@@ -270,17 +270,78 @@ const LandingPage = () => {
                                 />
                             </div>
 
+                            {/* Industry & Category Row */}
                             <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Industry</Label>
+                                    <Select onValueChange={(val) => handleSelectChange('industry', val)} value={formData.industry}>
+                                        <SelectTrigger className="h-11 bg-white border-slate-200 rounded-xl font-medium">
+                                            <SelectValue placeholder="Select industry..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-[300px]">
+                                            {industries.map((ind) => (
+                                                <SelectItem key={ind} value={ind}>{ind}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Category</Label>
                                     <Input 
                                         name="category"
                                         value={formData.category}
                                         onChange={handleChange}
-                                        placeholder="e.g. Fintech"
+                                        placeholder="e.g. Mobile Payments"
                                         className="h-11 bg-white border-slate-200 rounded-xl font-medium"
                                         required
                                     />
+                                </div>
+                            </div>
+
+                            {/* Product Type & USP Row */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Product Type</Label>
+                                    <Select onValueChange={(val) => handleSelectChange('product_type', val)} defaultValue={formData.product_type}>
+                                        <SelectTrigger className="h-11 bg-white border-slate-200 rounded-xl font-medium">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {productTypes.map((pt) => (
+                                                <SelectItem key={pt.value} value={pt.value}>{pt.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">USP (Pick One)</Label>
+                                    <Select onValueChange={(val) => handleSelectChange('usp', val)} value={formData.usp}>
+                                        <SelectTrigger className="h-11 bg-white border-slate-200 rounded-xl font-medium">
+                                            <SelectValue placeholder="Select USP..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {uspOptions.map((usp) => (
+                                                <SelectItem key={usp.value} value={usp.value}>{usp.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Brand Vibe & Positioning Row */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Brand Vibe</Label>
+                                    <Select onValueChange={(val) => handleSelectChange('brand_vibe', val)} value={formData.brand_vibe}>
+                                        <SelectTrigger className="h-11 bg-white border-slate-200 rounded-xl font-medium">
+                                            <SelectValue placeholder="Select vibe..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {brandVibes.map((vibe) => (
+                                                <SelectItem key={vibe.value} value={vibe.value}>{vibe.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Positioning</Label>
@@ -297,6 +358,7 @@ const LandingPage = () => {
                                 </div>
                             </div>
 
+                            {/* Market Scope & Countries Row */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Market Scope</Label>
@@ -318,7 +380,7 @@ const LandingPage = () => {
                                         name="countries"
                                         value={formData.countries}
                                         onChange={handleChange}
-                                        placeholder="e.g. USA, Japan, India"
+                                        placeholder="e.g. USA, India"
                                         className="h-11 bg-white border-slate-200 rounded-xl font-medium"
                                         required
                                     />
