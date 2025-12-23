@@ -42,11 +42,21 @@ export const VisibilityAnalysisCard = ({ analysis }) => {
                     </div>
                 )}
 
-                {/* User's Customer Avatar */}
-                {analysis.user_customer_avatar && (
-                    <div className="p-3 bg-violet-50 rounded-lg border border-violet-200">
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-violet-600 mb-1">Your Target Customer</h4>
-                        <p className="text-sm font-medium text-violet-800">{analysis.user_customer_avatar}</p>
+                {/* User's Product Intent & Customer */}
+                {(analysis.user_product_intent || analysis.user_customer_avatar) && (
+                    <div className="p-3 bg-violet-50 rounded-lg border border-violet-200 space-y-2">
+                        {analysis.user_product_intent && (
+                            <div>
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-violet-600 mb-1">Your Product Intent</h4>
+                                <p className="text-sm font-medium text-violet-800">{analysis.user_product_intent}</p>
+                            </div>
+                        )}
+                        {analysis.user_customer_avatar && (
+                            <div>
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-violet-600 mb-1">Your Target Customer</h4>
+                                <p className="text-sm font-medium text-violet-800">{analysis.user_customer_avatar}</p>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -54,7 +64,7 @@ export const VisibilityAnalysisCard = ({ analysis }) => {
                 {directCompetitors.length > 0 && (
                     <div>
                         <h4 className="text-xs font-black uppercase tracking-widest text-rose-500 mb-3 flex items-center gap-2">
-                            <XCircle className="w-3 h-3" /> Fatal Conflicts (Same Customers)
+                            <XCircle className="w-3 h-3" /> Fatal Conflicts (Same Intent + Same Customers)
                         </h4>
                         <div className="space-y-2">
                             {directCompetitors.map((item, i) => (
@@ -64,15 +74,26 @@ export const VisibilityAnalysisCard = ({ analysis }) => {
                                         <Badge className="bg-rose-600 text-white text-[10px]">FATAL</Badge>
                                     </div>
                                     <p className="text-xs text-rose-600 mb-1">{item.category}</p>
+                                    {item.their_product_intent && (
+                                        <p className="text-[10px] text-rose-500 mb-1">
+                                            <span className="font-bold">Their Intent:</span> {item.their_product_intent}
+                                        </p>
+                                    )}
                                     {item.their_customer_avatar && (
                                         <p className="text-[10px] text-rose-500">
                                             <span className="font-bold">Their Customers:</span> {item.their_customer_avatar}
                                         </p>
                                     )}
-                                    {item.customer_overlap && (
-                                        <Badge className="mt-1 bg-rose-100 text-rose-700 text-[10px]">
-                                            Customer Overlap: {item.customer_overlap}
-                                        </Badge>
+                                    <div className="flex gap-2 mt-1">
+                                        {item.intent_match && (
+                                            <Badge className="bg-rose-100 text-rose-700 text-[10px]">
+                                                Intent: {item.intent_match}
+                                            </Badge>
+                                        )}
+                                        {item.customer_overlap && (
+                                            <Badge className="bg-rose-100 text-rose-700 text-[10px]">
+                                                Customers: {item.customer_overlap}
+                                            </Badge>
                                     )}
                                     {item.reason && <p className="text-xs text-rose-500 mt-1 italic">{item.reason}</p>}
                                 </div>
