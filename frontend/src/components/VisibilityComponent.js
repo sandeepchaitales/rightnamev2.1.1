@@ -42,20 +42,38 @@ export const VisibilityAnalysisCard = ({ analysis }) => {
                     </div>
                 )}
 
+                {/* User's Customer Avatar */}
+                {analysis.user_customer_avatar && (
+                    <div className="p-3 bg-violet-50 rounded-lg border border-violet-200">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-violet-600 mb-1">Your Target Customer</h4>
+                        <p className="text-sm font-medium text-violet-800">{analysis.user_customer_avatar}</p>
+                    </div>
+                )}
+
                 {/* Direct Competitors (Fatal Conflicts) */}
                 {directCompetitors.length > 0 && (
                     <div>
                         <h4 className="text-xs font-black uppercase tracking-widest text-rose-500 mb-3 flex items-center gap-2">
-                            <XCircle className="w-3 h-3" /> Fatal Conflicts (Same Industry)
+                            <XCircle className="w-3 h-3" /> Fatal Conflicts (Same Customers)
                         </h4>
                         <div className="space-y-2">
                             {directCompetitors.map((item, i) => (
                                 <div key={i} className="p-3 bg-rose-50 rounded-lg border border-rose-200">
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-sm font-bold text-rose-800">{item.name}</span>
-                                        <Badge className="bg-rose-600 text-white text-[10px]">HIGH RISK</Badge>
+                                        <Badge className="bg-rose-600 text-white text-[10px]">FATAL</Badge>
                                     </div>
-                                    <p className="text-xs text-rose-600">{item.category}</p>
+                                    <p className="text-xs text-rose-600 mb-1">{item.category}</p>
+                                    {item.their_customer_avatar && (
+                                        <p className="text-[10px] text-rose-500">
+                                            <span className="font-bold">Their Customers:</span> {item.their_customer_avatar}
+                                        </p>
+                                    )}
+                                    {item.customer_overlap && (
+                                        <Badge className="mt-1 bg-rose-100 text-rose-700 text-[10px]">
+                                            Customer Overlap: {item.customer_overlap}
+                                        </Badge>
+                                    )}
                                     {item.reason && <p className="text-xs text-rose-500 mt-1 italic">{item.reason}</p>}
                                 </div>
                             ))}
@@ -67,7 +85,7 @@ export const VisibilityAnalysisCard = ({ analysis }) => {
                 {nameTwins.length > 0 && (
                     <div>
                         <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
-                            <Info className="w-3 h-3" /> Market Noise (Different Industries)
+                            <Info className="w-3 h-3" /> Market Noise (Different Customers)
                         </h4>
                         <div className="space-y-2">
                             {nameTwins.map((item, i) => (
@@ -76,7 +94,17 @@ export const VisibilityAnalysisCard = ({ analysis }) => {
                                         <span className="text-sm font-medium text-slate-700">{item.name}</span>
                                         <Badge variant="secondary" className="bg-slate-200 text-slate-600 text-[10px]">LOW RISK</Badge>
                                     </div>
-                                    <p className="text-xs text-slate-500">{item.category}</p>
+                                    <p className="text-xs text-slate-500 mb-1">{item.category}</p>
+                                    {item.their_customer_avatar && (
+                                        <p className="text-[10px] text-slate-400">
+                                            <span className="font-medium">Their Customers:</span> {item.their_customer_avatar}
+                                        </p>
+                                    )}
+                                    {item.customer_overlap && (
+                                        <Badge variant="outline" className="mt-1 text-[10px] text-slate-500 border-slate-300">
+                                            Customer Overlap: {item.customer_overlap}
+                                        </Badge>
+                                    )}
                                     {item.reason && <p className="text-xs text-slate-400 mt-1 italic">{item.reason}</p>}
                                 </div>
                             ))}
