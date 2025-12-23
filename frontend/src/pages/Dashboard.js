@@ -150,6 +150,13 @@ const Dashboard = () => {
                     </section>
                 )}
 
+                {/* 2.5 PLAN B - Alternative Names for REJECT/NO-GO verdicts */}
+                {brand.alternative_names && (
+                    <section className="print:mt-4">
+                        <AlternativeNamesCard alternatives={brand.alternative_names} verdict={brand.verdict} />
+                    </section>
+                )}
+
                 <Separator className="bg-slate-200/60 print:hidden" />
 
                 {/* 3. STRATEGY & RADAR */}
