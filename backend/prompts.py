@@ -270,10 +270,17 @@ Return ONLY valid JSON.
       },
       
       "visibility_analysis": {
+          "direct_competitors": [
+              {"name": "Competitor App Name", "category": "Same/Similar Category", "risk_level": "HIGH", "reason": "Direct competitor in same vertical"}
+          ],
+          "name_twins": [
+              {"name": "Unrelated App Name", "category": "Different Category (e.g., Photo Editor)", "risk_level": "LOW", "reason": "Different industry, no consumer confusion"}
+          ],
           "google_presence": [],
           "app_store_presence": [],
           "warning_triggered": false,
-          "warning_reason": null
+          "warning_reason": "ONLY trigger warning for DIRECT COMPETITORS, not Name Twins",
+          "conflict_summary": "X direct competitors found (High Risk). Y name twins found (Low Risk - different industries, not rejection factors)."
       },
       
       "cultural_analysis": [
