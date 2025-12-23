@@ -9,20 +9,20 @@
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2025-12-21T05:42:49.543206"
+      "timestamp": "2025-12-23T06:38:36.137303"
     },
     {
       "test": "Evaluate Endpoint - Structure",
       "success": true,
-      "details": "All required fields present, Astra NameScore: 72.3",
-      "timestamp": "2025-12-21T05:43:00.780871"
+      "details": "All required fields present, Astra NameScore: 39.0",
+      "timestamp": "2025-12-23T06:39:01.705726"
     },
     {
       "test": "Invalid Payload Handling",
       "success": true,
       "details": "Status: 422 (Expected 4xx for invalid payload)",
-      "timestamp": "2025-12-21T05:43:00.878018"
+      "timestamp": "2025-12-23T06:39:01.760450"
     }
   ],
-  "timestamp": "2025-12-21T05:43:00.878707"
+  "timestamp": "2025-12-23T06:39:01.760764"
 }
