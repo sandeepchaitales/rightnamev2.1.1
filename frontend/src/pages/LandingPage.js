@@ -513,29 +513,6 @@ const LandingPage = () => {
             </div>
         </div>
 
-        {/* Trusted By Section */}
-        <div className="mt-20 text-center">
-          <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Trusted By</p>
-          <div className="flex flex-wrap justify-center items-center gap-6 lg:gap-10">
-            <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-violet-200 transition-all cursor-default">
-              <Users className="w-6 h-6 text-violet-600" />
-              <span className="font-bold text-slate-700">Brand Consultants</span>
-            </div>
-            <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-fuchsia-200 transition-all cursor-default">
-              <Rocket className="w-6 h-6 text-fuchsia-600" />
-              <span className="font-bold text-slate-700">Startup Founders</span>
-            </div>
-            <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all cursor-default">
-              <Building2 className="w-6 h-6 text-orange-500" />
-              <span className="font-bold text-slate-700">Consulting Firms</span>
-            </div>
-            <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all cursor-default">
-              <Briefcase className="w-6 h-6 text-emerald-600" />
-              <span className="font-bold text-slate-700">Marketing Agencies</span>
-            </div>
-          </div>
-        </div>
-
         {/* Feature Grid Section */}
         <div className="mt-28">
             <div className="text-center mb-16">
