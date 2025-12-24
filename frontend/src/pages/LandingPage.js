@@ -451,8 +451,7 @@ const LandingPage = () => {
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Powered By</p>
             <div className="flex justify-center items-center gap-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
                  {/* Pseudo-logos text for effect */}
-                 <span className="font-serif text-2xl font-bold text-slate-800">Anthropic</span>
-                 <span className="font-sans text-2xl font-black text-slate-800">Emergent</span>
+                 <span className="font-serif text-2xl font-bold text-slate-800">OpenAI</span>
                  <span className="font-mono text-xl font-bold text-slate-800">React</span>
                  <span className="font-sans text-xl font-bold text-slate-800">FastAPI</span>
             </div>
