@@ -536,6 +536,9 @@ const LandingPage = () => {
                                     </>
                                 )}
                             </Button>
+                            
+                            {/* Trusted By - Under Generate Report */}
+                            <TrustedByCycler />
                         </form>
                     </CardContent>
                 </Card>
