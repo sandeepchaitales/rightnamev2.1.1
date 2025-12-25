@@ -240,7 +240,8 @@ class BrandEvaluationResponse(BaseModel):
     executive_summary: str
     brand_scores: List[BrandScore]
     # Made optional to prevent validation errors when LLM omits it (e.g. single brand or fatal flaw)
-    comparison_verdict: Optional[str] = None 
+    comparison_verdict: Optional[str] = None
+    report_id: Optional[str] = None 
 
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")
