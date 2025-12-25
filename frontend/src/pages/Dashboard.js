@@ -168,21 +168,42 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                             <p className="text-3xl font-black">{assessment.suitability_score || (score/10).toFixed(1)}/10</p>
                         </div>
                     </div>
-                    {assessment.bottom_line && (
+                    {(assessment.bottom_line || assessment.verdict_statement) && (
                         <p className="mt-4 text-white/90 border-t border-white/20 pt-4 text-sm">
-                            "{assessment.bottom_line}"
+                            "{assessment.bottom_line || assessment.verdict_statement}"
                         </p>
                     )}
                 </div>
             </PrintCard>
 
-            {/* Strategic Roadmap */}
-            {(assessment.ip_strategy || assessment.brand_narrative || assessment.launch_tactics) && (
+            {/* Strategic Roadmap - Handle both old and new data structures */}
+            {(assessment.recommendations?.length > 0 || assessment.ip_strategy || assessment.brand_narrative || assessment.launch_tactics) && (
                 <PrintCard>
                     <div className="bg-white rounded-2xl p-6 border border-slate-200">
                         <SubSectionHeader icon={Map} title="Strategic Roadmap" color="violet" />
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {assessment.ip_strategy && (
+                            {/* New structure: recommendations array */}
+                            {assessment.recommendations?.map((rec, i) => {
+                                const colors = [
+                                    { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-800', icon: 'text-violet-600' },
+                                    { bg: 'bg-fuchsia-50', border: 'border-fuchsia-200', text: 'text-fuchsia-800', icon: 'text-fuchsia-600' },
+                                    { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800', icon: 'text-orange-600' },
+                                ];
+                                const icons = [Shield, MessageSquare, Rocket];
+                                const color = colors[i % colors.length];
+                                const Icon = icons[i % icons.length];
+                                return (
+                                    <div key={i} className={`${color.bg} rounded-xl p-4 border ${color.border}`}>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Icon className={`w-4 h-4 ${color.icon}`} />
+                                            <h5 className={`font-bold ${color.text} text-sm`}>{rec.title}</h5>
+                                        </div>
+                                        <p className="text-xs text-slate-600 leading-relaxed">{rec.content}</p>
+                                    </div>
+                                );
+                            })}
+                            {/* Old structure fallback */}
+                            {!assessment.recommendations && assessment.ip_strategy && (
                                 <div className="bg-violet-50 rounded-xl p-4 border border-violet-200">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Shield className="w-4 h-4 text-violet-600" />
@@ -191,7 +212,7 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                                     <p className="text-xs text-slate-600">{assessment.ip_strategy}</p>
                                 </div>
                             )}
-                            {assessment.brand_narrative && (
+                            {!assessment.recommendations && assessment.brand_narrative && (
                                 <div className="bg-fuchsia-50 rounded-xl p-4 border border-fuchsia-200">
                                     <div className="flex items-center gap-2 mb-2">
                                         <MessageSquare className="w-4 h-4 text-fuchsia-600" />
@@ -200,7 +221,7 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                                     <p className="text-xs text-slate-600">{assessment.brand_narrative}</p>
                                 </div>
                             )}
-                            {assessment.launch_tactics && (
+                            {!assessment.recommendations && assessment.launch_tactics && (
                                 <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Rocket className="w-4 h-4 text-orange-600" />
@@ -210,9 +231,9 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                                 </div>
                             )}
                         </div>
-                        {assessment.contingency_note && (
+                        {(assessment.contingency_note || assessment.alternative_path) && (
                             <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                <p className="text-xs text-slate-600 italic">💡 {assessment.contingency_note}</p>
+                                <p className="text-xs text-slate-600 italic">💡 {assessment.contingency_note || assessment.alternative_path}</p>
                             </div>
                         )}
                     </div>
