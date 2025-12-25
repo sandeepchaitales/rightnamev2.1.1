@@ -1,64 +1,64 @@
 {
   "summary": {
     "tests_run": 9,
-    "tests_passed": 8,
-    "success_rate": 88.88888888888889
+    "tests_passed": 9,
+    "success_rate": 100.0
   },
   "results": [
     {
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2025-12-25T14:04:53.584695"
+      "timestamp": "2025-12-25T14:53:42.949642"
     },
     {
-      "test": "Evaluate Endpoint - HTTP Status",
-      "success": false,
-      "details": "HTTP 520: {\"detail\":\"Analysis failed: 4 validation errors for BrandEvaluationResponse\\nbrand_scores.0.domain_analysis.alternatives.0.dict[str,str].available\\n  Input should be a valid string [type=string_type, ",
-      "timestamp": "2025-12-25T14:06:52.238177"
+      "test": "Evaluate Endpoint - Structure",
+      "success": true,
+      "details": "All required fields present, Astra NameScore: 72.0",
+      "timestamp": "2025-12-25T14:54:45.437191"
     },
     {
       "test": "Auth Register",
       "success": true,
-      "details": "User registered: user_d8ec11241bc4",
-      "timestamp": "2025-12-25T14:06:52.579645"
+      "details": "User registered: user_0d86e1f122a8",
+      "timestamp": "2025-12-25T14:54:45.821648"
     },
     {
       "test": "Auth Login Email",
       "success": true,
-      "details": "User logged in: user_d8ec11241bc4",
-      "timestamp": "2025-12-25T14:06:52.846722"
+      "details": "User logged in: user_0d86e1f122a8",
+      "timestamp": "2025-12-25T14:54:46.111745"
     },
     {
       "test": "Auth Me",
       "success": true,
-      "details": "Current user: test_2b489a85@example.com",
-      "timestamp": "2025-12-25T14:06:52.886514"
+      "details": "Current user: test_62e4fe49@example.com",
+      "timestamp": "2025-12-25T14:54:46.171833"
     },
     {
       "test": "Generate Report with Auth",
       "success": true,
-      "details": "Report generated: report_7144205146624ec7",
-      "timestamp": "2025-12-25T14:07:20.171399"
+      "details": "Report generated: report_f2521e3259e34e59",
+      "timestamp": "2025-12-25T14:55:15.096081"
     },
     {
       "test": "Get Report Authenticated",
       "success": true,
       "details": "Full report retrieved for authenticated user",
-      "timestamp": "2025-12-25T14:07:20.231961"
+      "timestamp": "2025-12-25T14:55:15.158402"
     },
     {
       "test": "Get Report Unauthenticated",
       "success": true,
       "details": "Report retrieved with is_authenticated=False",
-      "timestamp": "2025-12-25T14:07:20.272951"
+      "timestamp": "2025-12-25T14:55:15.198672"
     },
     {
       "test": "Auth Logout",
       "success": true,
       "details": "Logout successful: Logged out successfully",
-      "timestamp": "2025-12-25T14:07:20.350179"
+      "timestamp": "2025-12-25T14:55:15.237908"
     }
   ],
-  "timestamp": "2025-12-25T14:07:20.350363"
+  "timestamp": "2025-12-25T14:55:15.238052"
 }
