@@ -303,12 +303,87 @@ def aggressive_json_repair(json_str):
 async def health_check():
     return {"status": "healthy"}
 
+# Famous brands blocklist - these are AUTO-REJECT regardless of category
+FAMOUS_BRANDS = {
+    # Fortune 500 / Major Retailers
+    "costco", "walmart", "target", "kroger", "walgreens", "cvs", "home depot", "lowes",
+    "best buy", "macys", "nordstrom", "kohls", "jcpenney", "sears", "ikea", "aldi", "lidl",
+    "whole foods", "trader joes", "safeway", "publix", "wegmans", "costco wholesale",
+    # Tech Giants
+    "apple", "google", "microsoft", "amazon", "meta", "facebook", "instagram", "whatsapp",
+    "netflix", "spotify", "uber", "lyft", "airbnb", "twitter", "tiktok", "snapchat", 
+    "linkedin", "pinterest", "reddit", "discord", "zoom", "slack", "dropbox", "salesforce",
+    "oracle", "sap", "adobe", "nvidia", "intel", "amd", "qualcomm", "cisco", "ibm", "hp",
+    "dell", "lenovo", "samsung", "sony", "lg", "panasonic", "toshiba", "huawei", "xiaomi",
+    # Automotive
+    "tesla", "ford", "gm", "chevrolet", "toyota", "honda", "bmw", "mercedes", "audi",
+    "volkswagen", "porsche", "ferrari", "lamborghini", "bentley", "rolls royce", "jaguar",
+    # Food & Beverage
+    "coca cola", "pepsi", "mcdonalds", "burger king", "wendys", "starbucks", "dunkin",
+    "subway", "dominos", "pizza hut", "kfc", "taco bell", "chipotle", "panera",
+    "nestle", "kraft", "general mills", "kelloggs", "pepsico", "mondelez",
+    # Fashion & Luxury
+    "nike", "adidas", "puma", "reebok", "under armour", "lululemon", "gap", "old navy",
+    "zara", "h&m", "uniqlo", "forever 21", "asos", "shein", "louis vuitton", "gucci",
+    "prada", "chanel", "hermes", "dior", "versace", "armani", "burberry", "coach",
+    "michael kors", "ralph lauren", "tommy hilfiger", "calvin klein", "levis",
+    # Finance
+    "visa", "mastercard", "american express", "paypal", "stripe", "square", "venmo",
+    "chase", "bank of america", "wells fargo", "citibank", "goldman sachs", "morgan stanley",
+    # Beauty & Personal Care
+    "loreal", "maybelline", "mac", "sephora", "ulta", "estee lauder", "clinique",
+    "neutrogena", "dove", "pantene", "head shoulders", "gillette", "olay",
+    # Entertainment
+    "disney", "warner bros", "universal", "paramount", "sony pictures", "mgm",
+    "hbo", "showtime", "hulu", "paramount plus", "peacock", "espn", "cnn", "fox",
+    # Others
+    "fedex", "ups", "usps", "dhl", "amazon prime", "ebay", "etsy", "shopify",
+    "alibaba", "aliexpress", "wish", "wayfair", "overstock", "chewy", "petco", "petsmart"
+}
+
+def check_famous_brand(brand_name: str) -> dict:
+    """
+    Check if brand name matches a famous brand (case-insensitive).
+    Returns dict with is_famous, matched_brand, and reason.
+    """
+    normalized = brand_name.lower().strip()
+    
+    # Exact match
+    if normalized in FAMOUS_BRANDS:
+        return {
+            "is_famous": True,
+            "matched_brand": normalized.title(),
+            "reason": f"'{brand_name}' is an exact match of the famous brand '{normalized.title()}'. This name is legally protected and cannot be used."
+        }
+    
+    # Check without spaces/hyphens
+    normalized_no_space = normalized.replace(" ", "").replace("-", "").replace("_", "")
+    for famous in FAMOUS_BRANDS:
+        famous_no_space = famous.replace(" ", "").replace("-", "")
+        if normalized_no_space == famous_no_space:
+            return {
+                "is_famous": True,
+                "matched_brand": famous.title(),
+                "reason": f"'{brand_name}' matches the famous brand '{famous.title()}'. This name is legally protected."
+            }
+    
+    return {"is_famous": False, "matched_brand": None, "reason": None}
+
 @api_router.get("/")
 async def root():
     return {"message": "RightName API is running"}
 
 @api_router.post("/evaluate", response_model=BrandEvaluationResponse)
 async def evaluate_brands(request: BrandEvaluationRequest):
+    
+    # 0. FAMOUS BRAND CHECK - Auto-reject famous brands before any other processing
+    famous_brand_rejections = {}
+    for brand in request.brand_names:
+        famous_check = check_famous_brand(brand)
+        if famous_check["is_famous"]:
+            famous_brand_rejections[brand] = famous_check
+            logging.warning(f"FAMOUS BRAND DETECTED: {brand} matches {famous_check['matched_brand']}")
+    
     if LlmChat and EMERGENT_KEY:
         llm_chat = LlmChat(
             api_key=EMERGENT_KEY,
