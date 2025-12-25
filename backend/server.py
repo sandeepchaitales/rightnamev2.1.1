@@ -302,6 +302,20 @@ async def evaluate_brands(request: BrandEvaluationRequest):
     - Apply INTENT MATCHING: Compare found apps against user's business context (Industry: {request.industry}, Category: {request.category}, Product Type: {request.product_type})
     - If intents are DIFFERENT, classify as "name_twins" not "direct_competitors"
     - Only flag as fatal conflict if SAME intent + SAME customers
+
+    ⚠️ MANDATORY COUNTRY-SPECIFIC COMPETITOR ANALYSIS ⚠️
+    Target Countries Selected: {request.countries}
+    Number of Countries: {len(request.countries)}
+    
+    CRITICAL INSTRUCTION: You MUST generate 'country_competitor_analysis' array with EXACTLY {min(len(request.countries), 4)} entries - one for EACH of these countries: {', '.join(request.countries[:4])}.
+    DO NOT skip any country. Each country entry MUST contain:
+    - country: exact country name
+    - country_flag: emoji flag (🇺🇸, 🇮🇳, 🇬🇧, 🇩🇪, etc.)
+    - competitors: 3 REAL local brands that operate in that specific country's market
+    - user_brand_position: recommended position in that market
+    - white_space_analysis: market gap in that specific country
+    - strategic_advantage: competitive advantage in that market
+    - market_entry_recommendation: specific advice for entering that country
     """
     
     max_retries = 3
