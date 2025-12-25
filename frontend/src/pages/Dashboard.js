@@ -1346,11 +1346,14 @@ const Dashboard = () => {
                 )}
 
                 {/* SECTION 8: COMPETITIVE LANDSCAPE */}
-                {brand.competitor_analysis && (
+                {(brand.competitor_analysis || brand.country_competitor_analysis?.length > 0) && (
                     <section className="print-section">
-                        <SectionHeader icon={Users} title="Competitive Landscape" subtitle="Strategic positioning matrix" color="blue" />
+                        <SectionHeader icon={Users} title="Competitive Landscape" subtitle="Strategic positioning matrix by market" color="blue" />
                         {isAuthenticated ? (
-                            <CompetitiveLandscapeSection competitorAnalysis={brand.competitor_analysis} />
+                            <CompetitiveLandscapeSection 
+                                competitorAnalysis={brand.competitor_analysis} 
+                                countryCompetitorAnalysis={brand.country_competitor_analysis}
+                            />
                         ) : (
                             <LockedSection title="Competitive Landscape" onUnlock={handleRegister} />
                         )}
