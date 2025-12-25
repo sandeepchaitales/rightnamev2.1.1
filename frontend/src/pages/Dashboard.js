@@ -303,9 +303,9 @@ const Dashboard = () => {
                 <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                     
                     {/* Left: Brand & Verdict */}
-                    <div className="lg:col-span-8 flex flex-col gap-6">
+                    <div className="lg:col-span-5 flex flex-col gap-6">
                         <div className="print:hidden">
-                            <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight mb-4">
+                            <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-4">
                                 {brand.brand_name}
                             </h1>
                             <div className="flex flex-wrap gap-3">
@@ -324,18 +324,18 @@ const Dashboard = () => {
                         </div>
                         
                         {/* Executive Summary - ALWAYS VISIBLE */}
-                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm print:border-l-4 print:border-l-violet-600 print:border-y-0 print:border-r-0 print:rounded-none">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm print:border-l-4 print:border-l-violet-600 print:border-y-0 print:border-r-0 print:rounded-none flex-grow">
                             <h3 className="text-xs font-bold uppercase tracking-widest text-violet-600 mb-2 flex items-center gap-2">
                                 <Star className="w-4 h-4" /> Executive Summary
                             </h3>
-                            <p className="text-lg font-medium text-slate-700 leading-relaxed text-justify">
+                            <p className="text-base font-medium text-slate-700 leading-relaxed text-justify">
                                 {data.executive_summary}
                             </p>
                         </div>
                     </div>
 
-                    {/* Right: Score Card - ALWAYS VISIBLE */}
-                    <div className="lg:col-span-4">
+                    {/* Middle: Score Card - ALWAYS VISIBLE */}
+                    <div className="lg:col-span-3">
                          <ScoreCard 
                             title="Rightname™ Index" 
                             score={brand.namescore} 
@@ -343,6 +343,39 @@ const Dashboard = () => {
                             subtitle="Composite Consulting Grade"
                             className="h-full shadow-lg shadow-slate-200/50"
                         />
+                    </div>
+
+                    {/* Right: Dimensions Quick View - ALWAYS VISIBLE */}
+                    <div className="lg:col-span-4">
+                        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-lg h-full">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Shield className="w-4 h-4 text-violet-500" />
+                                <p className="text-xs font-bold uppercase tracking-widest text-violet-600">Quick Dimensions</p>
+                            </div>
+                            <div className="space-y-3">
+                                {brand.dimensions.slice(0, 6).map((dim, i) => (
+                                    <div key={i} className="group">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-semibold text-slate-600 truncate max-w-[140px]">{dim.name}</span>
+                                            <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full">{dim.score}/10</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full rounded-full transition-all duration-1000 ease-out"
+                                                style={{ 
+                                                    width: `${dim.score * 10}%`,
+                                                    background: dim.score >= 8 
+                                                        ? 'linear-gradient(90deg, #10b981, #059669)' 
+                                                        : dim.score >= 6 
+                                                            ? 'linear-gradient(90deg, #8b5cf6, #d946ef)' 
+                                                            : 'linear-gradient(90deg, #f59e0b, #ef4444)'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </section>
 
