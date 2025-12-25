@@ -1,28 +1,64 @@
 {
   "summary": {
-    "tests_run": 3,
-    "tests_passed": 3,
-    "success_rate": 100.0
+    "tests_run": 9,
+    "tests_passed": 6,
+    "success_rate": 66.66666666666666
   },
   "results": [
     {
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2025-12-23T19:26:28.426951"
+      "timestamp": "2025-12-25T09:50:22.359014"
     },
     {
       "test": "Evaluate Endpoint - Structure",
       "success": true,
-      "details": "All required fields present, Astra NameScore: 78.0",
-      "timestamp": "2025-12-23T19:27:31.604714"
+      "details": "All required fields present, Astra NameScore: 45.0",
+      "timestamp": "2025-12-25T09:51:17.502083"
     },
     {
-      "test": "Invalid Payload Handling",
+      "test": "Auth Register",
       "success": true,
-      "details": "Status: 422 (Expected 4xx for invalid payload)",
-      "timestamp": "2025-12-23T19:27:31.672059"
+      "details": "User registered: user_5aa38225daec",
+      "timestamp": "2025-12-25T09:51:17.797013"
+    },
+    {
+      "test": "Auth Login Email",
+      "success": true,
+      "details": "User logged in: user_5aa38225daec",
+      "timestamp": "2025-12-25T09:51:18.066441"
+    },
+    {
+      "test": "Auth Me",
+      "success": true,
+      "details": "Current user: test_51e674ea@example.com",
+      "timestamp": "2025-12-25T09:51:18.108325"
+    },
+    {
+      "test": "Generate Report with Auth",
+      "success": false,
+      "details": "No report_id in response",
+      "timestamp": "2025-12-25T09:52:06.871974"
+    },
+    {
+      "test": "Get Report Authenticated",
+      "success": false,
+      "details": "No report_id available",
+      "timestamp": "2025-12-25T09:52:06.872004"
+    },
+    {
+      "test": "Get Report Unauthenticated",
+      "success": false,
+      "details": "No report_id available",
+      "timestamp": "2025-12-25T09:52:06.872010"
+    },
+    {
+      "test": "Auth Logout",
+      "success": true,
+      "details": "Logout successful: Logged out successfully",
+      "timestamp": "2025-12-25T09:52:06.952189"
     }
   ],
-  "timestamp": "2025-12-23T19:27:31.672342"
+  "timestamp": "2025-12-25T09:52:06.952359"
 }
