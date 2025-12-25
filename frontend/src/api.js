@@ -15,6 +15,17 @@ export const api = {
             throw error;
         }
     },
+    getReport: async (reportId) => {
+        try {
+            const response = await axios.get(`${API_URL}/reports/${reportId}`, {
+                withCredentials: true
+            });
+            return response.data;
+        } catch (error) {
+            console.error("Get Report API Error:", error);
+            throw error;
+        }
+    },
     status: async () => {
         return axios.get(`${API_URL}/`);
     }
