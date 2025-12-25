@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import AuthCallback from "./pages/AuthCallback";
 import { AuthProvider } from "./contexts/AuthContext";
+import AuthModal from "./components/AuthModal";
 import { Toaster } from "@/components/ui/sonner";
 
 // Router component that checks for session_id in URL
@@ -32,6 +33,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <AppRouter />
+          <AuthModal />
         </BrowserRouter>
       </AuthProvider>
       <Toaster />
