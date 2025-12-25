@@ -305,9 +305,9 @@ const LandingPage = () => {
                         </Button>
                     </div>
                 ) : (
-                    <Button onClick={login} className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 hover:from-violet-700 hover:via-fuchsia-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-violet-300/50 rounded-full px-6 hover:scale-105 transition-transform">
+                    <Button onClick={() => openAuthModal()} className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 hover:from-violet-700 hover:via-fuchsia-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-violet-300/50 rounded-full px-6 hover:scale-105 transition-transform">
                         <LogIn className="w-4 h-4 mr-2" />
-                        Sign in with Google
+                        Sign In
                     </Button>
                 )}
             </div>
