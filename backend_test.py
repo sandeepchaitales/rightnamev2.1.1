@@ -2,6 +2,7 @@ import requests
 import sys
 import json
 from datetime import datetime
+import uuid
 
 class BrandEvaluationTester:
     def __init__(self, base_url="https://brandcheck.preview.emergentagent.com"):
@@ -10,6 +11,11 @@ class BrandEvaluationTester:
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
+        self.session_cookies = None
+        self.test_user_email = f"test_{uuid.uuid4().hex[:8]}@example.com"
+        self.test_user_password = "TestPass123!"
+        self.test_user_name = "Test User"
+        self.test_report_id = None
 
     def log_test(self, name, success, details=""):
         """Log test result"""
