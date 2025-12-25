@@ -462,6 +462,41 @@ Return ONLY valid JSON.
           "suggested_pricing": "CRITICAL RULE: If verdict is REJECT or NO-GO, set this to 'N/A - Pricing analysis not applicable for rejected brand names.' Otherwise, provide specific pricing strategy in LOCAL CURRENCY."
       },
       
+      "country_competitor_analysis": [
+          {
+              "country": "USA",
+              "country_flag": "🇺🇸",
+              "x_axis_label": "Price: Budget → Premium",
+              "y_axis_label": "Style: Traditional → Modern",
+              "competitors": [
+                  {"name": "Top US Competitor 1", "x_coordinate": 70, "y_coordinate": 65, "price_position": "Premium", "category_position": "Modern", "quadrant": "Premium Modern"},
+                  {"name": "Top US Competitor 2", "x_coordinate": 40, "y_coordinate": 50, "price_position": "Mid-range", "category_position": "Balanced", "quadrant": "Value Mid"},
+                  {"name": "Top US Competitor 3", "x_coordinate": 85, "y_coordinate": 30, "price_position": "Luxury", "category_position": "Classic", "quadrant": "Heritage Luxury"}
+              ],
+              "user_brand_position": {"x_coordinate": 65, "y_coordinate": 70, "quadrant": "Target Position", "rationale": "Why this position works in the US market"},
+              "white_space_analysis": "Market gap in the US - which position is underserved",
+              "strategic_advantage": "Key advantage for entering US market",
+              "market_entry_recommendation": "Specific recommendation for US market entry"
+          },
+          {
+              "country": "India",
+              "country_flag": "🇮🇳",
+              "x_axis_label": "Price: Budget → Premium",
+              "y_axis_label": "Style: Traditional → Modern",
+              "competitors": [
+                  {"name": "Top India Competitor 1", "x_coordinate": 35, "y_coordinate": 55, "price_position": "Value", "category_position": "Growing", "quadrant": "Value Growth"},
+                  {"name": "Top India Competitor 2", "x_coordinate": 60, "y_coordinate": 70, "price_position": "Mid-Premium", "category_position": "Modern", "quadrant": "Aspirational Modern"},
+                  {"name": "Top India Competitor 3", "x_coordinate": 80, "y_coordinate": 40, "price_position": "Premium", "category_position": "Established", "quadrant": "Premium Established"}
+              ],
+              "user_brand_position": {"x_coordinate": 55, "y_coordinate": 65, "quadrant": "Target Position", "rationale": "Why this position works in the Indian market"},
+              "white_space_analysis": "Market gap in India - which position is underserved",
+              "strategic_advantage": "Key advantage for entering Indian market",
+              "market_entry_recommendation": "Specific recommendation for India market entry"
+          }
+      ],
+      
+      "COUNTRY_ANALYSIS_RULE": "Generate country_competitor_analysis for UP TO 4 countries from the user's selected countries. Each country should have REAL local competitors specific to that market. Use appropriate local competitor brands.",
+      
       "PRICING_RULE": "Do NOT recommend pricing strategies for brand names with REJECT or NO-GO verdicts. It is illogical to suggest how to price a product with a name you are recommending they abandon.",
       
       "positioning_fit": "Deep analysis of fit with the requested positioning. Discuss nuances. If verdict is REJECT/NO-GO, note that positioning analysis is moot given the recommendation to abandon this name.",
