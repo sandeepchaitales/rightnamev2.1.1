@@ -922,52 +922,52 @@ async def evaluate_brands(request: BrandEvaluationRequest):
                     content = response
                 else:
                     content = str(response)
-            
-            # Extract JSON from markdown code blocks
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0]
-            elif "```" in content:
-                parts = content.split("```")
-                if len(parts) >= 2:
-                    content = parts[1]
-                    if content.startswith("json"):
-                        content = content[4:]
-            
-            # Sanitization
-            content = content.strip()
-            
-            # Try direct parsing first
-            try:
-                data = json.loads(content)
-            except json.JSONDecodeError:
-                # Apply cleaning and repair
-                logging.info("Direct JSON parsing failed, applying cleanup and repair...")
-                content = clean_json_string(content)
-                content = repair_json(content)
+                
+                # Extract JSON from markdown code blocks
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0]
+                elif "```" in content:
+                    parts = content.split("```")
+                    if len(parts) >= 2:
+                        content = parts[1]
+                        if content.startswith("json"):
+                            content = content[4:]
+                
+                # Sanitization
+                content = content.strip()
+                
+                # Try direct parsing first
                 try:
                     data = json.loads(content)
-                except json.JSONDecodeError as je:
-                    # Log the problematic content for debugging (context around error)
-                    error_pos = je.pos if hasattr(je, 'pos') else 0
-                    start = max(0, error_pos - 100)
-                    end = min(len(content), error_pos + 100)
-                    logging.error(f"JSON Parse Error at position {error_pos}: {je.msg}")
-                    logging.error(f"Context around error: ...{repr(content[start:end])}...")
-                    
-                    # Try aggressive repair
-                    logging.info("Trying aggressive JSON repair...")
-                    content = aggressive_json_repair(content)
+                except json.JSONDecodeError:
+                    # Apply cleaning and repair
+                    logging.info("Direct JSON parsing failed, applying cleanup and repair...")
+                    content = clean_json_string(content)
+                    content = repair_json(content)
                     try:
                         data = json.loads(content)
-                        logging.info("Aggressive repair succeeded!")
-                    except json.JSONDecodeError:
-                        raise
-            
-            # Ensure data is a dict, not a list
-            if isinstance(data, list):
-                # If LLM returned a list, wrap it as brand_scores
-                if len(data) > 0 and isinstance(data[0], dict):
-                    data = {"brand_scores": data, "executive_summary": "Brand evaluation completed.", "comparison_verdict": ""}
+                    except json.JSONDecodeError as je:
+                        # Log the problematic content for debugging (context around error)
+                        error_pos = je.pos if hasattr(je, 'pos') else 0
+                        start = max(0, error_pos - 100)
+                        end = min(len(content), error_pos + 100)
+                        logging.error(f"JSON Parse Error at position {error_pos}: {je.msg}")
+                        logging.error(f"Context around error: ...{repr(content[start:end])}...")
+                        
+                        # Try aggressive repair
+                        logging.info("Trying aggressive JSON repair...")
+                        content = aggressive_json_repair(content)
+                        try:
+                            data = json.loads(content)
+                            logging.info("Aggressive repair succeeded!")
+                        except json.JSONDecodeError:
+                            raise
+                
+                # Ensure data is a dict, not a list
+                if isinstance(data, list):
+                    # If LLM returned a list, wrap it as brand_scores
+                    if len(data) > 0 and isinstance(data[0], dict):
+                        data = {"brand_scores": data, "executive_summary": "Brand evaluation completed.", "comparison_verdict": ""}
                 else:
                     raise ValueError("Invalid response format from LLM")
             
