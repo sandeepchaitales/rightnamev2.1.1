@@ -398,6 +398,260 @@ class BrandEvaluationTester:
             self.log_test("Auth Logout", False, str(e))
             return False
 
+    def test_trademark_research_luminara(self):
+        """Test trademark research feature with Luminara (Fashion/Streetwear/India)"""
+        payload = {
+            "brand_names": ["Luminara"],
+            "industry": "Fashion and Apparel",
+            "category": "Streetwear",
+            "product_type": "Clothing",
+            "usp": "Premium urban streetwear",
+            "brand_vibe": "Modern, Bold",
+            "positioning": "Premium",
+            "market_scope": "Single Country",
+            "countries": ["India"]
+        }
+        
+        try:
+            print(f"\n🔍 Testing trademark research with Luminara...")
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=180  # Extended timeout for trademark research
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    # Check if we have brand_scores
+                    if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                        self.log_test("Trademark Research - Luminara Structure", False, "No brand scores returned")
+                        return False
+                    
+                    brand = data["brand_scores"][0]
+                    
+                    # Test 1: Check trademark_research field exists
+                    if "trademark_research" not in brand:
+                        self.log_test("Trademark Research - Luminara Field", False, "trademark_research field missing")
+                        return False
+                    
+                    tm_research = brand["trademark_research"]
+                    if not tm_research:
+                        self.log_test("Trademark Research - Luminara Data", False, "trademark_research is null/empty")
+                        return False
+                    
+                    # Test 2: Check overall_risk_score (should be around 6-7/10)
+                    risk_score = tm_research.get("overall_risk_score")
+                    if risk_score is None:
+                        self.log_test("Trademark Research - Luminara Risk Score", False, "overall_risk_score missing")
+                        return False
+                    
+                    if not (5 <= risk_score <= 8):
+                        self.log_test("Trademark Research - Luminara Risk Score Range", False, f"Risk score {risk_score} not in expected range 5-8")
+                        return False
+                    
+                    # Test 3: Check trademark_conflicts array
+                    tm_conflicts = tm_research.get("trademark_conflicts", [])
+                    if len(tm_conflicts) < 2:
+                        self.log_test("Trademark Research - Luminara TM Conflicts", False, f"Expected at least 2 trademark conflicts, got {len(tm_conflicts)}")
+                        return False
+                    
+                    # Check for specific expected conflicts
+                    conflict_names = [c.get("name", "").lower() for c in tm_conflicts]
+                    expected_conflicts = ["luminara", "luminara elixir"]
+                    found_conflicts = [name for name in expected_conflicts if any(name in cn for cn in conflict_names)]
+                    
+                    if len(found_conflicts) < 1:
+                        self.log_test("Trademark Research - Luminara Expected Conflicts", False, f"Expected Luminara conflicts not found. Got: {conflict_names}")
+                        return False
+                    
+                    # Test 4: Check company_conflicts array
+                    co_conflicts = tm_research.get("company_conflicts", [])
+                    if len(co_conflicts) < 1:
+                        self.log_test("Trademark Research - Luminara Company Conflicts", False, f"Expected at least 1 company conflict, got {len(co_conflicts)}")
+                        return False
+                    
+                    # Check for Luminara Enterprises
+                    company_names = [c.get("name", "").lower() for c in co_conflicts]
+                    if not any("luminara enterprises" in cn for cn in company_names):
+                        print(f"Warning: Expected 'Luminara Enterprises' not found in companies: {company_names}")
+                    
+                    # Test 5: Check legal_precedents array
+                    legal_precedents = tm_research.get("legal_precedents", [])
+                    if len(legal_precedents) < 1:
+                        self.log_test("Trademark Research - Luminara Legal Precedents", False, f"Expected at least 1 legal precedent, got {len(legal_precedents)}")
+                        return False
+                    
+                    # Test 6: Check registration_timeline field
+                    if "registration_timeline" not in brand:
+                        self.log_test("Trademark Research - Luminara Timeline Field", False, "registration_timeline field missing")
+                        return False
+                    
+                    reg_timeline = brand["registration_timeline"]
+                    if not reg_timeline:
+                        self.log_test("Trademark Research - Luminara Timeline Data", False, "registration_timeline is null/empty")
+                        return False
+                    
+                    # Check timeline structure
+                    if "estimated_duration" not in reg_timeline:
+                        self.log_test("Trademark Research - Luminara Timeline Duration", False, "estimated_duration missing from timeline")
+                        return False
+                    
+                    duration = reg_timeline.get("estimated_duration", "")
+                    if "12-18 months" not in duration and "month" not in duration.lower():
+                        self.log_test("Trademark Research - Luminara Timeline Format", False, f"Unexpected duration format: {duration}")
+                        return False
+                    
+                    # Test 7: Check mitigation_strategies array
+                    if "mitigation_strategies" not in brand:
+                        self.log_test("Trademark Research - Luminara Mitigation Field", False, "mitigation_strategies field missing")
+                        return False
+                    
+                    mitigation = brand["mitigation_strategies"]
+                    if not isinstance(mitigation, list) or len(mitigation) == 0:
+                        self.log_test("Trademark Research - Luminara Mitigation Data", False, f"Expected mitigation strategies array, got: {type(mitigation)}")
+                        return False
+                    
+                    # Test 8: Check Nice Classification (should be Class 25 for Clothing)
+                    nice_class = tm_research.get("nice_classification", {})
+                    if nice_class and nice_class.get("class_number") != 25:
+                        self.log_test("Trademark Research - Luminara Nice Class", False, f"Expected Class 25 for clothing, got Class {nice_class.get('class_number')}")
+                        return False
+                    
+                    self.log_test("Trademark Research - Luminara Complete", True, 
+                                f"All checks passed. Risk: {risk_score}/10, TM conflicts: {len(tm_conflicts)}, Company conflicts: {len(co_conflicts)}, Legal precedents: {len(legal_precedents)}")
+                    return True
+                    
+                except json.JSONDecodeError as e:
+                    self.log_test("Trademark Research - Luminara JSON", False, f"Invalid JSON response: {str(e)}")
+                    return False
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Trademark Research - Luminara HTTP", False, error_msg)
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Trademark Research - Luminara Timeout", False, "Request timed out after 180 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Trademark Research - Luminara Exception", False, str(e))
+            return False
+
+    def test_trademark_research_nexofy(self):
+        """Test trademark research with unique brand name (should have low risk)"""
+        payload = {
+            "brand_names": ["Nexofy"],
+            "industry": "Technology",
+            "category": "SaaS",
+            "product_type": "Software",
+            "usp": "AI-powered automation",
+            "brand_vibe": "Innovative",
+            "positioning": "Premium",
+            "market_scope": "Global",
+            "countries": ["USA", "UK", "India"]
+        }
+        
+        try:
+            print(f"\n🔍 Testing trademark research with Nexofy (unique name)...")
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=180  # Extended timeout for trademark research
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    # Check if we have brand_scores
+                    if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                        self.log_test("Trademark Research - Nexofy Structure", False, "No brand scores returned")
+                        return False
+                    
+                    brand = data["brand_scores"][0]
+                    
+                    # Test 1: Check trademark_research field exists
+                    if "trademark_research" not in brand:
+                        self.log_test("Trademark Research - Nexofy Field", False, "trademark_research field missing")
+                        return False
+                    
+                    tm_research = brand["trademark_research"]
+                    if not tm_research:
+                        self.log_test("Trademark Research - Nexofy Data", False, "trademark_research is null/empty")
+                        return False
+                    
+                    # Test 2: Check overall_risk_score (should be low 1-3/10)
+                    risk_score = tm_research.get("overall_risk_score")
+                    if risk_score is None:
+                        self.log_test("Trademark Research - Nexofy Risk Score", False, "overall_risk_score missing")
+                        return False
+                    
+                    if risk_score > 4:
+                        self.log_test("Trademark Research - Nexofy Low Risk", False, f"Expected low risk (1-4), got {risk_score}/10")
+                        return False
+                    
+                    # Test 3: Check registration success probability (should be high 80%+)
+                    success_prob = tm_research.get("registration_success_probability")
+                    if success_prob is None:
+                        self.log_test("Trademark Research - Nexofy Success Prob", False, "registration_success_probability missing")
+                        return False
+                    
+                    if success_prob < 70:
+                        self.log_test("Trademark Research - Nexofy High Success", False, f"Expected high success probability (70%+), got {success_prob}%")
+                        return False
+                    
+                    # Test 4: Check Nice Classification (should be Class 42 for Scientific services)
+                    nice_class = tm_research.get("nice_classification", {})
+                    if nice_class and nice_class.get("class_number") not in [9, 42]:  # Allow both Class 9 (Software) and Class 42 (Services)
+                        self.log_test("Trademark Research - Nexofy Nice Class", False, f"Expected Class 9 or 42 for SaaS, got Class {nice_class.get('class_number')}")
+                        return False
+                    
+                    # Test 5: Check that basic structure is present
+                    required_fields = ["trademark_conflicts", "company_conflicts", "legal_precedents"]
+                    missing_fields = [field for field in required_fields if field not in tm_research]
+                    
+                    if missing_fields:
+                        self.log_test("Trademark Research - Nexofy Structure", False, f"Missing fields: {missing_fields}")
+                        return False
+                    
+                    # Test 6: Check registration_timeline and mitigation_strategies exist
+                    if "registration_timeline" not in brand:
+                        self.log_test("Trademark Research - Nexofy Timeline", False, "registration_timeline field missing")
+                        return False
+                    
+                    if "mitigation_strategies" not in brand:
+                        self.log_test("Trademark Research - Nexofy Mitigation", False, "mitigation_strategies field missing")
+                        return False
+                    
+                    tm_conflicts_count = len(tm_research.get("trademark_conflicts", []))
+                    co_conflicts_count = len(tm_research.get("company_conflicts", []))
+                    
+                    self.log_test("Trademark Research - Nexofy Complete", True, 
+                                f"Low risk brand passed. Risk: {risk_score}/10, Success: {success_prob}%, TM conflicts: {tm_conflicts_count}, Company conflicts: {co_conflicts_count}")
+                    return True
+                    
+                except json.JSONDecodeError as e:
+                    self.log_test("Trademark Research - Nexofy JSON", False, f"Invalid JSON response: {str(e)}")
+                    return False
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Trademark Research - Nexofy HTTP", False, error_msg)
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Trademark Research - Nexofy Timeout", False, "Request timed out after 180 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Trademark Research - Nexofy Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
