@@ -954,43 +954,6 @@ async def conduct_trademark_research(
                 f"Conflicts found: {result.total_conflicts_found}")
     
     return result
-    for c in search_co_conflicts:
-        if c.name.lower() not in existing_co_names:
-            result.company_conflicts.append(c)
-            existing_co_names.add(c.name.lower())
-    
-    # Step 5: Add relevant legal precedents
-    precedents = get_relevant_precedents(category, industry)
-    for p in precedents:
-        result.legal_precedents.append(LegalPrecedent(
-            case_name=p.get("case_name", ""),
-            court=p.get("court"),
-            year=p.get("year"),
-            relevance=p.get("relevance", ""),
-            key_principle=p.get("key_principle")
-        ))
-    
-    # Step 6: Calculate risk scores
-    risk_scores = calculate_risk_scores(
-        result.trademark_conflicts,
-        result.company_conflicts,
-        result.common_law_conflicts
-    )
-    
-    result.overall_risk_score = risk_scores["overall_risk_score"]
-    result.registration_success_probability = risk_scores["registration_success_probability"]
-    result.opposition_probability = risk_scores["opposition_probability"]
-    result.critical_conflicts_count = risk_scores["critical_conflicts_count"]
-    result.high_risk_conflicts_count = risk_scores["high_risk_conflicts_count"]
-    result.total_conflicts_found = risk_scores["total_conflicts_found"]
-    
-    # Step 7: Create search results summary for LLM
-    result.search_results_summary = create_search_summary(all_search_results, brand_name)
-    
-    logger.info(f"Trademark research complete. Risk score: {result.overall_risk_score}/10, "
-                f"Conflicts found: {result.total_conflicts_found}")
-    
-    return result
 
 
 def extract_common_law_conflicts(
