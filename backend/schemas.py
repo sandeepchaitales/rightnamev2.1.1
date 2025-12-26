@@ -276,6 +276,17 @@ class TrademarkResearchData(BaseModel):
     critical_conflicts_count: int = Field(default=0)
     high_risk_conflicts_count: int = Field(default=0)
     total_conflicts_found: int = Field(default=0)
+    
+    @field_validator('overall_risk_score', 'registration_success_probability', 'opposition_probability', 
+                     'critical_conflicts_count', 'high_risk_conflicts_count', 'total_conflicts_found', mode='before')
+    @classmethod
+    def convert_int_fields(cls, v):
+        if v is None or v == 'N/A' or v == '':
+            return 0
+        try:
+            return int(v)
+        except (ValueError, TypeError):
+            return 0
 
 class RegistrationTimeline(BaseModel):
     """Trademark registration timeline and costs"""
