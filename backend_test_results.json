@@ -1,82 +1,46 @@
 {
   "summary": {
-    "tests_run": 12,
-    "tests_passed": 5,
-    "success_rate": 41.66666666666667
+    "tests_run": 6,
+    "tests_passed": 3,
+    "success_rate": 50.0
   },
   "results": [
     {
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2025-12-26T16:28:15.454664"
+      "timestamp": "2025-12-26T16:42:47.381520"
     },
     {
       "test": "Emergent LLM Key - Budget Error",
       "success": false,
       "details": "Budget-related error: HTTP 422: {\"detail\":[{\"type\":\"literal_error\",\"loc\":[\"body\",\"positioning\"],\"msg\":\"Input should be 'Budget', 'Mid-Range', 'Premium', 'Luxury', 'Mass' or 'Ultra-Premium'\",\"input\":\"Premium software solutions\",\"ctx\":{\"expected\":\"'Budget', 'Mid-Range', 'Premium', 'Luxury', 'Mass' or 'Ultra-Premium'\"},\"url\":\"https:/",
-      "timestamp": "2025-12-26T16:28:15.499011"
+      "timestamp": "2025-12-26T16:42:47.420236"
     },
     {
       "test": "Evaluate Endpoint - Structure",
       "success": true,
-      "details": "All required fields present, Astra NameScore: 45.0",
-      "timestamp": "2025-12-26T16:29:20.199662"
+      "details": "All required fields present, Astra NameScore: 15.0",
+      "timestamp": "2025-12-26T16:43:39.595490"
     },
     {
-      "test": "Trademark Research - Luminara Timeout",
-      "success": false,
-      "details": "Request timed out after 180 seconds",
-      "timestamp": "2025-12-26T16:32:20.356190"
+      "test": "Trademark Research - Luminara Complete",
+      "success": true,
+      "details": "All checks passed. Risk: 7/10, TM conflicts: 1, Company conflicts: 1, Legal precedents: 1",
+      "timestamp": "2025-12-26T16:44:48.154382"
     },
     {
       "test": "Trademark Research - Nexofy Timeout",
       "success": false,
       "details": "Request timed out after 180 seconds",
-      "timestamp": "2025-12-26T16:35:20.541196"
+      "timestamp": "2025-12-26T16:47:48.334278"
     },
     {
       "test": "Auth Register",
-      "success": true,
-      "details": "User registered: user_4e5a802a37f3",
-      "timestamp": "2025-12-26T16:35:29.146543"
-    },
-    {
-      "test": "Auth Login Email",
-      "success": true,
-      "details": "User logged in: user_4e5a802a37f3",
-      "timestamp": "2025-12-26T16:35:29.431776"
-    },
-    {
-      "test": "Auth Me",
-      "success": true,
-      "details": "Current user: test_f9c17358@example.com",
-      "timestamp": "2025-12-26T16:35:29.472058"
-    },
-    {
-      "test": "Generate Report with Auth",
-      "success": false,
-      "details": "HTTPSConnectionPool(host='trademark-research.preview.emergentagent.com', port=443): Read timed out. (read timeout=120)",
-      "timestamp": "2025-12-26T16:37:29.597626"
-    },
-    {
-      "test": "Get Report Authenticated",
-      "success": false,
-      "details": "No report_id available",
-      "timestamp": "2025-12-26T16:37:29.597641"
-    },
-    {
-      "test": "Get Report Unauthenticated",
-      "success": false,
-      "details": "No report_id available",
-      "timestamp": "2025-12-26T16:37:29.597646"
-    },
-    {
-      "test": "Auth Logout",
       "success": false,
       "details": "HTTPSConnectionPool(host='trademark-research.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)",
-      "timestamp": "2025-12-26T16:37:39.663442"
+      "timestamp": "2025-12-26T16:47:58.400009"
     }
   ],
-  "timestamp": "2025-12-26T16:37:39.663626"
+  "timestamp": "2025-12-26T16:47:58.401147"
 }
