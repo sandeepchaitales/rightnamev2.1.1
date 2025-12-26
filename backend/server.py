@@ -26,6 +26,7 @@ from prompts import SYSTEM_PROMPT
 from visibility import check_visibility
 from availability import check_full_availability, check_multi_domain_availability, check_social_availability
 from similarity import check_brand_similarity, format_similarity_report
+from trademark_research import conduct_trademark_research, format_research_for_prompt
 
 # Import Emergent Integration
 try:
