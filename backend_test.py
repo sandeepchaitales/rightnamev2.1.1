@@ -1823,6 +1823,10 @@ class BrandEvaluationTester:
         print("\n🔑 PRIORITY TEST: Testing newly configured Emergent LLM key...")
         self.test_emergent_llm_key_smoke_test()
         
+        # PRIORITY: Test score_impact validation fix (as per review request)
+        print("\n🔧 PRIORITY TEST: Testing score_impact validation fix...")
+        self.test_score_impact_validation_fix()
+        
         # Test main evaluate endpoint
         self.test_evaluate_endpoint_structure()
         
