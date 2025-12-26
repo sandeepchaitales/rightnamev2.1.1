@@ -1615,18 +1615,40 @@ class BrandEvaluationTester:
 def main():
     tester = BrandEvaluationTester()
     
-    # Run ACTUAL country-specific trademark cost tests as per review request
-    print("🎯 FOCUSED TESTING: ACTUAL Country-Specific Trademark Costs in RIGHTNAME API")
+    # Run Country-Specific Legal Precedents tests as per review request
+    print("⚖️ FOCUSED TESTING: Country-Specific Legal Precedents in RIGHTNAME API")
     print("=" * 80)
-    print("🔍 TESTING: ACTUAL USPTO costs vs ACTUAL IP India costs (NOT currency conversion)")
+    print("🔍 TESTING: USA should show US court cases, India should show Indian court cases")
     print("=" * 80)
-    success = tester.run_currency_tests_only()
+    
+    # Test API health first
+    if not tester.test_api_health():
+        print("❌ API health check failed, stopping tests")
+        return 1
+    
+    # PRIORITY: Test country-specific legal precedents as per review request
+    print("\n⚖️ COUNTRY-SPECIFIC LEGAL PRECEDENTS TESTS:")
+    print("Testing that legal precedents match the selected country's jurisdiction...")
+    
+    # Test Case 1: USA - should show US court cases
+    tester.test_country_specific_legal_precedents_usa()
+    
+    # Test Case 2: India - should show Indian court cases  
+    tester.test_country_specific_legal_precedents_india()
+    
+    # Print summary
+    print(f"\n📊 Legal Precedents Test Summary:")
+    print(f"Tests Run: {tester.tests_run}")
+    print(f"Tests Passed: {tester.tests_passed}")
+    print(f"Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    
+    success = tester.tests_passed == tester.tests_run
     
     # Save detailed results
     with open('/app/backend_test_results.json', 'w') as f:
         json.dump({
-            "test_focus": "ACTUAL Country-Specific Trademark Costs Testing",
-            "description": "Testing ACTUAL trademark office costs (USPTO vs IP India) not just currency conversion",
+            "test_focus": "Country-Specific Legal Precedents Testing",
+            "description": "Testing that legal precedents are relevant to the selected country's jurisdiction",
             "summary": {
                 "tests_run": tester.tests_run,
                 "tests_passed": tester.tests_passed,
