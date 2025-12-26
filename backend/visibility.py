@@ -48,22 +48,39 @@ def generate_phonetic_variants(brand_name: str) -> list:
     
     # Special case mappings for common misspellings/variants
     special_mappings = {
-        "unque": ["unique", "unik", "uneek", "uniq"],
+        "unque": ["unique", "unik", "uneek", "uniq", "unike"],
         "unik": ["unique", "unque", "uneek"],
+        "unique": ["unque", "unik", "uneek"],
         "fresha": ["fresh", "fresher"],
         "booksy": ["booksie", "booksi"],
         "vagaro": ["vagero", "vegaro"],
+        "styleseat": ["style seat", "style-seat"],
     }
     
     # Check special mappings first
     if name_lower in special_mappings:
         variants.update(special_mappings[name_lower])
     
-    # Check if any special mapping key is in the brand name
+    # Check if any special mapping key is similar to the brand name
     for key, values in special_mappings.items():
-        if key in name_lower:
-            for v in values:
-                variants.add(name_lower.replace(key, v))
+        # Check if brand is similar to key (missing letters, extra letters, etc.)
+        if len(name_lower) >= 3 and len(key) >= 3:
+            # Check if brand is a subset or superset
+            if name_lower in key or key in name_lower:
+                variants.update(values)
+            # Check edit distance (simple check - same length, 1-2 chars different)
+            elif abs(len(name_lower) - len(key)) <= 2:
+                matching_chars = sum(1 for a, b in zip(name_lower, key) if a == b)
+                if matching_chars >= min(len(name_lower), len(key)) - 2:
+                    variants.update(values)
+    
+    # CRITICAL: Check for "que" -> "que" pattern (unque -> unique)
+    if "que" in name_lower and "i" not in name_lower:
+        # Add version with 'i' before 'que'
+        idx = name_lower.find("que")
+        variant_with_i = name_lower[:idx] + "i" + name_lower[idx:]
+        variants.add(variant_with_i)
+        variants.add(variant_with_i.capitalize())
     
     # Apply phonetic substitutions
     phonetic_rules = [
@@ -99,8 +116,14 @@ def generate_phonetic_variants(brand_name: str) -> list:
     variants.discard(brand_name.lower())
     variants.discard("")
     
-    # Return unique variants (limit to 5 most likely)
-    return list(variants)[:5]
+    # Prioritize "unique" if it's a variant (most common case)
+    variant_list = list(variants)
+    if "unique" in variant_list:
+        variant_list.remove("unique")
+        variant_list.insert(0, "unique")
+    
+    # Return unique variants (limit to 6 most likely)
+    return variant_list[:6]
 
 
 def get_web_search_results(query, num_results=10):
