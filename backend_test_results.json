@@ -1,36 +1,30 @@
 {
-  "test_focus": "ACTUAL Country-Specific Trademark Costs Testing",
-  "description": "Testing ACTUAL trademark office costs (USPTO vs IP India) not just currency conversion",
+  "test_focus": "Country-Specific Legal Precedents Testing",
+  "description": "Testing that legal precedents are relevant to the selected country's jurisdiction",
   "summary": {
-    "tests_run": 4,
-    "tests_passed": 3,
-    "success_rate": 75.0
+    "tests_run": 3,
+    "tests_passed": 1,
+    "success_rate": 33.33333333333333
   },
   "results": [
     {
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2025-12-26T17:29:17.538693"
+      "timestamp": "2025-12-26T18:02:50.208249"
     },
     {
-      "test": "ACTUAL USPTO Costs - USA Single Country",
-      "success": true,
-      "details": "All costs show ACTUAL USPTO amounts (not currency conversion)",
-      "timestamp": "2025-12-26T17:30:19.812126"
-    },
-    {
-      "test": "ACTUAL IP India Costs - Timeout",
+      "test": "Legal Precedents USA - Timeout",
       "success": false,
       "details": "Request timed out after 180 seconds",
-      "timestamp": "2025-12-26T17:33:19.967401"
+      "timestamp": "2025-12-26T18:05:50.366239"
     },
     {
-      "test": "Currency Test - Multiple Countries",
-      "success": true,
-      "details": "All costs correctly in USD ($) for multi-country",
-      "timestamp": "2025-12-26T17:35:20.455254"
+      "test": "Legal Precedents India - Timeout",
+      "success": false,
+      "details": "Request timed out after 180 seconds",
+      "timestamp": "2025-12-26T18:08:50.550012"
     }
   ],
-  "timestamp": "2025-12-26T17:35:20.455409"
+  "timestamp": "2025-12-26T18:08:50.550171"
 }
