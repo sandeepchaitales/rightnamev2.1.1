@@ -11,6 +11,10 @@ import {
     Rocket, MessageSquare, Scale, Building2, Hash, AtSign,
     CheckCircle, XOctagon, HelpCircle, Map, Briefcase, UserCheck, AlertCircle
 } from "lucide-react";
+import { 
+    RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
+    ResponsiveContainer, Tooltip 
+} from 'recharts';
 
 // RIGHTNAME Logo URL
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_38043537-e3af-491b-9b60-3b8b2372877a/artifacts/9yz5wf80_rightname.ai%20logo%20%281%29.png";
