@@ -72,22 +72,15 @@ const COUNTRY_FLAGS = {
     'EU': '🇪🇺', 'Europe': '🇪🇺'
 };
 
-// Get flag for a country (handles both string and object formats)
-const getCountryFlag = (country) => {
-    // Handle if country is an object with 'name' property
-    const countryName = typeof country === 'object' ? country?.name : country;
-    return COUNTRY_FLAGS[countryName] || '🌍';
-};
-
 // Get country name (handles both string and object formats)
 const getCountryName = (country) => {
     return typeof country === 'object' ? country?.name : country;
 };
 
-// Format countries for display with flags
+// Format countries for display (names only, no flags)
 const formatCountriesWithFlags = (countries) => {
     if (!countries || countries.length === 0) return 'Not specified';
-    return countries.map(c => `${getCountryFlag(c)} ${getCountryName(c)}`).join(', ');
+    return countries.map(c => getCountryName(c)).join(', ');
 };
 
 // ============ PRINT-SAFE CARD WRAPPER ============
