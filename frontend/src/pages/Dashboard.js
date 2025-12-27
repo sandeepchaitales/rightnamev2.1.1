@@ -188,14 +188,9 @@ const CoverPage = ({ brandName, score, verdict, date, query, reportId }) => {
                             <tr>
                                 <td className="px-4 py-2 text-slate-500 font-medium">Target Countries</td>
                                 <td className="px-4 py-2 text-slate-900 font-semibold text-right">
-                                    <span className="flex items-center justify-end gap-2 flex-wrap">
-                                        {query?.countries?.map((country, idx) => (
-                                            <span key={idx} className="inline-flex items-center gap-1">
-                                                <CountryMapIcon country={country} className="w-4 h-3 text-slate-600" />
-                                                <span>{country}</span>
-                                            </span>
-                                        )) || 'Not specified'}
-                                    </span>
+                                    {query?.countries?.map((c, i) => (
+                                        <span key={i}>{getCountryFlag(c)} {c}{i < query.countries.length - 1 ? ', ' : ''}</span>
+                                    )) || 'Not specified'}
                                 </td>
                             </tr>
                         </tbody>
