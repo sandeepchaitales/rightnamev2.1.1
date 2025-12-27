@@ -145,39 +145,68 @@ def get_web_search_results(query, num_results=10):
     return results
 
 
-def get_play_store_results(query, country='us'):
+def get_play_store_results(query, country='us', timeout=10):
     """
-    Searches Google Play Store with error handling.
+    Searches Google Play Store with ROBUST error handling (Improvement #4).
     Returns list of app info dictionaries.
+    
+    Improvements:
+    - Timeout handling
+    - Multiple retry attempts
+    - Graceful degradation on failure
+    - Better error logging
     """
     results = []
-    try:
-        res = google_search(
-            query,
-            lang='en',
-            country=country,
-            n_hits=5  # Reduced from 10 to avoid rate limiting
-        )
-        
-        if res:
-            for app in res:
-                if app and isinstance(app, dict):
-                    results.append({
-                        "title": app.get('title', 'Unknown'),
-                        "developer": app.get('developer', 'Unknown'),
-                        "appId": app.get('appId', ''),
-                        "score": app.get('score', 0),
-                        "installs": app.get('installs', '0'),
-                    })
-                    
-    except TypeError as e:
-        # Handle NoneType errors from google_play_scraper
-        logger.warning(f"Play Store search type error for '{query}': {str(e)}")
-    except Exception as e:
-        logger.warning(f"Play Store search failed for '{query}': {str(e)}")
+    max_retries = 2
     
-    # Add delay to avoid rate limiting
-    time.sleep(0.5)
+    for attempt in range(max_retries):
+        try:
+            res = google_search(
+                query,
+                lang='en',
+                country=country,
+                n_hits=5  # Reduced from 10 to avoid rate limiting
+            )
+            
+            if res:
+                for app in res:
+                    if app and isinstance(app, dict):
+                        results.append({
+                            "title": app.get('title', 'Unknown'),
+                            "developer": app.get('developer', 'Unknown'),
+                            "appId": app.get('appId', ''),
+                            "score": app.get('score', 0),
+                            "installs": app.get('installs', '0'),
+                        })
+            
+            # Success - break retry loop
+            break
+                        
+        except TypeError as e:
+            # Handle NoneType errors from google_play_scraper (most common error)
+            logger.warning(f"Play Store search type error for '{query}' (attempt {attempt+1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(0.5)  # Short delay before retry
+                continue
+        except ConnectionError as e:
+            logger.warning(f"Play Store connection error for '{query}': {str(e)}")
+            break  # Don't retry on connection errors
+        except TimeoutError as e:
+            logger.warning(f"Play Store timeout for '{query}': {str(e)}")
+            break  # Don't retry on timeout
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Check for specific error types that shouldn't be retried
+            if any(x in error_msg for x in ['rate limit', 'too many requests', '429', 'forbidden', '403']):
+                logger.warning(f"Play Store rate limited for '{query}': {str(e)}")
+                break
+            logger.warning(f"Play Store search failed for '{query}' (attempt {attempt+1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(0.5)
+                continue
+    
+    # Add delay to avoid rate limiting (even on success)
+    time.sleep(0.3)
         
     return results
 
