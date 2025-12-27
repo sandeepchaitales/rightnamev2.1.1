@@ -361,18 +361,43 @@ def search_app_stores_comprehensive(brand_name: str, category: str = "", industr
             app_title_lower = app.get("title", "").lower()
             brand_lower = brand_name.lower()
             
-            # Check if app title contains brand name (case insensitive)
-            if brand_lower in app_title_lower:
+            # IMPROVED: Normalize both names for comparison
+            app_title_normalized = re.sub(r'[^a-z0-9]', '', app_title_lower)
+            brand_normalized = re.sub(r'[^a-z0-9]', '', brand_lower)
+            
+            # IMPROVED: Also dedupe repeated letters for comparison
+            app_title_dedupe = re.sub(r'(.)\1+', r'\1', app_title_normalized)
+            brand_dedupe = re.sub(r'(.)\1+', r'\1', brand_normalized)
+            
+            # Check multiple match conditions
+            is_exact_match = (
+                brand_lower in app_title_lower or 
+                brand_normalized in app_title_normalized or
+                brand_dedupe == app_title_dedupe or  # "ludostarr" matches "ludostar"
+                app_title_normalized in brand_normalized or
+                app_title_dedupe in brand_dedupe
+            )
+            
+            # Check phonetic similarity using normalized forms
+            is_phonetic_match = any(
+                re.sub(r'(.)\1+', r'\1', re.sub(r'[^a-z0-9]', '', v.lower())) in app_title_dedupe or
+                app_title_dedupe in re.sub(r'(.)\1+', r'\1', re.sub(r'[^a-z0-9]', '', v.lower()))
+                for v in phonetic_variants
+            )
+            
+            if is_exact_match:
                 app["match_type"] = "EXACT"
+                app["similarity_note"] = f"'{brand_name}' matches '{app.get('title')}'"
                 results["exact_matches"].append(app)
                 results["potential_conflicts"].append(app)
-            # Also check phonetic variants in title
-            elif any(v.lower() in app_title_lower for v in phonetic_variants):
-                matched_variant = next((v for v in phonetic_variants if v.lower() in app_title_lower), "")
+                logger.warning(f"🚨 CONFLICT DETECTED: '{brand_name}' matches app '{app.get('title')}' by {app.get('developer')}")
+            elif is_phonetic_match:
+                matched_variant = next((v for v in phonetic_variants if v.lower() in app_title_lower), brand_name)
                 app["match_type"] = "PHONETIC_EXACT"
                 app["phonetic_variant"] = matched_variant
                 results["phonetic_matches"].append(app)
                 results["potential_conflicts"].append(app)
+                logger.warning(f"🔊 PHONETIC CONFLICT: '{brand_name}' sounds like '{app.get('title')}'")
             else:
                 app["match_type"] = "PARTIAL"
                 results["category_competitors"].append(app)
