@@ -151,9 +151,7 @@ const CoverPage = ({ brandName, score, verdict, date, query, reportId }) => {
                 </div>
                 <div className="text-slate-500 space-y-2">
                     <p className="text-lg">
-                        {query?.category} • {query?.countries?.map((c, i) => (
-                            <span key={i}>{getCountryFlag(c)} {c}{i < query.countries.length - 1 ? ', ' : ''}</span>
-                        ))}
+                        {query?.category} • {formatCountriesWithFlags(query?.countries)}
                     </p>
                     <p className="flex items-center justify-center gap-2">
                         <Calendar className="w-4 h-4" />{date}
