@@ -676,6 +676,10 @@ FAMOUS_BRANDS = {
     "subway", "dominos", "pizza hut", "kfc", "taco bell", "chipotle", "panera",
     "nestle", "kraft", "general mills", "kelloggs", "pepsico", "mondelez",
     "swiggy", "zomato", "uber eats", "doordash", "grubhub", "deliveroo",
+    # Indian Food Delivery Apps
+    "box8", "box 8", "eatclub", "eat club", "eatsure", "eat sure", "faasos", "behrouz", "behrouz biryani",
+    "freshmenu", "fresh menu", "dunzo", "blinkit", "zepto", "bigbasket", "big basket", "jiomart", "instamart",
+    "grofers", "milkbasket", "licious", "meatigo", "freshtohome", "fresh to home",
     # Fashion & Luxury
     "nike", "adidas", "puma", "reebok", "under armour", "lululemon", "gap", "old navy",
     "zara", "h&m", "uniqlo", "forever 21", "asos", "shein", "louis vuitton", "gucci",
