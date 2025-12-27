@@ -655,6 +655,16 @@ FAMOUS_BRANDS = {
     "linkedin", "pinterest", "reddit", "discord", "zoom", "slack", "dropbox", "salesforce",
     "oracle", "sap", "adobe", "nvidia", "intel", "amd", "qualcomm", "cisco", "ibm", "hp",
     "dell", "lenovo", "samsung", "sony", "lg", "panasonic", "toshiba", "huawei", "xiaomi",
+    # Gaming Apps - POPULAR MOBILE GAMES
+    "ludo king", "ludoking", "candy crush", "candycrush", "clash of clans", "clashofclans",
+    "pubg", "pubg mobile", "free fire", "freefire", "garena free fire", "fortnite",
+    "minecraft", "roblox", "among us", "amongus", "subway surfers", "subwaysurfers",
+    "temple run", "templerun", "angry birds", "angrybirds", "fruit ninja", "fruitninja",
+    "pokemon go", "pokemongo", "clash royale", "clashroyale", "coin master", "coinmaster",
+    "8 ball pool", "8ballpool", "carrom pool", "carrompool", "teen patti", "teenpatti",
+    "dream11", "mpl", "winzo", "paytm first games", "games24x7", "rummy circle",
+    "call of duty mobile", "cod mobile", "asphalt", "real racing", "hill climb racing",
+    "wordle", "chess.com", "lichess", "bgmi", "battlegrounds mobile india",
     # Automotive
     "tesla", "ford", "gm", "chevrolet", "toyota", "honda", "bmw", "mercedes", "audi",
     "volkswagen", "porsche", "ferrari", "lamborghini", "bentley", "rolls royce", "jaguar",
@@ -662,29 +672,34 @@ FAMOUS_BRANDS = {
     "coca cola", "pepsi", "mcdonalds", "burger king", "wendys", "starbucks", "dunkin",
     "subway", "dominos", "pizza hut", "kfc", "taco bell", "chipotle", "panera",
     "nestle", "kraft", "general mills", "kelloggs", "pepsico", "mondelez",
+    "swiggy", "zomato", "uber eats", "doordash", "grubhub", "deliveroo",
     # Fashion & Luxury
     "nike", "adidas", "puma", "reebok", "under armour", "lululemon", "gap", "old navy",
     "zara", "h&m", "uniqlo", "forever 21", "asos", "shein", "louis vuitton", "gucci",
     "prada", "chanel", "hermes", "dior", "versace", "armani", "burberry", "coach",
     "michael kors", "ralph lauren", "tommy hilfiger", "calvin klein", "levis",
-    # Finance
+    "myntra", "ajio", "flipkart", "meesho", "nykaa",
+    # Finance & Fintech
     "visa", "mastercard", "american express", "paypal", "stripe", "square", "venmo",
     "chase", "bank of america", "wells fargo", "citibank", "goldman sachs", "morgan stanley",
+    "phonepe", "paytm", "google pay", "gpay", "razorpay", "cred", "groww", "zerodha", "upstox",
     # Beauty & Personal Care
     "loreal", "maybelline", "mac", "sephora", "ulta", "estee lauder", "clinique",
     "neutrogena", "dove", "pantene", "head shoulders", "gillette", "olay",
-    # Entertainment
+    # Entertainment & Streaming
     "disney", "warner bros", "universal", "paramount", "sony pictures", "mgm",
     "hbo", "showtime", "hulu", "paramount plus", "peacock", "espn", "cnn", "fox",
-    # Others
+    "hotstar", "jio cinema", "zee5", "sony liv", "voot", "alt balaji", "mx player",
+    # E-commerce & Delivery
     "fedex", "ups", "usps", "dhl", "amazon prime", "ebay", "etsy", "shopify",
-    "alibaba", "aliexpress", "wish", "wayfair", "overstock", "chewy", "petco", "petsmart"
+    "alibaba", "aliexpress", "wish", "wayfair", "overstock", "chewy", "petco", "petsmart",
+    "flipkart", "snapdeal", "bigbasket", "blinkit", "zepto", "instamart", "dunzo"
 }
 
 def check_famous_brand(brand_name: str) -> dict:
     """
     Check if brand name matches a famous brand (case-insensitive).
-    Returns dict with is_famous, matched_brand, and reason.
+    Uses multiple matching strategies: exact, normalized, and phonetic similarity.
     """
     normalized = brand_name.lower().strip()
     
@@ -696,16 +711,64 @@ def check_famous_brand(brand_name: str) -> dict:
             "reason": f"'{brand_name}' is an exact match of the famous brand '{normalized.title()}'. This name is legally protected and cannot be used."
         }
     
-    # Check without spaces/hyphens
-    normalized_no_space = normalized.replace(" ", "").replace("-", "").replace("_", "")
+    # Check without spaces/hyphens/underscores and with common letter substitutions
+    normalized_clean = normalized.replace(" ", "").replace("-", "").replace("_", "")
+    
+    # Remove doubled letters for comparison (e.g., "kingg" -> "king")
+    import re
+    normalized_dedupe = re.sub(r'(.)\1+', r'\1', normalized_clean)
+    
     for famous in FAMOUS_BRANDS:
-        famous_no_space = famous.replace(" ", "").replace("-", "")
-        if normalized_no_space == famous_no_space:
+        famous_clean = famous.replace(" ", "").replace("-", "")
+        famous_dedupe = re.sub(r'(.)\1+', r'\1', famous_clean)
+        
+        # Direct match after normalization
+        if normalized_clean == famous_clean:
             return {
                 "is_famous": True,
                 "matched_brand": famous.title(),
                 "reason": f"'{brand_name}' matches the famous brand '{famous.title()}'. This name is legally protected."
             }
+        
+        # Match after removing doubled letters (ludokingg -> ludoking)
+        if normalized_dedupe == famous_dedupe:
+            return {
+                "is_famous": True,
+                "matched_brand": famous.title(),
+                "reason": f"'{brand_name}' is a variation of the famous brand '{famous.title()}' (letter doubling detected). This name will cause trademark conflicts."
+            }
+        
+        # Check if input contains the famous brand name
+        if len(famous_clean) >= 5 and famous_clean in normalized_clean:
+            return {
+                "is_famous": True,
+                "matched_brand": famous.title(),
+                "reason": f"'{brand_name}' contains the famous brand '{famous.title()}'. This name will cause trademark conflicts."
+            }
+        
+        # Check if famous brand contains the input (for short distinctive names)
+        if len(normalized_clean) >= 5 and normalized_clean in famous_clean:
+            return {
+                "is_famous": True,
+                "matched_brand": famous.title(),
+                "reason": f"'{brand_name}' is contained within the famous brand '{famous.title()}'. This may cause trademark conflicts."
+            }
+    
+    # Phonetic similarity check using jellyfish
+    try:
+        import jellyfish
+        for famous in FAMOUS_BRANDS:
+            famous_clean = famous.replace(" ", "")
+            # Jaro-Winkler similarity (0-1, higher = more similar)
+            similarity = jellyfish.jaro_winkler_similarity(normalized_clean, famous_clean)
+            if similarity >= 0.90:  # 90% similar
+                return {
+                    "is_famous": True,
+                    "matched_brand": famous.title(),
+                    "reason": f"'{brand_name}' is phonetically very similar ({int(similarity*100)}%) to the famous brand '{famous.title()}'. This will cause trademark conflicts."
+                }
+    except ImportError:
+        pass
     
     return {"is_famous": False, "matched_brand": None, "reason": None}
 
