@@ -347,14 +347,12 @@ def search_app_stores_comprehensive(brand_name: str, category: str = "", industr
     phonetic_variants = generate_phonetic_variants(brand_name)
     logger.info(f"Phonetic variants for '{brand_name}': {phonetic_variants}")
     
-    # Strategy 1: Exact brand name search (primary country only to reduce API calls)
-    logger.info(f"App search Strategy 1: Exact brand name '{brand_name}'")
-    results["search_queries_used"].append(f"Exact: {brand_name}")
+    # Strategy 1: Exact brand name search (BOTH Play Store AND iOS App Store)
+    logger.info(f"App search Strategy 1: Exact brand name '{brand_name}' on BOTH stores")
+    results["search_queries_used"].append(f"Exact: {brand_name} (Play Store + iOS)")
     
-    # Search primary country first
-    exact_results = get_play_store_results(brand_name, country='us')
-    # Also try India if the brand might be India-specific
-    exact_results.extend(get_play_store_results(brand_name, country='in'))
+    # Search BOTH app stores
+    exact_results = search_both_app_stores(brand_name, countries=['us', 'in'])
     
     for app in exact_results:
         app_id = app.get("appId", "")
