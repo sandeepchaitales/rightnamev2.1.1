@@ -967,7 +967,7 @@ const LandingPage = () => {
             <div className="absolute top-4 left-4 text-6xl opacity-20">✨</div>
             <div className="absolute bottom-4 right-4 text-6xl opacity-20">🚀</div>
             <h2 className="text-3xl lg:text-4xl font-black mb-4">Ready to find your perfect name?</h2>
-            <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">Join thousands of founders who've validated their brand names with RIGHTNAME.</p>
+            <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">Join thousands of founders who have validated their brand names with RIGHTNAME.</p>
             <Button 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="bg-white text-violet-700 hover:bg-slate-100 font-black text-lg px-8 py-6 rounded-xl shadow-xl hover:scale-105 transition-transform"
