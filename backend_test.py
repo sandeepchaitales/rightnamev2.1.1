@@ -2781,6 +2781,15 @@ class BrandEvaluationTester:
         self.test_new_form_fields()                   # Improvements #2 & #3
         self.test_play_store_error_handling()         # Improvement #4
         
+        # NEW: LLM-First Brand Conflict Detection Tests
+        print("\n🤖 LLM-FIRST BRAND CONFLICT DETECTION TESTS")
+        print("=" * 80)
+        self.test_llm_brand_detection_andhrajyoothi()  # Test Case 1: AndhraJyoothi vs Andhra Jyothi
+        self.test_llm_brand_detection_bumbell()        # Test Case 2: BUMBELL vs Bumble
+        self.test_llm_brand_detection_unique_name()    # Test Case 3: Zyntrix2025 (unique)
+        self.test_llm_brand_detection_moneycontrols()  # Test Case 4: MoneyControls vs Moneycontrol
+        self.test_llm_backend_logs_verification()      # Verify LLM logs
+        
         # Print summary
         print(f"\n📊 Test Summary:")
         print(f"Tests Run: {self.tests_run}")
