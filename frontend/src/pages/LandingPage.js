@@ -320,6 +320,13 @@ const LandingPage = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>RIGHTNAME | AI-Powered Brand Name Evaluation & Trademark Check</title>
+        <meta name="description" content="Evaluate brand names instantly with AI. Check trademark conflicts, domain availability, social handles & get a consulting-grade NameScore report in 60 seconds. First report FREE!" />
+        <link rel="canonical" href="https://rightname.ai" />
+      </Helmet>
+      
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 font-sans selection:bg-violet-200 overflow-x-hidden">
       {/* Add floating animation keyframes */}
       <style>{`
