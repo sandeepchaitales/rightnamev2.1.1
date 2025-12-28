@@ -718,178 +718,97 @@ FAMOUS_BRANDS = {
 
 async def dynamic_brand_search(brand_name: str, category: str = "") -> dict:
     """
-    DYNAMIC BRAND SEARCH - Two-pronged approach:
+    LLM-FIRST BRAND CONFLICT DETECTION
     
-    1. Check against category-specific competitors (for known categories)
-    2. Web search to discover if this brand/similar brand already exists
+    Use GPT-4o's knowledge to detect brand conflicts - NO STATIC LISTS!
+    The LLM knows millions of brands, let it do the work.
     """
     import re
-    import urllib.parse
     
-    logging.info(f"🔍 DYNAMIC SEARCH: '{brand_name}' in category '{category}'")
+    logging.info(f"🔍 LLM BRAND CHECK: '{brand_name}' in category '{category}'")
     
     result = {
         "exists": False,
         "confidence": "LOW",
         "matched_brand": None,
         "evidence": [],
-        "competitors_found": [],
         "reason": ""
     }
     
-    # Normalize brand name
-    brand_lower = brand_name.lower().strip()
-    brand_normalized = re.sub(r'[^a-z0-9]', '', brand_lower)
-    brand_dedupe = re.sub(r'(.)\1+', r'\1', brand_normalized)
-    
-    # Category-specific known competitors
-    CATEGORY_COMPETITORS = {
-        'dating': ['tinder', 'bumble', 'hinge', 'okcupid', 'match', 'badoo', 'happn', 'grindr', 'shaadi', 'bharatmatrimony', 'aisle', 'trulymadly'],
-        'food': ['swiggy', 'zomato', 'ubereats', 'doordash', 'grubhub', 'deliveroo', 'dunzo', 'blinkit', 'zepto', 'bigbasket', 'grofers'],
-        'finance': ['paytm', 'phonepe', 'googlepay', 'razorpay', 'cred', 'groww', 'zerodha', 'mobikwik', 'freecharge', 'bhim', 'moneycontrol', 'etmoney'],
-        'streaming': ['netflix', 'prime', 'hulu', 'disney', 'hbo', 'hotstar', 'zee5', 'sonyliv', 'voot', 'mxplayer', 'jiocinema'],
-        'travel': ['makemytrip', 'goibibo', 'booking', 'airbnb', 'trivago', 'expedia', 'kayak', 'skyscanner', 'yatra', 'cleartrip'],
-        'ecommerce': ['amazon', 'flipkart', 'myntra', 'ajio', 'nykaa', 'meesho', 'snapdeal', 'shopclues', 'firstcry', 'lenskart'],
-        'social': ['facebook', 'instagram', 'twitter', 'snapchat', 'tiktok', 'linkedin', 'pinterest', 'reddit', 'sharechat', 'moj', 'josh'],
-        'gaming': ['pubg', 'freefire', 'codmobile', 'ludoking', 'candycrush', 'clashofclans', 'minecraft', 'roblox', 'bgmi', 'valorant'],
-        'health': ['practo', 'netmeds', 'pharmeasy', 'apollo', 'medlife', 'healthify', 'cultfit', 'curefit', 'tata1mg', 'lybrate'],
-        'education': ['byjus', 'unacademy', 'vedantu', 'toppr', 'coursera', 'udemy', 'skillshare', 'whitehat', 'physics wallah', 'extramarks'],
-        'news': ['andhrajyothi', 'eenadu', 'sakshi', 'thehindu', 'timesofindia', 'hindustan', 'dainikbhaskar', 'dainikjagran', 'ndtv', 'zeenews', 'aajtak', 'indiatoday'],
-        'newspaper': ['andhrajyothi', 'eenadu', 'sakshi', 'thehindu', 'timesofindia', 'hindustan', 'dainikbhaskar', 'dainikjagran', 'lokmat', 'malayalamanorama', 'mathrubhumi'],
-        'media': ['andhrajyothi', 'eenadu', 'sakshi', 'thehindu', 'timesofindia', 'ndtv', 'zeenews', 'aajtak', 'tv9', 'abpnews', 'news18'],
-        'cab': ['uber', 'ola', 'rapido', 'lyft', 'grab', 'didi', 'blablacar', 'meru', 'jugnoo'],
-        'grocery': ['bigbasket', 'grofers', 'blinkit', 'zepto', 'dunzo', 'jiomart', 'amazon fresh', 'swiggy instamart', 'milkbasket'],
-    }
-    
-    def check_similarity(name1, name2):
-        """Check phonetic similarity"""
-        try:
-            import jellyfish
-            n1 = re.sub(r'[^a-z0-9]', '', name1.lower())
-            n2 = re.sub(r'[^a-z0-9]', '', name2.lower())
-            
-            if len(n1) < 3 or len(n2) < 3 or n1 == n2:
-                return False, 0, ""
-            
-            # Dedupe match (andhrajyoothi → andhrajyothi)
-            n1_dedupe = re.sub(r'(.)\1+', r'\1', n1)
-            n2_dedupe = re.sub(r'(.)\1+', r'\1', n2)
-            if n1_dedupe == n2_dedupe:
-                return True, 0.95, "DEDUPE"
-            
-            # Jaro-Winkler
-            jw = jellyfish.jaro_winkler_similarity(n1, n2)
-            if jw >= 0.85:
-                return True, jw, "JARO_WINKLER"
-            
-            # Soundex & Metaphone
-            if len(n1) >= 4 and len(n2) >= 4:
-                if jellyfish.soundex(n1) == jellyfish.soundex(n2):
-                    return True, 0.88, "SOUNDEX"
-                if jellyfish.metaphone(n1) == jellyfish.metaphone(n2):
-                    return True, 0.86, "METAPHONE"
-            
-            return False, jw, ""
-        except:
-            return False, 0, ""
-    
-    conflicts = []
-    
-    # ========== STEP 1: Check against category competitors ==========
-    category_lower = category.lower() if category else ""
-    competitors_to_check = set()
-    
-    for cat_key, competitors in CATEGORY_COMPETITORS.items():
-        if cat_key in category_lower:
-            competitors_to_check.update(competitors)
-            logging.info(f"  Category '{cat_key}': {len(competitors)} competitors")
-    
-    # If no category match, check ALL competitors
-    if not competitors_to_check:
-        logging.info(f"  No category match, checking ALL {sum(len(v) for v in CATEGORY_COMPETITORS.values())} competitors")
-        for competitors in CATEGORY_COMPETITORS.values():
-            competitors_to_check.update(competitors)
-    
-    result["competitors_found"] = list(competitors_to_check)
-    
-    for competitor in competitors_to_check:
-        is_similar, similarity, match_type = check_similarity(brand_name, competitor)
-        if is_similar and similarity >= 0.85:
-            conflicts.append({
-                "competitor": competitor,
-                "similarity": similarity,
-                "match_type": match_type,
-                "source": "category_list"
-            })
-            logging.warning(f"    🚨 CATEGORY CONFLICT: '{brand_name}' ~ '{competitor}' ({similarity:.0%} {match_type})")
-    
-    # ========== STEP 2: Web search to discover if brand exists ==========
+    # Use LLM to check for brand conflicts
     try:
-        from primp import Client
-        client = Client(impersonate="chrome_131", follow_redirects=True, timeout=10)
+        if not LlmChat or not EMERGENT_KEY:
+            logging.warning("LLM not available, skipping brand check")
+            return result
         
-        # Search 1: Check if this exact brand exists
-        # Use dedupe version to find the "correct" spelling
-        query1 = f'"{brand_dedupe}" company OR brand OR app'
-        logging.info(f"  Web search: '{query1}'")
+        llm = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")  # Use mini for speed/cost
         
-        url1 = f"https://www.bing.com/search?q={urllib.parse.quote(query1)}"
-        response1 = client.get(url1)
+        prompt = f"""You are a trademark and brand expert. Analyze this brand name for conflicts.
+
+BRAND NAME: {brand_name}
+CATEGORY: {category or 'General'}
+TARGET MARKET: India, USA, Global
+
+TASK: Is this brand name identical or confusingly similar to ANY existing brand, company, app, product, or trademark?
+
+Consider:
+1. Exact matches (same name)
+2. Phonetic similarity (sounds the same)
+3. Spelling variations (extra letters, typos)
+4. Regional brands (Indian newspapers, local apps, etc.)
+5. Global brands (tech companies, apps, etc.)
+
+RESPOND IN THIS EXACT JSON FORMAT:
+{{
+    "has_conflict": true or false,
+    "confidence": "HIGH" or "MEDIUM" or "LOW",
+    "conflicting_brand": "Name of existing brand" or null,
+    "similarity_percentage": 0-100,
+    "reason": "Brief explanation",
+    "brand_info": "What is the conflicting brand (1 sentence)"
+}}
+
+Examples:
+- "AndhraJyoothi" in "News" → {{"has_conflict": true, "confidence": "HIGH", "conflicting_brand": "Andhra Jyothi", "similarity_percentage": 98, "reason": "Phonetically identical to famous Telugu newspaper", "brand_info": "Andhra Jyothi is a major Telugu daily newspaper in India"}}
+- "BUMBELL" in "Dating" → {{"has_conflict": true, "confidence": "HIGH", "conflicting_brand": "Bumble", "similarity_percentage": 94, "reason": "Phonetically similar to Bumble dating app", "brand_info": "Bumble is a popular dating app"}}
+- "UniqueXYZ123" in "Finance" → {{"has_conflict": false, "confidence": "HIGH", "conflicting_brand": null, "similarity_percentage": 0, "reason": "No known brand with this name", "brand_info": null}}
+
+NOW ANALYZE: "{brand_name}" in "{category or 'General'}"
+Return ONLY the JSON, no other text."""
+
+        response = llm.generate_response(prompt)
         
-        if response1.status_code == 200:
-            # Extract domains that might be the brand
-            domains = re.findall(r'https?://(?:www\.)?([a-z0-9]+)\.(?:com|in|co|app|io)', response1.text.lower())
+        # Parse LLM response
+        import json
+        try:
+            # Clean response (remove markdown if present)
+            clean_response = response.strip()
+            if clean_response.startswith("```"):
+                clean_response = re.sub(r'^```json?\n?', '', clean_response)
+                clean_response = re.sub(r'\n?```$', '', clean_response)
             
-            for domain in set(domains):
-                if domain in ['bing', 'microsoft', 'google', 'facebook', 'amazon', 'wikipedia', 'linkedin']:
-                    continue
+            llm_result = json.loads(clean_response)
+            
+            if llm_result.get("has_conflict") and llm_result.get("confidence") in ["HIGH", "MEDIUM"]:
+                result["exists"] = True
+                result["confidence"] = llm_result.get("confidence", "MEDIUM")
+                result["matched_brand"] = llm_result.get("conflicting_brand", "Unknown")
+                result["evidence"] = [
+                    f"Similarity: {llm_result.get('similarity_percentage', 0)}%",
+                    llm_result.get("brand_info", "")
+                ]
+                result["reason"] = llm_result.get("reason", "Conflict detected by AI analysis")
                 
-                is_similar, similarity, match_type = check_similarity(brand_name, domain)
-                if is_similar and similarity >= 0.88:
-                    conflicts.append({
-                        "competitor": domain,
-                        "similarity": similarity,
-                        "match_type": match_type,
-                        "source": "web_search"
-                    })
-                    logging.warning(f"    🚨 WEB CONFLICT: '{brand_name}' ~ '{domain}' ({similarity:.0%})")
-        
-        # Search 2: Search for category to find competitors
-        if category:
-            query2 = f"top {category} India 2024"
-            logging.info(f"  Category search: '{query2}'")
-            url2 = f"https://www.bing.com/search?q={urllib.parse.quote(query2)}"
-            response2 = client.get(url2)
-            
-            if response2.status_code == 200:
-                domains2 = re.findall(r'https?://(?:www\.)?([a-z0-9]+)\.(?:com|in|co)', response2.text.lower())
-                for domain in set(domains2):
-                    if domain in ['bing', 'microsoft', 'google', 'facebook', 'wikipedia']:
-                        continue
-                    is_similar, similarity, match_type = check_similarity(brand_name, domain)
-                    if is_similar and similarity >= 0.88:
-                        conflicts.append({
-                            "competitor": domain,
-                            "similarity": similarity,
-                            "match_type": match_type,
-                            "source": "category_search"
-                        })
-                        logging.warning(f"    🚨 CATEGORY SEARCH CONFLICT: '{brand_name}' ~ '{domain}' ({similarity:.0%})")
+                logging.warning(f"🚨 LLM DETECTED CONFLICT: '{brand_name}' ~ '{result['matched_brand']}' ({llm_result.get('similarity_percentage')}%)")
+            else:
+                logging.info(f"✅ LLM: '{brand_name}' appears unique")
+                
+        except json.JSONDecodeError as e:
+            logging.warning(f"Failed to parse LLM response: {e}")
+            logging.warning(f"Response was: {response[:200]}")
     
     except Exception as e:
-        logging.warning(f"  Web search failed: {e}")
-    
-    # ========== Determine result ==========
-    if conflicts:
-        best_match = max(conflicts, key=lambda x: x["similarity"])
-        result["exists"] = True
-        result["confidence"] = "HIGH" if best_match["similarity"] >= 0.90 else "MEDIUM"
-        result["matched_brand"] = best_match["competitor"].title()
-        result["evidence"] = [f"{c['competitor']} ({c['similarity']:.0%} via {c['source']})" for c in conflicts[:5]]
-        result["reason"] = f"'{brand_name}' is {best_match['similarity']:.0%} similar to '{best_match['competitor'].title()}'."
-        logging.warning(f"🚨 RESULT: '{brand_name}' conflicts with '{best_match['competitor']}' ({best_match['similarity']:.0%})")
-    else:
-        logging.info(f"✅ '{brand_name}' appears unique (checked {len(competitors_to_check)} competitors + web search)")
+        logging.error(f"LLM brand check failed: {e}")
     
     return result
 
