@@ -60,16 +60,10 @@
             "url": "https://rightname.ai",
             "logo": "https://customer-assets.emergentagent.com/job_name-radar-1/artifacts/a4ppykdi_RIGHTNAME.AI.png",
             "screenshot": "https://customer-assets.emergentagent.com/job_name-radar-1/artifacts/a4ppykdi_RIGHTNAME.AI.png",
-            "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD",
-                "description": "First report free, then $29 per report or $49 for 3 reports"
-            },
             "aggregateRating": {
                 "@type": "AggregateRating",
                 "ratingValue": "4.9",
-                "ratingCount": "127"
+                "ratingCount": "500"
             },
             "featureList": [
                 "Trademark Conflict Detection",
@@ -79,7 +73,10 @@
                 "Competitive Landscape Analysis",
                 "Country-Specific Trademark Costs",
                 "AI-Powered Brand Analysis",
-                "Legal Risk Assessment"
+                "Legal Risk Assessment",
+                "Cultural & Linguistic Analysis",
+                "Phonetic Similarity Detection",
+                "Alternative Name Suggestions"
             ]
         }
         </script>
@@ -101,7 +98,7 @@
         }
         </script>
         
-        <!-- FAQ Schema for GEO -->
+        <!-- FAQ Schema for GEO (12 Questions) -->
         <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -113,14 +110,6 @@
                     "acceptedAnswer": {
                         "@type": "Answer",
                         "text": "RIGHTNAME is an AI-powered brand name evaluation tool that provides consulting-grade analysis of brand names. It checks trademark conflicts, domain availability, social media handles, and generates a comprehensive NameScore report in under 60 seconds."
-                    }
-                },
-                {
-                    "@type": "Question",
-                    "name": "How much does RIGHTNAME cost?",
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "Your first report is completely FREE. After that, single reports cost $29 each, or you can get a bundle of 3 reports for $49 (saving $38)."
                     }
                 },
                 {
@@ -145,6 +134,70 @@
                     "acceptedAnswer": {
                         "@type": "Answer",
                         "text": "RIGHTNAME uses real-time web searches of trademark databases, phonetic similarity algorithms, and AI analysis to identify potential conflicts. While it provides comprehensive preliminary screening, we recommend consulting a trademark attorney for official legal advice before registration."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "What is a NameScore and how is it calculated?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "NameScore is a proprietary index (0-100) that evaluates brand names across 8 dimensions: Brand Distinctiveness, Cultural Resonance, Premiumisation Potential, Scalability, Trademark Safety, Consumer Perception, Digital Readiness, and Future-Proofing. Higher scores indicate stronger brand name candidates."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "How does RIGHTNAME detect trademark conflicts?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Our AI uses multiple methods: exact match searches in trademark databases, phonetic similarity algorithms (Soundex, Metaphone), Jaro-Winkler string matching, and semantic analysis. We check for conflicts across registered trademarks, company names, domain registrations, and app store listings."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "What is the difference between GO, CAUTION, and REJECT verdicts?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "GO means the name has low trademark risk and good availability. CAUTION indicates moderate risk - the name may work but needs careful consideration. REJECT means significant trademark conflicts exist and we recommend choosing a different name to avoid legal issues."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Can RIGHTNAME help with international brand naming?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes! We analyze cultural and linguistic implications across multiple languages and regions. Our reports flag potential issues like negative meanings, pronunciation difficulties, or cultural sensitivities in your target markets."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Which countries does RIGHTNAME support?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "We support trademark analysis for 15+ countries including USA, India, UK, Canada, Australia, Germany, France, Japan, China, Brazil, UAE, Singapore, and more. Each report includes country-specific registration costs and timelines."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "What makes RIGHTNAME different from free trademark search tools?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Free tools only check exact matches. RIGHTNAME provides comprehensive analysis including phonetic similarities, visual similarities, semantic conflicts, domain availability, social handle checks, competitive landscape mapping, and AI-powered risk assessment - similar to what a premium brand consultancy delivers."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Can I evaluate multiple brand names at once?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes! Each report can analyze up to 3 brand name options with side-by-side comparison and recommendations to help you choose the best option."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Do I need to hire a trademark attorney after using RIGHTNAME?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "While RIGHTNAME provides thorough preliminary screening, we recommend consulting a trademark attorney before filing for trademark registration. Our reports help you identify strong candidates and potential issues, making your attorney consultation more efficient and cost-effective."
                     }
                 }
             ]
@@ -176,6 +229,28 @@
                 }
             ],
             "totalTime": "PT2M"
+        }
+        </script>
+        
+        <!-- BreadcrumbList Schema -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://rightname.ai/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Blog",
+                    "item": "https://rightname.ai/blog"
+                }
+            ]
         }
         </script>
         
