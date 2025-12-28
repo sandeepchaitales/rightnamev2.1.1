@@ -2538,7 +2538,7 @@ class BrandEvaluationTester:
             "category": "Finance App",
             "industry": "Fintech",
             "product_type": "Digital",
-            "positioning": "Mass Market",
+            "positioning": "Mass",
             "market_scope": "Single Country",
             "countries": ["India"]
         }
