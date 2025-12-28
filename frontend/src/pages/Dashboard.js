@@ -1791,8 +1791,20 @@ const Dashboard = () => {
                                 : query.market_scope)}
                     </Badge>
                     {isAuthenticated ? (
-                        <Button onClick={() => window.print()} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
-                            <Printer className="h-4 w-4" /> Export PDF
+                        <Button 
+                            onClick={handleDownloadPDF} 
+                            disabled={downloading}
+                            className="gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+                        >
+                            {downloading ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" /> Generating PDF...
+                                </>
+                            ) : (
+                                <>
+                                    <Download className="h-4 w-4" /> Download PDF
+                                </>
+                            )}
                         </Button>
                     ) : (
                         <Button onClick={handleRegister} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
@@ -1809,7 +1821,7 @@ const Dashboard = () => {
             </div>
 
             {/* Main Content */}
-            <main className="max-w-5xl mx-auto px-6 py-8 space-y-8 print:px-2 print:py-2 print:space-y-4">
+            <main ref={reportRef} className="max-w-5xl mx-auto px-6 py-8 space-y-8 print:px-2 print:py-2 print:space-y-4">
                 
                 {/* CTA Banner */}
                 {!isAuthenticated && (
