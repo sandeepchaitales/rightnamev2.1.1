@@ -850,6 +850,7 @@ IMPORTANT:
 - When in doubt, FLAG AS CONFLICT - it's safer to reject
 - If "{brand_name}" sounds like it could be an existing cafe/restaurant/business - CHECK CAREFULLY
 - "Chai Duniya" IS an existing chai cafe chain - if this exact name or similar is asked, REJECT IT
+- "Red Bucket Biryani" IS an existing biryani chain - if this exact name or similar is asked, REJECT IT
 
 RESPOND IN THIS EXACT JSON FORMAT:
 {{
@@ -863,6 +864,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
 }}
 
 Examples (BE STRICT LIKE THESE):
+- "Red Bucket Biryani" in "Restaurant" → {{"has_conflict": true, "confidence": "HIGH", "conflicting_brand": "Red Bucket Biryani", "similarity_percentage": 100, "reason": "Red Bucket Biryani is an existing biryani restaurant chain in India", "brand_info": "Red Bucket Biryani is a biryani delivery/restaurant chain in India", "brand_already_exists": true}}
 - "Chai Duniya" in "Cafe" → {{"has_conflict": true, "confidence": "HIGH", "conflicting_brand": "Chai Duniya", "similarity_percentage": 100, "reason": "Chai Duniya is an existing chai cafe chain in India", "brand_info": "Chai Duniya is a chai cafe brand operating in India", "brand_already_exists": true}}
 - "Chaibunk" in "Cafe" → {{"has_conflict": true, "confidence": "HIGH", "conflicting_brand": "Chai Bunk", "similarity_percentage": 100, "reason": "Chai Bunk is an existing chai cafe chain in India with 100+ stores", "brand_info": "Chai Bunk is a popular Indian chai cafe chain", "brand_already_exists": true}}
 - "Chaayos" in "Cafe" → {{"has_conflict": true, "confidence": "HIGH", "conflicting_brand": "Chaayos", "similarity_percentage": 100, "reason": "Chaayos is a major chai cafe chain in India", "brand_info": "Chaayos is one of India's largest chai cafe chains", "brand_already_exists": true}}
