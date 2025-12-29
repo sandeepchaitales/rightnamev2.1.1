@@ -806,7 +806,7 @@ async def dynamic_brand_search(brand_name: str, category: str = "") -> dict:
             logging.warning("LLM not available, skipping brand check")
             return result
         
-        llm = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")  # Use mini for speed/cost
+        llm = LlmChat(EMERGENT_KEY, "openai", "gpt-5.2")  # Latest model for better brand recognition
         
         prompt = f"""You are a trademark and brand expert with STRICT conflict detection. Analyze this brand name for conflicts.
 
