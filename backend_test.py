@@ -3563,9 +3563,10 @@ class BrandEvaluationTester:
                     self.log_test("Enhanced Detection - Nexovix Score", False, f"Expected high score (>80), got {namescore} (unique name should score well)")
                     return False
                 
-                # Test 4: Check summary doesn't mention conflicts
+                # Test 4: Check summary doesn't mention conflicts (but allow "free from conflicts")
                 summary = brand.get("summary", "").lower()
-                if any(keyword in summary for keyword in ["existing brand", "trademark conflict", "already exists"]):
+                bad_conflict_keywords = ["existing brand", "trademark conflict", "already exists", "brand conflict"]
+                if any(keyword in summary for keyword in bad_conflict_keywords):
                     self.log_test("Enhanced Detection - Nexovix No Conflicts", False, f"Summary should not mention conflicts for unique name: {summary[:100]}")
                     return False
                 
