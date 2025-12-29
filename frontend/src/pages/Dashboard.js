@@ -19,7 +19,7 @@ import {
 import html2pdf from 'html2pdf.js';
 
 // RIGHTNAME Logo URL
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_name-radar-1/artifacts/a4ppykdi_RIGHTNAME.AI.png";
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_name-radar-1/artifacts/qrfrrizq_R.png";
 
 // Get country name (handles both string and object formats)
 const getCountryName = (country) => {
