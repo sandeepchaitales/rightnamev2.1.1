@@ -5,7 +5,7 @@ import time
 
 def test_quicktest_api():
     """Simple test for QuickTest API"""
-    url = "https://name-radar-1.preview.emergentagent.com/api/evaluate"
+    url = "https://brand-guard.preview.emergentagent.com/api/evaluate"
     
     payload = {
         "brand_names": ["QuickTest"],

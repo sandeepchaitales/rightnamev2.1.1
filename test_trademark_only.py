@@ -8,7 +8,7 @@ import sys
 
 def test_trademark_research():
     """Test the trademark research feature with Luminara"""
-    base_url = "https://name-radar-1.preview.emergentagent.com"
+    base_url = "https://brand-guard.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Test Case 1: Luminara (Fashion/Streetwear/India)
@@ -121,7 +121,7 @@ def test_trademark_research():
 
 def test_nexofy():
     """Test with unique brand name"""
-    base_url = "https://name-radar-1.preview.emergentagent.com"
+    base_url = "https://brand-guard.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Test Case 2: Nexofy (unique name)
