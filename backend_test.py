@@ -3238,7 +3238,7 @@ class BrandEvaluationTester:
             "category": "Cafe",
             "industry": "Food and Beverage", 
             "product_type": "Chai and Snacks",
-            "positioning": "Affordable chai for everyone",
+            "positioning": "Budget",
             "market_scope": "Single Country",
             "countries": ["India"]
         }
