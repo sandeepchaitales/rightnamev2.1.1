@@ -3615,6 +3615,179 @@ class BrandEvaluationTester:
         
         return self.print_summary()
 
+    def test_zyphlora_comprehensive_evaluation(self):
+        """Test comprehensive brand evaluation for Zyphlora with all required sections"""
+        payload = {
+            "brand_names": ["Zyphlora"],
+            "category": "software",
+            "industry": "Technology",
+            "product_type": "SaaS",
+            "positioning": "Premium",
+            "market_scope": "Global",
+            "countries": ["USA"]
+        }
+        
+        try:
+            print(f"\n🔍 Testing ZYPHLORA Comprehensive Evaluation...")
+            print(f"Payload: {json.dumps(payload, indent=2)}")
+            print(f"Expected: GO or CONDITIONAL GO verdict with NameScore > 70 and all required sections")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=300  # Extended timeout for comprehensive evaluation
+            )
+            response_time = time.time() - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:500]}"
+                self.log_test("Zyphlora Comprehensive - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                print(f"✅ Response received successfully, checking comprehensive structure...")
+                
+                # Test 1: Check basic response structure
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Zyphlora Comprehensive - Brand Scores Missing", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # Test 2: Check brand name matches
+                if brand.get("brand_name") != "Zyphlora":
+                    self.log_test("Zyphlora Comprehensive - Brand Name", False, f"Expected 'Zyphlora', got '{brand.get('brand_name')}'")
+                    return False
+                
+                # Test 3: Check verdict (should be GO or CONDITIONAL GO for unique brand)
+                verdict = brand.get("verdict", "")
+                expected_verdicts = ["GO", "CONDITIONAL GO", "APPROVE"]  # Accept these as positive verdicts
+                if verdict not in expected_verdicts:
+                    self.log_test("Zyphlora Comprehensive - Verdict", False, f"Expected GO/CONDITIONAL GO for unique brand, got '{verdict}'")
+                    return False
+                
+                # Test 4: Check NameScore (should be > 70 for unique brand)
+                namescore = brand.get("namescore")
+                if not isinstance(namescore, (int, float)):
+                    self.log_test("Zyphlora Comprehensive - NameScore Type", False, f"NameScore should be numeric, got {type(namescore)}")
+                    return False
+                
+                if namescore <= 70:
+                    self.log_test("Zyphlora Comprehensive - NameScore Range", False, f"Expected NameScore > 70 for unique brand, got {namescore}")
+                    return False
+                
+                # Test 5: Check dimensions array (MUST have 6+ dimensions)
+                if "dimensions" not in brand:
+                    self.log_test("Zyphlora Comprehensive - Dimensions Missing", False, "dimensions field missing from brand_scores[0]")
+                    return False
+                
+                dimensions = brand["dimensions"]
+                if not isinstance(dimensions, list) or len(dimensions) < 6:
+                    self.log_test("Zyphlora Comprehensive - Dimensions Count", False, f"Expected 6+ dimensions, got {len(dimensions) if isinstance(dimensions, list) else 'not a list'}")
+                    return False
+                
+                # Test 6: Check each dimension has required fields (name, score, reasoning)
+                dimension_issues = []
+                for i, dim in enumerate(dimensions):
+                    if not isinstance(dim, dict):
+                        dimension_issues.append(f"Dimension {i} is not an object")
+                        continue
+                    
+                    if "name" not in dim or not dim["name"]:
+                        dimension_issues.append(f"Dimension {i} missing 'name' field")
+                    
+                    if "score" not in dim:
+                        dimension_issues.append(f"Dimension {i} missing 'score' field")
+                    elif not isinstance(dim["score"], (int, float)) or not (0 <= dim["score"] <= 10):
+                        dimension_issues.append(f"Dimension {i} score should be 0-10, got {dim['score']}")
+                    
+                    if "reasoning" not in dim or not dim["reasoning"]:
+                        dimension_issues.append(f"Dimension {i} missing 'reasoning' field")
+                    elif len(dim["reasoning"]) < 10:
+                        dimension_issues.append(f"Dimension {i} reasoning too short: {len(dim['reasoning'])} chars")
+                
+                if dimension_issues:
+                    self.log_test("Zyphlora Comprehensive - Dimensions Structure", False, "; ".join(dimension_issues[:3]))  # Show first 3 issues
+                    return False
+                
+                # Test 7: Check trademark_research section exists
+                if "trademark_research" not in brand:
+                    self.log_test("Zyphlora Comprehensive - Trademark Research Missing", False, "trademark_research field missing from brand_scores[0]")
+                    return False
+                
+                tm_research = brand["trademark_research"]
+                if not tm_research:
+                    self.log_test("Zyphlora Comprehensive - Trademark Research Empty", False, "trademark_research is null/empty")
+                    return False
+                
+                # Check trademark research has key fields
+                tm_required = ["overall_risk_score", "trademark_conflicts", "company_conflicts"]
+                tm_missing = [field for field in tm_required if field not in tm_research]
+                if tm_missing:
+                    self.log_test("Zyphlora Comprehensive - Trademark Research Fields", False, f"Missing trademark research fields: {tm_missing}")
+                    return False
+                
+                # Test 8: Check competitor_analysis section exists
+                competitor_analysis_found = False
+                competitor_fields = ["competitor_analysis", "competitive_analysis", "competitive_landscape"]
+                for field in competitor_fields:
+                    if field in brand and brand[field]:
+                        competitor_analysis_found = True
+                        break
+                
+                if not competitor_analysis_found:
+                    self.log_test("Zyphlora Comprehensive - Competitor Analysis Missing", False, f"No competitor analysis found. Checked fields: {competitor_fields}")
+                    return False
+                
+                # Test 9: Check domain_analysis section exists
+                if "domain_analysis" not in brand:
+                    self.log_test("Zyphlora Comprehensive - Domain Analysis Missing", False, "domain_analysis field missing from brand_scores[0]")
+                    return False
+                
+                domain_analysis = brand["domain_analysis"]
+                if not domain_analysis:
+                    self.log_test("Zyphlora Comprehensive - Domain Analysis Empty", False, "domain_analysis is null/empty")
+                    return False
+                
+                # Test 10: Check executive summary exists and is substantial
+                exec_summary = data.get("executive_summary", "")
+                if len(exec_summary) < 100:
+                    self.log_test("Zyphlora Comprehensive - Executive Summary", False, f"Executive summary too short: {len(exec_summary)} chars (expected 100+)")
+                    return False
+                
+                # Success - log detailed results
+                dimension_names = [dim.get("name", "Unknown") for dim in dimensions]
+                tm_risk = tm_research.get("overall_risk_score", "Unknown")
+                
+                print(f"✅ Zyphlora evaluation completed successfully:")
+                print(f"   - NameScore: {namescore}/100")
+                print(f"   - Verdict: {verdict}")
+                print(f"   - Dimensions: {len(dimensions)} ({', '.join(dimension_names[:4])}...)")
+                print(f"   - Trademark Risk: {tm_risk}/10")
+                print(f"   - Executive Summary: {len(exec_summary)} characters")
+                print(f"   - Response Time: {response_time:.2f} seconds")
+                
+                self.log_test("Zyphlora Comprehensive Evaluation", True, 
+                            f"All sections verified. NameScore: {namescore}/100, Verdict: {verdict}, Dimensions: {len(dimensions)}, TM Risk: {tm_risk}/10, Time: {response_time:.1f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Zyphlora Comprehensive - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Zyphlora Comprehensive - Timeout", False, "Request timed out after 300 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Zyphlora Comprehensive - Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
