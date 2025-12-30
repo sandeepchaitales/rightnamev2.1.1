@@ -2031,6 +2031,11 @@ const Dashboard = () => {
                             <p className="text-white/80 mt-2 text-lg">Deep dive into your brand's DNA</p>
                         </div>
                         
+                        {/* Performance Radar Chart */}
+                        <div className="mb-6">
+                            <PerformanceRadar dimensions={brand.dimensions} brandName={brand.brand_name} />
+                        </div>
+                        
                         {/* Detailed Framework Analysis */}
                         <SectionHeader icon={BarChart3} title="Detailed Framework Analysis" subtitle="In-depth scoring breakdown" color="fuchsia" />
                         {isAuthenticated ? (
