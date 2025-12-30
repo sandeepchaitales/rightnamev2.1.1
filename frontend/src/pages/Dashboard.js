@@ -1714,21 +1714,43 @@ const Dashboard = () => {
         openAuthModal(reportData?.report_id);
     };
 
-    // PDF Download function - Using browser print
+    // PDF Download function
     const handleDownloadPDF = async () => {
+        if (!reportRef.current) {
+            alert('Report not ready. Please wait and try again.');
+            return;
+        }
+        
         setDownloading(true);
         
         try {
-            // Add slight delay to ensure DOM is ready
-            await new Promise(resolve => setTimeout(resolve, 500));
+            const brandName = reportData?.brand_scores?.[0]?.brand_name || 'Report';
+            const element = reportRef.current;
             
-            // Trigger browser print dialog - user can "Save as PDF"
-            window.print();
+            const opt = {
+                margin: 10,
+                filename: 'RIGHTNAME_' + brandName + '_Report.pdf',
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait' 
+                },
+                pagebreak: { mode: 'avoid-all' }
+            };
+            
+            await html2pdf().set(opt).from(element).save();
+            
         } catch (error) {
-            console.error('Print failed:', error);
-            alert('Please use Ctrl+P (or Cmd+P on Mac) to print/save as PDF');
+            console.error('PDF Error:', error);
+            alert('PDF generation failed: ' + error.message + '\n\nPlease try using Ctrl+P to print as PDF.');
         } finally {
-            setTimeout(() => setDownloading(false), 1000);
+            setDownloading(false);
         }
     };
 
