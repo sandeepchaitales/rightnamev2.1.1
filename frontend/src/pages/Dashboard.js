@@ -1969,9 +1969,9 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* SECTION 7: MARKET INTELLIGENCE */}
+                {/* SECTION 7: MARKET INTELLIGENCE - New Page */}
                 {(brand.domain_analysis || brand.visibility_analysis || brand.cultural_analysis) && (
-                    <section className="print-section print-page-break">
+                    <section className="print-section print-new-page">
                         <SectionHeader icon={TrendingUp} title="Market Intelligence" subtitle="Domain status, conflicts & cultural fit" color="amber" />
                         {isAuthenticated ? (
                             <MarketIntelligenceSection 
@@ -1985,9 +1985,9 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* SECTION 8: COMPETITIVE LANDSCAPE */}
+                {/* SECTION 8: COMPETITIVE LANDSCAPE - New Page */}
                 {(brand.competitor_analysis || brand.country_competitor_analysis?.length > 0) && (
-                    <section className="print-section print-page-break">
+                    <section className="print-section print-new-page">
                         <SectionHeader icon={Users} title="Competitive Landscape" subtitle="Strategic positioning matrix by market" color="blue" />
                         {isAuthenticated ? (
                             <CompetitiveLandscapeSection 
@@ -2000,9 +2000,9 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* SECTION 9: LEGAL RISK MATRIX */}
+                {/* SECTION 9: LEGAL RISK MATRIX - New Page */}
                 {brand.trademark_matrix && (
-                    <section className="print-section print-page-break">
+                    <section className="print-section print-new-page">
                         <SectionHeader icon={Scale} title="Legal Risk Matrix" subtitle="IP Analysis & Trademark Assessment" color="red" />
                         {isAuthenticated ? (
                             <LegalRiskMatrix trademarkMatrix={brand.trademark_matrix} trademarkClasses={brand.trademark_classes} />
@@ -2012,9 +2012,9 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* SECTION 10: TRADEMARK RESEARCH (NEW - Perplexity-Level Analysis) */}
+                {/* SECTION 10: TRADEMARK RESEARCH - New Page */}
                 {brand.trademark_research && (
-                    <section className="print-section print-page-break">
+                    <section className="print-section print-new-page">
                         <SectionHeader icon={Shield} title="Trademark Research Intelligence" subtitle="Real-Time Conflict Discovery & Risk Analysis" color="violet" badge="NEW" />
                         {isAuthenticated ? (
                             <TrademarkResearchSection 
