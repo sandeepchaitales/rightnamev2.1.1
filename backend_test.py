@@ -3707,10 +3707,8 @@ class BrandEvaluationTester:
                     elif not isinstance(dim["score"], (int, float)) or not (0 <= dim["score"] <= 10):
                         dimension_issues.append(f"Dimension {i} score should be 0-10, got {dim['score']}")
                     
-                    if "reasoning" not in dim or not dim["reasoning"]:
-                        dimension_issues.append(f"Dimension {i} missing 'reasoning' field")
-                    elif len(dim["reasoning"]) < 10:
-                        dimension_issues.append(f"Dimension {i} reasoning too short: {len(dim['reasoning'])} chars")
+                    if "reasoning" not in dim or not dim["reasoning"] or len(str(dim["reasoning"]).strip()) < 10:
+                        dimension_issues.append(f"Dimension {i} missing or insufficient 'reasoning' field (got: {repr(dim.get('reasoning', 'MISSING'))[:50]}...)")
                 
                 if dimension_issues:
                     self.log_test("Zyphlora Comprehensive - Dimensions Structure", False, "; ".join(dimension_issues[:3]))  # Show first 3 issues
