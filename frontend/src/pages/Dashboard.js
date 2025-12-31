@@ -2034,11 +2034,43 @@ const Dashboard = () => {
             const opt = {
                 margin: [8, 8, 12, 8],
                 filename: 'RIGHTNAME_' + brandName + '_Report.pdf',
-                image: { type: 'jpeg', quality: 0.92 },
-                html2canvas: { scale: 1.8, useCORS: true, logging: false, allowTaint: true },
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: true, 
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    windowWidth: 794, // A4 width in px at 96dpi
+                    onclone: (clonedDoc) => {
+                        // Ensure visibility for cloned document
+                        const container = clonedDoc.getElementById('pdf-export-container');
+                        if (container) {
+                            container.style.visibility = 'visible';
+                            container.style.position = 'relative';
+                            container.style.zIndex = '1';
+                        }
+                    }
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css'], avoid: ['div[style*="page-break-inside:avoid"]'] }
+                pagebreak: { mode: ['css', 'legacy'], before: '.page-break-before', after: '.page-break-after', avoid: '.page-break-avoid' }
             };
+            
+            // Wait for images to load
+            const images = pdfContainer.getElementsByTagName('img');
+            await Promise.all(Array.from(images).map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            }));
+            
+            // Small delay to ensure DOM is fully rendered
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Make container visible for rendering
+            pdfContainer.style.visibility = 'visible';
             
             await html2pdf().set(opt).from(pdfContainer).save();
             document.body.removeChild(pdfContainer);
