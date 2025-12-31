@@ -1827,7 +1827,10 @@ const Dashboard = () => {
 
             {/* Print Header */}
             <div className="hidden print:flex print:justify-between print:items-center print:px-4 print:py-2 print:border-b print:border-slate-200 print:mb-4">
-                <img src={LOGO_URL} alt="RIGHTNAME" className="h-5" />
+                <div className="text-lg font-black">
+                    <span className="text-violet-600">RIGHT</span>
+                    <span className="text-slate-900">NAME</span>
+                </div>
                 <span className="text-xs text-slate-500">{currentDate}</span>
             </div>
 
