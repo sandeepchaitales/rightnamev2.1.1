@@ -1825,12 +1825,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Print Header */}
-            <div className="hidden print:flex print:justify-between print:items-center print:px-4 print:py-2 print:border-b print:border-slate-200 print:mb-4">
-                <div className="text-lg font-black">
-                    <span className="text-violet-600">RIGHT</span>
-                    <span className="text-slate-900">NAME</span>
-                </div>
+            {/* Print Header - Date only, no logo (logo is on cover page) */}
+            <div className="hidden print:flex print:justify-end print:items-center print:px-4 print:py-2 print:border-b print:border-slate-200 print:mb-4">
                 <span className="text-xs text-slate-500">{currentDate}</span>
             </div>
 
