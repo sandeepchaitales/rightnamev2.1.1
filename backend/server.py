@@ -806,6 +806,9 @@ def _sounds_similar(word1: str, word2: str) -> bool:
             return True
     
     return False
+
+
+async def dynamic_brand_search(brand_name: str, category: str = "") -> dict:
     """
     LLM-FIRST BRAND CONFLICT DETECTION + WEB VERIFICATION
     
