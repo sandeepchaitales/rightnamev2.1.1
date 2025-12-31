@@ -1778,7 +1778,7 @@ const Dashboard = () => {
                 @media print {
                     @page { 
                         size: A4 portrait; 
-                        margin: 15mm 12mm; 
+                        margin: 10mm; 
                     }
                     
                     html, body {
@@ -1792,52 +1792,70 @@ const Dashboard = () => {
                         display: none !important; 
                     }
                     
-                    /* COVER PAGE - Full page, centered */
+                    /* ========== PAGE 1: COVER PAGE ========== */
                     .cover-page-container {
                         position: relative !important;
                         left: auto !important;
                         visibility: visible !important;
                         width: 100% !important;
+                        height: 100vh !important;
                         min-height: 100vh !important;
                         display: flex !important;
                         flex-direction: column !important;
                         align-items: center !important;
                         justify-content: center !important;
                         background: white !important;
-                        padding: 20mm !important;
+                        padding: 15mm !important;
                         page-break-after: always !important;
                         break-after: page !important;
                         box-sizing: border-box !important;
                     }
                     
-                    /* NEW PAGE FOR SECTIONS */
-                    .print-new-page, .pdf-page-break { 
-                        page-break-before: always !important; 
-                        break-before: page !important;
-                        padding-top: 10mm !important;
+                    /* ========== PAGE 2: Evaluation Summary (NO page break before) ========== */
+                    .page-2-content {
+                        page-break-before: auto !important;
                     }
                     
-                    /* PREVENT BREAKS INSIDE ELEMENTS */
+                    /* ========== PAGE 3+: New pages ========== */
+                    .print-new-page { 
+                        page-break-before: always !important; 
+                        break-before: page !important;
+                        padding-top: 5mm !important;
+                    }
+                    
+                    /* ========== PREVENT BREAKS INSIDE ========== */
                     .print-card, 
-                    .print-section,
-                    section > div {
+                    .print-section > div,
+                    .print-no-break {
                         break-inside: avoid !important; 
                         page-break-inside: avoid !important;
                     }
                     
-                    /* MAIN CONTENT SPACING */
+                    /* ========== SPACING ========== */
                     main {
                         max-width: 100% !important;
-                        padding: 0 5mm !important;
+                        padding: 0 !important;
                     }
                     
-                    main > section {
-                        margin-bottom: 10mm !important;
+                    section {
+                        margin-bottom: 8mm !important;
                     }
                     
-                    /* GRID LAYOUTS */
+                    /* ========== GRIDS FOR PRINT ========== */
+                    .print\\:grid-cols-1 {
+                        grid-template-columns: 1fr !important;
+                    }
+                    
                     .grid {
-                        gap: 8px !important;
+                        gap: 6px !important;
+                    }
+                    
+                    /* ========== IMAGES ========== */
+                    img {
+                        max-width: 100% !important;
+                    }
+                }
+            `}</style>
                     }
                     
                     /* IMAGES */
