@@ -1856,20 +1856,6 @@ const Dashboard = () => {
                     }
                 }
             `}</style>
-                    }
-                    
-                    /* IMAGES */
-                    img {
-                        max-width: 100% !important;
-                        height: auto !important;
-                    }
-                    
-                    /* CARDS */
-                    .rounded-2xl, .rounded-xl {
-                        border-radius: 8px !important;
-                    }
-                }
-            `}</style>
 
             {/* Cover Page */}
             <CoverPage brandName={brand.brand_name} score={brand.namescore} verdict={brand.verdict} date={currentDate} query={query} reportId={data.report_id} />
