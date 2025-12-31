@@ -1973,7 +1973,7 @@ const Dashboard = () => {
                 {/* ==================== PAGE 3: FINAL ASSESSMENT + STRATEGY SNAPSHOT ==================== */}
                 {/* Final Assessment */}
                 {brand.final_assessment && (
-                    <section className="print-new-page print-section">
+                    <section className="print-new-page">
                         <SectionHeader icon={Zap} title="Final Assessment" subtitle="Consultant Verdict & Roadmap" color="emerald" />
                         {isAuthenticated ? (
                             <FinalAssessmentFull assessment={brand.final_assessment} verdict={brand.verdict} score={brand.namescore} />
@@ -1983,8 +1983,8 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* Strategy Snapshot - Still Page 3 */}
-                <section className="print-section">
+                {/* Strategy Snapshot - Same Page 3 as Final Assessment */}
+                <section className={brand.final_assessment ? "" : "print-new-page"}>
                     <SectionHeader icon={Target} title="Strategy Snapshot" subtitle="Strengths and risks analysis" color="emerald" />
                     {isAuthenticated ? (
                         <StrategySnapshot classification={brand.strategic_classification} pros={brand.pros} cons={brand.cons} />
