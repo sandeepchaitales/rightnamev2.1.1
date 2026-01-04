@@ -459,7 +459,7 @@ class CompetitivePosition(BaseModel):
     quadrant: Optional[str] = None
 
 class BrandAuditResponse(BaseModel):
-    """Complete Brand Audit response"""
+    """Complete Brand Audit response - Elite Consulting Grade"""
     report_id: str
     brand_name: str
     brand_website: str
@@ -468,12 +468,34 @@ class BrandAuditResponse(BaseModel):
     
     # Overall Assessment
     overall_score: float = Field(default=0.0, description="Overall brand health score (0-100)")
+    rating: Optional[str] = Field(default=None, description="A+ to F grade")
     verdict: str = Field(default="PENDING", description="STRONG/MODERATE/WEAK/CRITICAL")
     executive_summary: str = Field(default="")
     investment_thesis: Optional[str] = None
     
     # Brand Overview
     brand_overview: Optional[Dict[str, Any]] = Field(default={})
+    
+    # NEW: Market Landscape & Industry Structure
+    market_landscape: Optional[Dict[str, Any]] = Field(default=None, description="TAM, CAGR, Porter's Five Forces")
+    
+    # NEW: Brand Equity & Positioning
+    brand_equity: Optional[Dict[str, Any]] = Field(default=None, description="Brand narrative, positioning, differentiation")
+    
+    # NEW: Financial Performance
+    financial_performance: Optional[Dict[str, Any]] = Field(default=None, description="Revenue, margins, growth")
+    
+    # NEW: Consumer Perception
+    consumer_perception: Optional[Dict[str, Any]] = Field(default=None, description="Awareness, loyalty, perception gaps")
+    
+    # NEW: Competitive Positioning
+    competitive_positioning: Optional[Dict[str, Any]] = Field(default=None, description="BCG matrix, market share")
+    
+    # NEW: Valuation
+    valuation: Optional[Dict[str, Any]] = Field(default=None, description="Implied valuation, multiples")
+    
+    # NEW: Conclusion with rating
+    conclusion: Optional[Dict[str, Any]] = Field(default=None, description="Final rating and recommendation")
     
     # 8-Dimension Scores
     dimensions: List[BrandAuditDimension] = Field(default=[])
@@ -490,18 +512,19 @@ class BrandAuditResponse(BaseModel):
     swot: Optional[SWOTAnalysis] = None
     
     # Strategic Recommendations
-    immediate_recommendations: List[StrategicRecommendation] = Field(default=[], description="0-6 months")
-    medium_term_recommendations: List[StrategicRecommendation] = Field(default=[], description="6-18 months")
-    long_term_recommendations: List[StrategicRecommendation] = Field(default=[], description="18-36 months")
+    immediate_recommendations: List[StrategicRecommendation] = Field(default=[], description="0-12 months")
+    medium_term_recommendations: List[StrategicRecommendation] = Field(default=[], description="12-24 months")
+    long_term_recommendations: List[StrategicRecommendation] = Field(default=[], description="3-5 years")
     
     # Risk Analysis
     risks: List[Dict[str, Any]] = Field(default=[], description="Risk and mitigation pairs")
     
     # Research Transparency
-    search_queries: List[str] = Field(default=[], description="All 12 search queries used")
+    search_queries: List[str] = Field(default=[], description="All search queries used")
     sources: List[Dict[str, Any]] = Field(default=[], description="All sources with citations")
     data_confidence: Optional[str] = Field(default="MEDIUM", description="Overall data confidence")
     
     # Metadata
     created_at: Optional[str] = None
     processing_time_seconds: Optional[float] = None
+
