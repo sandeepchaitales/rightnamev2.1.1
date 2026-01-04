@@ -92,41 +92,210 @@ const Card = ({ children, className = "" }) => (
     </div>
 );
 
-// Radar Chart (Simple CSS-based)
-const RadarDisplay = ({ dimensions }) => {
+// ============ PERFORMANCE RADAR CHART ============
+const PerformanceRadar = ({ dimensions, brandName }) => {
+    if (!dimensions || dimensions.length === 0) return null;
+    
+    // Transform dimensions data for Recharts radar
+    const radarData = dimensions.slice(0, 8).map(dim => ({
+        dimension: dim.name?.length > 12 ? dim.name.substring(0, 12) + '...' : dim.name,
+        fullName: dim.name,
+        score: dim.score || 0,
+        fullMark: 10
+    }));
+    
     const avgScore = dimensions.length > 0 
         ? (dimensions.reduce((acc, d) => acc + (d.score || 0), 0) / dimensions.length).toFixed(1)
         : 0;
     
     return (
         <Card>
-            <h3 className="font-bold text-slate-900 mb-4">8-Dimension Radar</h3>
-            <div className="text-center mb-4">
-                <div className="text-4xl font-black text-violet-600">{avgScore}</div>
-                <div className="text-sm text-slate-500">Average Score</div>
-            </div>
-            <div className="space-y-3">
-                {dimensions.map((dim, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                        <span className="text-xl">{DIMENSION_ICONS[dim.name] || '📊'}</span>
-                        <div className="flex-1">
-                            <div className="flex justify-between mb-1">
-                                <span className="text-xs font-medium text-slate-600">{dim.name}</span>
-                                <span className={`text-xs font-bold ${getScoreColor(dim.score)}`}>{dim.score}/10</span>
-                            </div>
-                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div 
-                                    className={`h-full rounded-full ${dim.score >= 7 ? 'bg-emerald-500' : dim.score >= 5 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                    style={{ width: `${dim.score * 10}%` }}
-                                />
-                            </div>
-                        </div>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-fuchsia-100 flex items-center justify-center">
+                        <Target className="w-5 h-5 text-fuchsia-600" />
                     </div>
-                ))}
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800">Performance Radar</h3>
+                        <p className="text-xs text-slate-500">8-Dimension Analysis</p>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <div className="text-2xl font-black text-fuchsia-600">{avgScore}</div>
+                    <div className="text-xs text-slate-500">Avg Score</div>
+                </div>
+            </div>
+            <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                        <PolarGrid 
+                            stroke="#e2e8f0" 
+                            strokeDasharray="3 3"
+                        />
+                        <PolarAngleAxis 
+                            dataKey="dimension" 
+                            tick={{ 
+                                fill: '#64748b', 
+                                fontSize: 10,
+                                fontWeight: 500
+                            }}
+                            tickLine={false}
+                        />
+                        <PolarRadiusAxis 
+                            angle={90} 
+                            domain={[0, 10]} 
+                            tick={{ fill: '#94a3b8', fontSize: 9 }}
+                            tickCount={6}
+                            axisLine={false}
+                        />
+                        <Radar
+                            name={brandName || "Score"}
+                            dataKey="score"
+                            stroke="#a855f7"
+                            fill="#a855f7"
+                            fillOpacity={0.3}
+                            strokeWidth={2}
+                            dot={{ 
+                                fill: '#a855f7', 
+                                strokeWidth: 0,
+                                r: 4
+                            }}
+                            activeDot={{
+                                fill: '#7c3aed',
+                                strokeWidth: 0,
+                                r: 6
+                            }}
+                        />
+                        <Tooltip 
+                            content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                    const data = payload[0].payload;
+                                    return (
+                                        <div className="bg-slate-900 text-white px-3 py-2 rounded-lg shadow-lg text-xs">
+                                            <p className="font-bold">{data.fullName}</p>
+                                            <p className="text-fuchsia-300">Score: {data.score}/10</p>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            }}
+                        />
+                    </RadarChart>
+                </ResponsiveContainer>
+            </div>
+            <div className="mt-2 text-center">
+                <p className="text-xs text-slate-400">Hover/tap points for details</p>
             </div>
         </Card>
     );
 };
+
+// ============ DETAILED DIMENSION CARD ============
+const DetailedDimensionCard = ({ dimension, index }) => {
+    const icons = ['🏛️', '⭐', '🎯', '📈', '⚙️', '📢', '💰', '🌐'];
+    
+    const getScoreColorClasses = (score) => {
+        if (score >= 8) return 'from-emerald-400 to-emerald-500 bg-emerald-100 text-emerald-700';
+        if (score >= 6) return 'from-violet-400 to-fuchsia-500 bg-violet-100 text-violet-700';
+        if (score >= 4) return 'from-amber-400 to-orange-500 bg-amber-100 text-amber-700';
+        return 'from-red-400 to-red-500 bg-red-100 text-red-700';
+    };
+    
+    const colors = getScoreColorClasses(dimension.score);
+    
+    // Parse evidence from dimension
+    const evidence = dimension.evidence || dimension.data_sources || [];
+    const confidence = dimension.confidence || 'MEDIUM';
+    
+    const confidenceColors = {
+        'HIGH': 'bg-emerald-100 text-emerald-700',
+        'MEDIUM': 'bg-amber-100 text-amber-700',
+        'LOW': 'bg-red-100 text-red-700'
+    };
+    
+    return (
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-violet-200">
+            {/* Header with Score */}
+            <div className={`px-5 py-4 ${colors.split(' ').slice(2, 4).join(' ')} border-b`}>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <span className="text-2xl">{icons[index % icons.length]}</span>
+                        <div>
+                            <h4 className="font-bold text-slate-800">{dimension.name}</h4>
+                            <Badge className={`text-xs mt-1 ${confidenceColors[confidence]}`}>
+                                {confidence} Confidence
+                            </Badge>
+                        </div>
+                    </div>
+                    <div className={`px-4 py-2 rounded-full bg-gradient-to-r ${colors.split(' ').slice(0, 2).join(' ')} text-white font-black text-lg shadow-lg`}>
+                        {dimension.score}/10
+                    </div>
+                </div>
+            </div>
+            
+            {/* Body */}
+            <div className="p-5">
+                {/* Progress bar */}
+                <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-4">
+                    <div 
+                        className={`h-full rounded-full bg-gradient-to-r ${colors.split(' ').slice(0, 2).join(' ')} transition-all duration-500`} 
+                        style={{ width: `${dimension.score * 10}%` }} 
+                    />
+                </div>
+                
+                {/* Reasoning */}
+                <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Activity className="w-4 h-4 text-violet-500" />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Analysis</span>
+                    </div>
+                    <p className="text-sm text-slate-600 leading-relaxed">{dimension.reasoning}</p>
+                </div>
+                
+                {/* Evidence/Data Sources */}
+                {evidence.length > 0 && (
+                    <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Evidence</span>
+                        </div>
+                        <ul className="space-y-1">
+                            {evidence.slice(0, 3).map((item, i) => (
+                                <li key={i} className="text-xs text-slate-600 flex items-start gap-2">
+                                    <span className="text-emerald-500 mt-0.5">•</span>
+                                    <span>{typeof item === 'string' ? item : item.point || item.source}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ============ QUICK DIMENSIONS GRID ============
+const QuickDimensionsGrid = ({ dimensions }) => (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {dimensions?.slice(0, 8).map((dim, i) => {
+            const icons = ['🏛️', '⭐', '🎯', '📈', '⚙️', '📢', '💰', '🌐'];
+            const bgColor = dim.score >= 8 ? 'bg-emerald-50 border-emerald-200' : 
+                           dim.score >= 6 ? 'bg-violet-50 border-violet-200' : 
+                           dim.score >= 4 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
+            const textColor = dim.score >= 8 ? 'text-emerald-700' : 
+                             dim.score >= 6 ? 'text-violet-700' : 
+                             dim.score >= 4 ? 'text-amber-700' : 'text-red-700';
+            
+            return (
+                <div key={i} className={`${bgColor} border rounded-xl p-3 text-center`}>
+                    <span className="text-xl block mb-1">{icons[i]}</span>
+                    <div className={`text-2xl font-black ${textColor}`}>{dim.score}</div>
+                    <div className="text-xs text-slate-600 truncate">{dim.name}</div>
+                </div>
+            );
+        })}
+    </div>
+);
 
 // SWOT Card
 const SWOTCard = ({ type, items, icon: Icon, bgColor, textColor }) => (
