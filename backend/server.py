@@ -2099,14 +2099,15 @@ async def brand_audit(request: BrandAuditRequest):
         research_data=research_data
     )
     
-    # Models to try in order (most reliable first)
+    # Models to try in order - OpenAI only for reliability (Claude has timeout issues)
     models_to_try = [
         ("openai", "gpt-4o-mini"),
-        ("anthropic", "claude-sonnet-4-20250514"),
         ("openai", "gpt-4o"),
+        ("openai", "gpt-4.1"),
     ]
     
     content = ""
+    data = None
     last_error = None
     
     for provider, model in models_to_try:
@@ -2119,7 +2120,10 @@ async def brand_audit(request: BrandAuditRequest):
             ).with_model(provider, model)
             
             user_message = UserMessage(text=user_prompt)
-            response = await llm_chat.send_message(user_message)
+            response = await asyncio.wait_for(
+                llm_chat.send_message(user_message),
+                timeout=120.0  # 2 minute timeout per model
+            )
             
             if hasattr(response, 'text'):
                 content = response.text
