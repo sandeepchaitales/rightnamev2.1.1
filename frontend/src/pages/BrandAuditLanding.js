@@ -360,7 +360,7 @@ const BrandAuditLanding = () => {
                             <div className="bg-white rounded-xl p-4 border border-slate-200">
                                 <Shield className="w-8 h-8 text-emerald-600 mb-2" />
                                 <h3 className="font-bold text-slate-900">Institutional Grade</h3>
-                                <p className="text-sm text-slate-600">McKinsey/BCG quality analysis methodology</p>
+                                <p className="text-sm text-slate-600">Fortune 500 consulting-grade analysis methodology</p>
                             </div>
                             <div className="bg-white rounded-xl p-4 border border-slate-200">
                                 <BarChart3 className="w-8 h-8 text-violet-600 mb-2" />
