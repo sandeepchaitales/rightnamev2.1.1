@@ -2176,106 +2176,102 @@ async def brand_audit(request: BrandAuditRequest):
             data_sources=dim.get('data_sources', []),
             confidence=dim.get('confidence', 'MEDIUM')
         ))
-        
-        # Ensure we have 8 dimensions
-        dimension_names = ["Heritage & Authenticity", "Customer Satisfaction", "Market Positioning", 
-                          "Growth Trajectory", "Operational Excellence", "Brand Awareness", 
-                          "Financial Viability", "Digital Presence"]
-        existing_names = [d.name for d in dimensions]
-        for name in dimension_names:
-            if name not in existing_names:
-                dimensions.append(BrandAuditDimension(name=name, score=5.0, reasoning="Data insufficient", confidence="LOW"))
-        
-        # Parse competitors
-        competitors = []
-        for comp in data.get('competitors', []):
-            competitors.append(CompetitorData(
-                name=comp.get('name', ''),
-                website=comp.get('website', ''),
-                founded=comp.get('founded'),
-                outlets=comp.get('outlets'),
-                rating=comp.get('rating'),
-                social_followers=comp.get('social_followers'),
-                key_strength=comp.get('key_strength'),
-                key_weakness=comp.get('key_weakness')
-            ))
-        
-        # Parse competitive matrix
-        competitive_matrix = []
-        for pos in data.get('competitive_matrix', []):
-            competitive_matrix.append(CompetitivePosition(
-                brand_name=pos.get('brand_name', ''),
-                x_score=float(pos.get('x_score', 50)),
-                y_score=float(pos.get('y_score', 50)),
-                quadrant=pos.get('quadrant')
-            ))
-        
-        # Parse SWOT
-        swot_data = data.get('swot', {})
-        swot = SWOTAnalysis(
-            strengths=[SWOTItem(**s) if isinstance(s, dict) else SWOTItem(point=str(s)) for s in swot_data.get('strengths', [])],
-            weaknesses=[SWOTItem(**w) if isinstance(w, dict) else SWOTItem(point=str(w)) for w in swot_data.get('weaknesses', [])],
-            opportunities=[SWOTItem(**o) if isinstance(o, dict) else SWOTItem(point=str(o)) for o in swot_data.get('opportunities', [])],
-            threats=[SWOTItem(**t) if isinstance(t, dict) else SWOTItem(point=str(t)) for t in swot_data.get('threats', [])]
-        )
-        
-        # Parse recommendations
-        immediate_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
-                         for r in data.get('immediate_recommendations', [])]
-        medium_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
-                      for r in data.get('medium_term_recommendations', [])]
-        long_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
-                    for r in data.get('long_term_recommendations', [])]
-        
-        # Parse market data
-        market_data_raw = data.get('market_data', {})
-        market_data = MarketData(
-            market_size=market_data_raw.get('market_size'),
-            cagr=market_data_raw.get('cagr'),
-            growth_drivers=market_data_raw.get('growth_drivers', []),
-            key_trends=market_data_raw.get('key_trends', [])
-        ) if market_data_raw else None
-        
-        # Build response
-        response_data = BrandAuditResponse(
-            report_id=report_id,
-            brand_name=request.brand_name,
-            brand_website=request.brand_website,
-            category=request.category,
-            geography=request.geography,
-            overall_score=float(data.get('overall_score', 0)),
-            verdict=data.get('verdict', 'MODERATE'),
-            executive_summary=data.get('executive_summary', ''),
-            investment_thesis=data.get('investment_thesis'),
-            brand_overview=data.get('brand_overview', {}),
-            dimensions=dimensions,
-            competitors=competitors,
-            competitive_matrix=competitive_matrix,
-            positioning_gap=data.get('positioning_gap'),
-            market_data=market_data,
-            swot=swot,
-            immediate_recommendations=immediate_recs,
-            medium_term_recommendations=medium_recs,
-            long_term_recommendations=long_recs,
-            risks=data.get('risks', []),
-            search_queries=research_data.get('all_queries', []),
-            sources=data.get('sources', []),
-            data_confidence=data.get('data_confidence', 'MEDIUM'),
-            created_at=datetime.now(timezone.utc).isoformat(),
-            processing_time_seconds=time_module.time() - start_time
-        )
-        
-        # Save to database
-        doc = response_data.model_dump()
-        doc['request'] = request.model_dump()
-        await db.brand_audits.insert_one(doc)
-        
-        logging.info(f"Brand Audit completed in {time_module.time() - start_time:.2f}s")
-        return response_data
-        
-    except Exception as e:
-        logging.error(f"Brand Audit LLM error: {e}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+    
+    # Ensure we have 8 dimensions
+    dimension_names = ["Heritage & Authenticity", "Customer Satisfaction", "Market Positioning", 
+                      "Growth Trajectory", "Operational Excellence", "Brand Awareness", 
+                      "Financial Viability", "Digital Presence"]
+    existing_names = [d.name for d in dimensions]
+    for name in dimension_names:
+        if name not in existing_names:
+            dimensions.append(BrandAuditDimension(name=name, score=5.0, reasoning="Data insufficient", confidence="LOW"))
+    
+    # Parse competitors
+    competitors = []
+    for comp in data.get('competitors', []):
+        competitors.append(CompetitorData(
+            name=comp.get('name', ''),
+            website=comp.get('website', ''),
+            founded=comp.get('founded'),
+            outlets=comp.get('outlets'),
+            rating=comp.get('rating'),
+            social_followers=comp.get('social_followers'),
+            key_strength=comp.get('key_strength'),
+            key_weakness=comp.get('key_weakness')
+        ))
+    
+    # Parse competitive matrix
+    competitive_matrix = []
+    for pos in data.get('competitive_matrix', []):
+        competitive_matrix.append(CompetitivePosition(
+            brand_name=pos.get('brand_name', ''),
+            x_score=float(pos.get('x_score', 50)),
+            y_score=float(pos.get('y_score', 50)),
+            quadrant=pos.get('quadrant')
+        ))
+    
+    # Parse SWOT
+    swot_data = data.get('swot', {})
+    swot = SWOTAnalysis(
+        strengths=[SWOTItem(**s) if isinstance(s, dict) else SWOTItem(point=str(s)) for s in swot_data.get('strengths', [])],
+        weaknesses=[SWOTItem(**w) if isinstance(w, dict) else SWOTItem(point=str(w)) for w in swot_data.get('weaknesses', [])],
+        opportunities=[SWOTItem(**o) if isinstance(o, dict) else SWOTItem(point=str(o)) for o in swot_data.get('opportunities', [])],
+        threats=[SWOTItem(**t) if isinstance(t, dict) else SWOTItem(point=str(t)) for t in swot_data.get('threats', [])]
+    )
+    
+    # Parse recommendations
+    immediate_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
+                     for r in data.get('immediate_recommendations', [])]
+    medium_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
+                  for r in data.get('medium_term_recommendations', [])]
+    long_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
+                for r in data.get('long_term_recommendations', [])]
+    
+    # Parse market data
+    market_data_raw = data.get('market_data', {})
+    market_data = MarketData(
+        market_size=market_data_raw.get('market_size'),
+        cagr=market_data_raw.get('cagr'),
+        growth_drivers=market_data_raw.get('growth_drivers', []),
+        key_trends=market_data_raw.get('key_trends', [])
+    ) if market_data_raw else None
+    
+    # Build response
+    response_data = BrandAuditResponse(
+        report_id=report_id,
+        brand_name=request.brand_name,
+        brand_website=request.brand_website,
+        category=request.category,
+        geography=request.geography,
+        overall_score=float(data.get('overall_score', 0)),
+        verdict=data.get('verdict', 'MODERATE'),
+        executive_summary=data.get('executive_summary', ''),
+        investment_thesis=data.get('investment_thesis'),
+        brand_overview=data.get('brand_overview', {}),
+        dimensions=dimensions,
+        competitors=competitors,
+        competitive_matrix=competitive_matrix,
+        positioning_gap=data.get('positioning_gap'),
+        market_data=market_data,
+        swot=swot,
+        immediate_recommendations=immediate_recs,
+        medium_term_recommendations=medium_recs,
+        long_term_recommendations=long_recs,
+        risks=data.get('risks', []),
+        search_queries=research_data.get('all_queries', []),
+        sources=data.get('sources', []),
+        data_confidence=data.get('data_confidence', 'MEDIUM'),
+        created_at=datetime.now(timezone.utc).isoformat(),
+        processing_time_seconds=time_module.time() - start_time
+    )
+    
+    # Save to database
+    doc = response_data.model_dump()
+    doc['request'] = request.model_dump()
+    await db.brand_audits.insert_one(doc)
+    
+    logging.info(f"Brand Audit completed in {time_module.time() - start_time:.2f}s")
+    return response_data
 
 @api_router.get("/brand-audit/{report_id}")
 async def get_brand_audit_report(report_id: str):
