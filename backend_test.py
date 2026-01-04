@@ -1173,6 +1173,133 @@ class BrandEvaluationTester:
             self.log_test("ACTUAL USPTO Costs - Exception", False, str(e))
             return False
 
+    def test_brand_audit_haldiram(self):
+        """Test Brand Audit API endpoint with Haldiram (famous Indian food brand)"""
+        payload = {
+            "brand_name": "Haldiram",
+            "brand_website": "https://haldirams.com",
+            "category": "Food & Beverage",
+            "geography": "India",
+            "competitor_1": "Bikaji",
+            "competitor_2": "Balaji"
+        }
+        
+        try:
+            print(f"\n🔍 Testing Brand Audit API with Haldiram...")
+            print(f"Payload: {json.dumps(payload, indent=2)}")
+            print(f"Expected: API should return proper response with report_id, overall_score, verdict, executive_summary, dimensions")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/brand-audit", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=180  # Extended timeout for brand audit processing
+            )
+            
+            processing_time = time.time() - start_time
+            print(f"Response Status: {response.status_code}")
+            print(f"Processing Time: {processing_time:.2f} seconds")
+            
+            # Test 1: API should return 200 OK (not 502 or 500 error)
+            if response.status_code not in [200]:
+                error_msg = f"HTTP {response.status_code}: {response.text[:500]}"
+                if response.status_code in [502, 500]:
+                    self.log_test("Brand Audit - Haldiram Server Error", False, f"Server error (expected 200 OK): {error_msg}")
+                else:
+                    self.log_test("Brand Audit - Haldiram HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                print(f"✅ Response received successfully, checking structure...")
+                
+                # Test 2: Check required top-level fields
+                required_fields = ["report_id", "overall_score", "verdict", "executive_summary", "dimensions"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Brand Audit - Haldiram Required Fields", False, f"Missing required fields: {missing_fields}")
+                    return False
+                
+                # Test 3: Check report_id is string
+                report_id = data.get("report_id")
+                if not isinstance(report_id, str) or len(report_id) == 0:
+                    self.log_test("Brand Audit - Haldiram Report ID", False, f"Invalid report_id: {report_id}")
+                    return False
+                
+                # Test 4: Check overall_score is number 0-100
+                overall_score = data.get("overall_score")
+                if not isinstance(overall_score, (int, float)) or not (0 <= overall_score <= 100):
+                    self.log_test("Brand Audit - Haldiram Overall Score", False, f"Invalid overall_score: {overall_score} (should be 0-100)")
+                    return False
+                
+                # Test 5: Check verdict is one of expected values
+                verdict = data.get("verdict", "")
+                valid_verdicts = ["STRONG", "MODERATE", "WEAK", "CRITICAL"]
+                if verdict not in valid_verdicts:
+                    self.log_test("Brand Audit - Haldiram Verdict", False, f"Invalid verdict: {verdict} (should be one of {valid_verdicts})")
+                    return False
+                
+                # Test 6: Check executive_summary is substantial text
+                exec_summary = data.get("executive_summary", "")
+                if len(exec_summary) < 50:
+                    self.log_test("Brand Audit - Haldiram Executive Summary", False, f"Executive summary too short: {len(exec_summary)} chars")
+                    return False
+                
+                # Test 7: Check dimensions array has 8 brand dimensions
+                dimensions = data.get("dimensions", [])
+                if not isinstance(dimensions, list) or len(dimensions) != 8:
+                    self.log_test("Brand Audit - Haldiram Dimensions Count", False, f"Expected 8 dimensions, got {len(dimensions)}")
+                    return False
+                
+                # Test 8: Check each dimension has required fields
+                for i, dimension in enumerate(dimensions):
+                    if not isinstance(dimension, dict):
+                        self.log_test("Brand Audit - Haldiram Dimension Structure", False, f"Dimension {i} is not a dict")
+                        return False
+                    
+                    dim_required = ["name", "score", "analysis"]
+                    dim_missing = [field for field in dim_required if field not in dimension]
+                    if dim_missing:
+                        self.log_test("Brand Audit - Haldiram Dimension Fields", False, f"Dimension {i} missing fields: {dim_missing}")
+                        return False
+                    
+                    # Check score is 0-100
+                    dim_score = dimension.get("score")
+                    if not isinstance(dim_score, (int, float)) or not (0 <= dim_score <= 100):
+                        self.log_test("Brand Audit - Haldiram Dimension Score", False, f"Dimension {i} invalid score: {dim_score}")
+                        return False
+                
+                # Test 9: Check brand_name matches input
+                brand_name = data.get("brand_name", "")
+                if brand_name != "Haldiram":
+                    self.log_test("Brand Audit - Haldiram Brand Name", False, f"Expected 'Haldiram', got '{brand_name}'")
+                    return False
+                
+                print(f"✅ Haldiram Brand Audit completed successfully:")
+                print(f"   - Report ID: {report_id}")
+                print(f"   - Overall Score: {overall_score}/100")
+                print(f"   - Verdict: {verdict}")
+                print(f"   - Executive Summary: {len(exec_summary)} characters")
+                print(f"   - Dimensions: {len(dimensions)} brand dimensions")
+                print(f"   - Processing Time: {processing_time:.2f} seconds")
+                
+                self.log_test("Brand Audit - Haldiram Complete", True, 
+                            f"All checks passed. Score: {overall_score}/100, Verdict: {verdict}, Dimensions: {len(dimensions)}, Time: {processing_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Brand Audit - Haldiram JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Brand Audit - Haldiram Timeout", False, "Request timed out after 180 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Brand Audit - Haldiram Exception", False, str(e))
+            return False
+
     def test_fallback_model_feature(self):
         """Test the new fallback model feature with FallbackTest brand"""
         payload = {
