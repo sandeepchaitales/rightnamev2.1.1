@@ -2248,13 +2248,28 @@ async def brand_audit(request: BrandAuditRequest):
         threats=[SWOTItem(**t) if isinstance(t, dict) else SWOTItem(point=str(t)) for t in swot_data.get('threats', [])]
     )
     
-    # Parse recommendations
+    # Parse recommendations - handle both nested and flat structures
+    recommendations_data = data.get('recommendations', {})
+    immediate_raw = recommendations_data.get('immediate', []) if isinstance(recommendations_data, dict) else []
+    medium_raw = recommendations_data.get('medium_term', []) if isinstance(recommendations_data, dict) else []
+    long_raw = recommendations_data.get('long_term', []) if isinstance(recommendations_data, dict) else []
+    
+    # Fallback to flat keys if nested is empty
+    if not immediate_raw:
+        immediate_raw = data.get('immediate_recommendations', [])
+    if not medium_raw:
+        medium_raw = data.get('medium_term_recommendations', [])
+    if not long_raw:
+        long_raw = data.get('long_term_recommendations', [])
+    
     immediate_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
-                     for r in data.get('immediate_recommendations', [])]
+                     for r in immediate_raw]
     medium_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
-                  for r in data.get('medium_term_recommendations', [])]
+                  for r in medium_raw]
     long_recs = [StrategicRecommendation(**r) if isinstance(r, dict) else StrategicRecommendation(title=str(r), recommended_action=str(r)) 
-                for r in data.get('long_term_recommendations', [])]
+                for r in long_raw]
+    
+    logging.info(f"Brand Audit: Parsed {len(immediate_recs)} immediate, {len(medium_recs)} medium, {len(long_recs)} long-term recommendations")
     
     # Parse market data
     market_data_raw = data.get('market_data', {})
