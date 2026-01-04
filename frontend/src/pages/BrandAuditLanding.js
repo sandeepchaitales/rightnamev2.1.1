@@ -84,6 +84,7 @@ const API_URL = process.env.NODE_ENV === 'production' ? '/api' : `${process.env.
 const BrandAuditLanding = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [formData, setFormData] = useState({
         brand_name: '',
         brand_website: '',
