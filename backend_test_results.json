@@ -1,22 +1,28 @@
 {
-  "test_focus": "Brand Audit API Test",
-  "description": "Test the Brand Audit API endpoint /api/brand-audit which was failing with 502 errors",
+  "test_focus": "Brand Audit API Test - Claude Timeout Fix",
+  "description": "Re-test the Brand Audit API /api/brand-audit after fixing the Claude timeout issue",
+  "fix_details": {
+    "issue": "Claude model was hanging/timing out in fallback chain",
+    "solution": "Removed Claude from fallback chain, now using OpenAI only: gpt-4o-mini \u2192 gpt-4o \u2192 gpt-4.1",
+    "timeout_fix": "Added 120-second timeout per model to prevent hanging"
+  },
   "test_case": {
-    "brand_name": "Haldiram",
-    "brand_website": "https://haldirams.com",
+    "brand_name": "Tea Villa",
+    "brand_website": "https://teavilla.in",
     "category": "Food & Beverage",
     "geography": "India",
-    "competitor_1": "Bikaji",
-    "competitor_2": "Balaji"
+    "competitor_1": "Chai Point",
+    "competitor_2": "Chaayos"
   },
   "verification_points": [
-    "API returns successful response (200 OK, not 502)",
+    "API returns successful response (200 OK, not timeout)",
     "Response contains report_id (string)",
     "Response contains overall_score (number 0-100)",
     "Response contains verdict (STRONG/MODERATE/WEAK/CRITICAL)",
     "Response contains executive_summary (text)",
     "Response contains dimensions (array of 8 brand dimensions)",
-    "Model fallback working: gpt-4o-mini \u2192 claude-sonnet-4-20250514 \u2192 gpt-4o"
+    "Processing completes within 180 seconds total",
+    "Backend logs show OpenAI model usage without Claude hanging"
   ],
   "summary": {
     "tests_run": 2,
@@ -29,14 +35,14 @@
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2026-01-04T06:16:12.932277"
+      "timestamp": "2026-01-04T06:23:59.553983"
     },
     {
-      "test": "Brand Audit - Haldiram Timeout",
+      "test": "Brand Audit - Tea Villa Timeout",
       "success": false,
-      "details": "Request timed out after 180 seconds",
-      "timestamp": "2026-01-04T06:19:13.057520"
+      "details": "Request timed out after 180 seconds - Claude fix may not be working",
+      "timestamp": "2026-01-04T06:26:59.680631"
     }
   ],
-  "timestamp": "2026-01-04T06:19:13.057673"
+  "timestamp": "2026-01-04T06:26:59.680793"
 }
