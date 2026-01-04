@@ -1173,6 +1173,132 @@ class BrandEvaluationTester:
             self.log_test("ACTUAL USPTO Costs - Exception", False, str(e))
             return False
 
+    def test_brand_audit_tea_villa_claude_fix(self):
+        """Test Brand Audit API after fixing Claude timeout issue - Tea Villa test case"""
+        payload = {
+            "brand_name": "Tea Villa",
+            "brand_website": "https://teavilla.in",
+            "category": "Food & Beverage",
+            "geography": "India",
+            "competitor_1": "Chai Point",
+            "competitor_2": "Chaayos"
+        }
+        
+        try:
+            print(f"\n🔍 Testing Brand Audit API after Claude timeout fix with Tea Villa...")
+            print(f"Payload: {json.dumps(payload, indent=2)}")
+            print(f"Expected: API should return proper response with report_id, overall_score, verdict, executive_summary, dimensions")
+            print(f"Fixed: Removed Claude from fallback chain, now using OpenAI only: gpt-4o-mini → gpt-4o → gpt-4.1")
+            print(f"Fixed: Added 120-second timeout per model to prevent hanging")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/brand-audit", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=180  # Allow up to 180 seconds total as requested
+            )
+            
+            processing_time = time.time() - start_time
+            print(f"Response Status: {response.status_code}")
+            print(f"Processing Time: {processing_time:.2f} seconds")
+            
+            # Test 1: API should return 200 OK (not timeout or server error)
+            if response.status_code not in [200]:
+                error_msg = f"HTTP {response.status_code}: {response.text[:500]}"
+                if response.status_code in [502, 500, 503]:
+                    self.log_test("Brand Audit - Tea Villa Server Error", False, f"Server error after Claude fix (expected 200 OK): {error_msg}")
+                elif response.status_code == 408:
+                    self.log_test("Brand Audit - Tea Villa Timeout", False, f"Request timeout after Claude fix: {error_msg}")
+                else:
+                    self.log_test("Brand Audit - Tea Villa HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                print(f"✅ Response received successfully, checking structure...")
+                
+                # Test 2: Check required top-level fields
+                required_fields = ["report_id", "overall_score", "verdict", "executive_summary", "dimensions"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Brand Audit - Tea Villa Required Fields", False, f"Missing required fields: {missing_fields}")
+                    return False
+                
+                # Test 3: Check report_id is string
+                report_id = data.get("report_id")
+                if not isinstance(report_id, str) or len(report_id) == 0:
+                    self.log_test("Brand Audit - Tea Villa Report ID", False, f"Invalid report_id: {report_id}")
+                    return False
+                
+                # Test 4: Check overall_score is number 0-100
+                overall_score = data.get("overall_score")
+                if not isinstance(overall_score, (int, float)) or not (0 <= overall_score <= 100):
+                    self.log_test("Brand Audit - Tea Villa Overall Score", False, f"Invalid overall_score: {overall_score} (should be 0-100)")
+                    return False
+                
+                # Test 5: Check verdict is one of expected values
+                verdict = data.get("verdict", "")
+                valid_verdicts = ["STRONG", "MODERATE", "WEAK", "CRITICAL"]
+                if verdict not in valid_verdicts:
+                    self.log_test("Brand Audit - Tea Villa Verdict", False, f"Invalid verdict: {verdict} (should be one of {valid_verdicts})")
+                    return False
+                
+                # Test 6: Check executive_summary is substantial text
+                exec_summary = data.get("executive_summary", "")
+                if len(exec_summary) < 50:
+                    self.log_test("Brand Audit - Tea Villa Executive Summary", False, f"Executive summary too short: {len(exec_summary)} chars")
+                    return False
+                
+                # Test 7: Check dimensions array has 8 items
+                dimensions = data.get("dimensions", [])
+                if not isinstance(dimensions, list) or len(dimensions) != 8:
+                    self.log_test("Brand Audit - Tea Villa Dimensions Count", False, f"Expected 8 dimensions, got {len(dimensions)}")
+                    return False
+                
+                # Test 8: Check each dimension has required structure
+                for i, dimension in enumerate(dimensions):
+                    if not isinstance(dimension, dict):
+                        self.log_test("Brand Audit - Tea Villa Dimension Structure", False, f"Dimension {i} is not a dict")
+                        return False
+                    
+                    required_dim_fields = ["name", "score", "reasoning"]
+                    missing_dim_fields = [field for field in required_dim_fields if field not in dimension]
+                    
+                    if missing_dim_fields:
+                        self.log_test("Brand Audit - Tea Villa Dimension Fields", False, f"Dimension {i} missing fields: {missing_dim_fields}")
+                        return False
+                    
+                    # Check score is 0-10
+                    dim_score = dimension.get("score")
+                    if not isinstance(dim_score, (int, float)) or not (0 <= dim_score <= 10):
+                        self.log_test("Brand Audit - Tea Villa Dimension Score", False, f"Dimension {i} invalid score: {dim_score} (should be 0-10)")
+                        return False
+                
+                print(f"✅ Tea Villa Brand Audit completed successfully:")
+                print(f"   - Report ID: {report_id}")
+                print(f"   - Overall Score: {overall_score}/100")
+                print(f"   - Verdict: {verdict}")
+                print(f"   - Executive Summary: {len(exec_summary)} characters")
+                print(f"   - Dimensions: {len(dimensions)} items")
+                print(f"   - Processing Time: {processing_time:.2f} seconds")
+                
+                self.log_test("Brand Audit - Tea Villa Claude Fix", True, 
+                            f"SUCCESS after Claude fix. Score: {overall_score}/100, Verdict: {verdict}, Time: {processing_time:.2f}s, All 8 dimensions present")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Brand Audit - Tea Villa JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Brand Audit - Tea Villa Timeout", False, "Request timed out after 180 seconds - Claude fix may not be working")
+            return False
+        except Exception as e:
+            self.log_test("Brand Audit - Tea Villa Exception", False, str(e))
+            return False
+
     def test_brand_audit_haldiram(self):
         """Test Brand Audit API endpoint with Haldiram (famous Indian food brand)"""
         payload = {
