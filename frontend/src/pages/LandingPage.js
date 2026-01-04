@@ -376,12 +376,12 @@ const LandingPage = () => {
                 <img 
                   src="https://customer-assets.emergentagent.com/job_name-radar-1/artifacts/qrfrrizq_R.png" 
                   alt="RIGHTNAME Logo" 
-                  className="w-12 h-12 rounded-2xl shadow-xl shadow-violet-300/50 hover:scale-110 transition-transform cursor-pointer"
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-2xl shadow-xl shadow-violet-300/50 hover:scale-110 transition-transform cursor-pointer"
                 />
-                <h1 className="text-2xl lg:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 tracking-tight">RIGHTNAME</h1>
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 tracking-tight">RIGHTNAME</h1>
             </div>
             
-            {/* Navigation Links */}
+            {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center gap-6">
               <Link to="/" className="text-sm font-semibold text-violet-600">Home</Link>
               <a href="#features" className="text-sm font-semibold text-slate-600 hover:text-violet-600 transition-colors">Features</a>
@@ -423,32 +423,157 @@ const LandingPage = () => {
               <a href="#faq" className="text-sm font-semibold text-slate-600 hover:text-violet-600 transition-colors">FAQ</a>
             </nav>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
+                {/* Mobile Menu Button */}
+                <button 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 rounded-xl bg-white border-2 border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  {mobileMenuOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
+                </button>
+                
                 {authLoading ? (
                     <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse" />
                 ) : user ? (
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-slate-200 rounded-full shadow-sm">
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white border-2 border-slate-200 rounded-full shadow-sm">
                             {user.picture ? (
-                                <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full ring-2 ring-violet-200" />
+                                <img src={user.picture} alt={user.name} className="w-6 h-6 md:w-7 md:h-7 rounded-full ring-2 ring-violet-200" />
                             ) : (
                                 <User className="w-5 h-5 text-slate-500" />
                             )}
                             <span className="text-sm font-bold text-slate-700 hidden sm:inline">{user.name?.split(' ')[0]}</span>
                         </div>
-                        <Button variant="outline" size="sm" onClick={logout} className="text-slate-600 rounded-full border-2">
+                        <Button variant="outline" size="sm" onClick={logout} className="text-slate-600 rounded-full border-2 hidden sm:flex">
                             <LogOut className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Sign Out</span>
                         </Button>
                     </div>
                 ) : (
-                    <Button onClick={() => openAuthModal()} className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 hover:from-violet-700 hover:via-fuchsia-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-violet-300/50 rounded-full px-6 hover:scale-105 transition-transform">
-                        <LogIn className="w-4 h-4 mr-2" />
-                        Sign In
+                    <Button onClick={() => openAuthModal()} className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 hover:from-violet-700 hover:via-fuchsia-600 hover:to-orange-600 text-white font-bold shadow-xl shadow-violet-300/50 rounded-full px-4 md:px-6 text-sm hover:scale-105 transition-transform">
+                        <LogIn className="w-4 h-4 mr-1 md:mr-2" />
+                        <span className="hidden sm:inline">Sign In</span>
+                        <span className="sm:hidden">Login</span>
                     </Button>
                 )}
             </div>
         </div>
+        
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
+            <div 
+              className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-lg font-bold text-slate-900">Menu</h2>
+                  <button 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2 rounded-xl hover:bg-slate-100 transition-colors"
+                  >
+                    <X className="w-5 h-5 text-slate-600" />
+                  </button>
+                </div>
+                
+                <nav className="space-y-2">
+                  <Link 
+                    to="/" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-600 bg-violet-50 font-semibold"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Home
+                  </Link>
+                  
+                  <a 
+                    href="#features" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 font-semibold transition-colors"
+                  >
+                    <Star className="w-5 h-5" />
+                    Features
+                  </a>
+                  
+                  <div className="pt-2 pb-1">
+                    <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Tools</p>
+                  </div>
+                  
+                  <Link 
+                    to="/" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="p-1.5 bg-violet-100 rounded-lg">
+                      <Sparkles className="w-4 h-4 text-violet-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900">Brand Evaluation</div>
+                      <div className="text-xs text-slate-500">For New Brands</div>
+                    </div>
+                  </Link>
+                  
+                  <Link 
+                    to="/brand-audit" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="p-1.5 bg-emerald-100 rounded-lg">
+                      <BarChart3 className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900">Brand Audit</div>
+                      <div className="text-xs text-slate-500">For Existing Brands</div>
+                    </div>
+                  </Link>
+                  
+                  <div className="pt-4 border-t border-slate-100 mt-4">
+                    <a 
+                      href="#how-it-works" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 font-semibold transition-colors"
+                    >
+                      <Target className="w-5 h-5" />
+                      How It Works
+                    </a>
+                    
+                    <Link 
+                      to="/blog" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 font-semibold transition-colors"
+                    >
+                      <FileText className="w-5 h-5" />
+                      Blog
+                    </Link>
+                    
+                    <a 
+                      href="#faq" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 font-semibold transition-colors"
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                      FAQ
+                    </a>
+                  </div>
+                  
+                  {/* Mobile Sign Out Button for logged in users */}
+                  {user && (
+                    <div className="pt-4 border-t border-slate-100 mt-4">
+                      <button 
+                        onClick={() => { logout(); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 font-semibold transition-colors w-full"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             
