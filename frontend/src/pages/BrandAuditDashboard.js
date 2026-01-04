@@ -323,6 +323,14 @@ const BrandAuditDashboard = () => {
                                     </div>
                                     <div className="flex flex-wrap gap-2 mb-4">
                                         <Badge className={getVerdictColor(data.verdict)}>{data.verdict}</Badge>
+                                        {data.rating && (
+                                            <Badge className={`font-black text-lg px-3 ${
+                                                data.rating.startsWith('A') ? 'bg-emerald-100 text-emerald-700' :
+                                                data.rating.startsWith('B') ? 'bg-blue-100 text-blue-700' :
+                                                data.rating.startsWith('C') ? 'bg-amber-100 text-amber-700' :
+                                                'bg-red-100 text-red-700'
+                                            }`}>Rating: {data.rating}</Badge>
+                                        )}
                                         <Badge variant="outline">{data.category}</Badge>
                                         <Badge variant="outline">{data.geography}</Badge>
                                     </div>
@@ -331,6 +339,17 @@ const BrandAuditDashboard = () => {
                                         <span className="text-xs font-bold uppercase tracking-widest text-amber-600">Executive Summary</span>
                                     </div>
                                     <p className="text-slate-700 leading-relaxed">{data.executive_summary}</p>
+                                    
+                                    {/* Investment Thesis */}
+                                    {data.investment_thesis && (
+                                        <div className="mt-4 p-4 bg-violet-50 rounded-xl border border-violet-200">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Lightbulb className="w-4 h-4 text-violet-600" />
+                                                <span className="text-xs font-bold uppercase tracking-widest text-violet-600">Investment Thesis</span>
+                                            </div>
+                                            <p className="text-slate-700">{data.investment_thesis}</p>
+                                        </div>
+                                    )}
                                 </Card>
                             </div>
                             
@@ -345,10 +364,187 @@ const BrandAuditDashboard = () => {
                                     <div className={`inline-flex items-center px-4 py-2 rounded-full font-bold ${getVerdictColor(data.verdict)}`}>
                                         {data.verdict}
                                     </div>
+                                    {data.conclusion?.recommendation && (
+                                        <div className={`mt-4 p-3 rounded-xl font-bold ${
+                                            data.conclusion.recommendation === 'INVEST' ? 'bg-emerald-100 text-emerald-700' :
+                                            data.conclusion.recommendation === 'HOLD' ? 'bg-amber-100 text-amber-700' :
+                                            'bg-red-100 text-red-700'
+                                        }`}>
+                                            {data.conclusion.recommendation}
+                                        </div>
+                                    )}
                                 </Card>
                             </div>
                         </div>
                     </section>
+                    
+                    {/* Market Landscape & Industry Structure */}
+                    {data.market_landscape && (
+                        <section>
+                            <SectionHeader icon={Globe} title="Market Landscape & Industry Structure" subtitle="Porter's Five Forces Analysis" color="blue" />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <Card>
+                                    <h3 className="font-bold text-slate-900 mb-4">Market Overview</h3>
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        {data.market_landscape.tam && (
+                                            <div className="p-3 bg-blue-50 rounded-lg">
+                                                <span className="text-xs text-slate-500 block">Total Addressable Market</span>
+                                                <span className="text-lg font-bold text-blue-700">{data.market_landscape.tam}</span>
+                                            </div>
+                                        )}
+                                        {data.market_landscape.cagr && (
+                                            <div className="p-3 bg-emerald-50 rounded-lg">
+                                                <span className="text-xs text-slate-500 block">CAGR</span>
+                                                <span className="text-lg font-bold text-emerald-700">{data.market_landscape.cagr}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {data.market_landscape.analysis && (
+                                        <p className="text-sm text-slate-600 leading-relaxed">{data.market_landscape.analysis}</p>
+                                    )}
+                                </Card>
+                                {data.market_landscape.porters_five_forces && (
+                                    <Card>
+                                        <h3 className="font-bold text-slate-900 mb-4">Porter's Five Forces</h3>
+                                        <div className="space-y-3">
+                                            {Object.entries(data.market_landscape.porters_five_forces).map(([key, value]) => (
+                                                <div key={key} className="flex justify-between items-center p-2 bg-slate-50 rounded-lg">
+                                                    <span className="text-sm text-slate-700 capitalize">{key.replace(/_/g, ' ')}</span>
+                                                    <Badge className={
+                                                        typeof value === 'string' && value.toLowerCase().includes('high') ? 'bg-red-100 text-red-700' :
+                                                        typeof value === 'string' && value.toLowerCase().includes('low') ? 'bg-emerald-100 text-emerald-700' :
+                                                        'bg-amber-100 text-amber-700'
+                                                    }>{typeof value === 'string' ? value.split(' ')[0] : value}</Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                )}
+                            </div>
+                        </section>
+                    )}
+                    
+                    {/* Financial Performance */}
+                    {data.financial_performance && (
+                        <section>
+                            <SectionHeader icon={TrendingUp} title="Financial Performance & Growth Trajectory" subtitle="Revenue, margins, and growth metrics" color="emerald" />
+                            <Card>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                    {data.financial_performance.estimated_revenue && (
+                                        <div className="p-3 bg-emerald-50 rounded-lg text-center">
+                                            <span className="text-xs text-slate-500 block">Est. Revenue</span>
+                                            <span className="text-lg font-bold text-emerald-700">{data.financial_performance.estimated_revenue}</span>
+                                        </div>
+                                    )}
+                                    {data.financial_performance.growth_rate && (
+                                        <div className="p-3 bg-blue-50 rounded-lg text-center">
+                                            <span className="text-xs text-slate-500 block">Growth Rate</span>
+                                            <span className="text-lg font-bold text-blue-700">{data.financial_performance.growth_rate}</span>
+                                        </div>
+                                    )}
+                                    {data.financial_performance.profitability && (
+                                        <div className="p-3 bg-violet-50 rounded-lg text-center">
+                                            <span className="text-xs text-slate-500 block">Profitability</span>
+                                            <span className="text-lg font-bold text-violet-700 capitalize">{data.financial_performance.profitability}</span>
+                                        </div>
+                                    )}
+                                    {data.financial_performance.funding_status && (
+                                        <div className="p-3 bg-amber-50 rounded-lg text-center">
+                                            <span className="text-xs text-slate-500 block">Funding</span>
+                                            <span className="text-lg font-bold text-amber-700">{data.financial_performance.funding_status}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {data.financial_performance.analysis && (
+                                    <p className="text-sm text-slate-600 leading-relaxed">{data.financial_performance.analysis}</p>
+                                )}
+                            </Card>
+                        </section>
+                    )}
+                    
+                    {/* Consumer Perception */}
+                    {data.consumer_perception && (
+                        <section>
+                            <SectionHeader icon={Users} title="Consumer Perception & Behavioral Analysis" subtitle="Brand awareness, loyalty, and perception" color="pink" />
+                            <Card>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                                    {data.consumer_perception.brand_awareness && (
+                                        <div className="p-3 bg-pink-50 rounded-lg">
+                                            <span className="text-xs text-slate-500 block">Brand Awareness</span>
+                                            <span className="text-lg font-bold text-pink-700">{data.consumer_perception.brand_awareness}</span>
+                                        </div>
+                                    )}
+                                    {data.consumer_perception.customer_ratings && (
+                                        <div className="p-3 bg-amber-50 rounded-lg">
+                                            <span className="text-xs text-slate-500 block">Avg Rating</span>
+                                            <span className="text-lg font-bold text-amber-700">{data.consumer_perception.customer_ratings} ⭐</span>
+                                        </div>
+                                    )}
+                                    {data.consumer_perception.loyalty_metrics && (
+                                        <div className="p-3 bg-emerald-50 rounded-lg">
+                                            <span className="text-xs text-slate-500 block">Loyalty</span>
+                                            <span className="text-lg font-bold text-emerald-700">{data.consumer_perception.loyalty_metrics}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {data.consumer_perception.purchase_drivers?.length > 0 && (
+                                    <div className="mb-4">
+                                        <h4 className="text-sm font-bold text-slate-700 mb-2">Key Purchase Drivers</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.consumer_perception.purchase_drivers.map((driver, i) => (
+                                                <Badge key={i} variant="outline" className="bg-white">{driver}</Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {data.consumer_perception.analysis && (
+                                    <p className="text-sm text-slate-600 leading-relaxed">{data.consumer_perception.analysis}</p>
+                                )}
+                            </Card>
+                        </section>
+                    )}
+                    
+                    {/* Valuation */}
+                    {data.valuation && (
+                        <section>
+                            <SectionHeader icon={TrendingUp} title="Valuation & Financial Outlook" subtitle="Implied valuation and key drivers" color="indigo" />
+                            <Card>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                                    {data.valuation.implied_range && (
+                                        <div className="p-4 bg-indigo-50 rounded-xl text-center">
+                                            <span className="text-xs text-slate-500 block">Implied Valuation</span>
+                                            <span className="text-xl font-black text-indigo-700">{data.valuation.implied_range}</span>
+                                        </div>
+                                    )}
+                                    {data.valuation.revenue_multiple && (
+                                        <div className="p-4 bg-violet-50 rounded-xl text-center">
+                                            <span className="text-xs text-slate-500 block">Revenue Multiple</span>
+                                            <span className="text-xl font-black text-violet-700">{data.valuation.revenue_multiple}</span>
+                                        </div>
+                                    )}
+                                    {data.valuation.bcg_position && (
+                                        <div className="p-4 bg-emerald-50 rounded-xl text-center">
+                                            <span className="text-xs text-slate-500 block">BCG Matrix</span>
+                                            <span className="text-xl font-black text-emerald-700">{data.competitive_positioning?.bcg_position || 'N/A'}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {data.valuation.key_value_drivers?.length > 0 && (
+                                    <div className="mb-4">
+                                        <h4 className="text-sm font-bold text-slate-700 mb-2">Key Value Drivers</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.valuation.key_value_drivers.map((driver, i) => (
+                                                <Badge key={i} className="bg-indigo-100 text-indigo-700">{driver}</Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {data.valuation.three_year_outlook && (
+                                    <p className="text-sm text-slate-600 leading-relaxed">{data.valuation.three_year_outlook}</p>
+                                )}
+                            </Card>
+                        </section>
+                    )}
                     
                     {/* 8-Dimension Analysis */}
                     <section>
