@@ -2132,6 +2132,9 @@ async def brand_audit(request: BrandAuditRequest):
             else:
                 content = str(response)
             
+            logging.info(f"Brand Audit: {provider}/{model} raw response length: {len(content) if content else 0}")
+            logging.info(f"Brand Audit: {provider}/{model} raw response preview: {content[:200] if content else 'EMPTY'}...")
+            
             # Check for empty response
             if not content or content.strip() == "":
                 logging.warning(f"Brand Audit: {provider}/{model} returned empty response")
@@ -2148,6 +2151,8 @@ async def brand_audit(request: BrandAuditRequest):
                         content = content[4:]
             
             content = content.strip()
+            
+            logging.info(f"Brand Audit: After JSON extraction, content length: {len(content)}")
             
             # Check again after extraction
             if not content:
