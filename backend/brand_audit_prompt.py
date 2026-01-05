@@ -250,6 +250,63 @@ Respond with ONLY valid JSON in this structure:
     "analysis": "<250+ word consumer perception analysis>"
   },
   
+  "customer_perception_analysis": {
+    "overall_sentiment": "<POSITIVE|NEUTRAL|NEGATIVE>",
+    "sentiment_score": <0-100>,
+    "platform_ratings": [
+      {
+        "platform": "Google Maps",
+        "rating": <X.X>,
+        "review_count": "<X reviews>",
+        "url": "<direct link if available>"
+      },
+      {
+        "platform": "Justdial",
+        "rating": <X.X>,
+        "review_count": "<X reviews>",
+        "url": "<direct link>"
+      },
+      {
+        "platform": "Zomato",
+        "rating": <X.X>,
+        "review_count": "<X reviews>",
+        "url": "<direct link>"
+      }
+    ],
+    "average_rating": <X.X>,
+    "total_reviews": "<X+ total reviews>",
+    "rating_vs_competitors": "<Above market average (4.0-4.2)|At par with market|Below market average>",
+    "competitor_ratings": {
+      "<competitor1>": <X.X>,
+      "<competitor2>": <X.X>
+    },
+    "positive_themes": [
+      {
+        "theme": "<Theme title e.g., Authentic taste>",
+        "quote": "<Actual quote from review>",
+        "frequency": "<HIGH|MEDIUM|LOW>",
+        "sentiment": "POSITIVE"
+      },
+      {
+        "theme": "<Theme 2>",
+        "quote": "<quote>",
+        "frequency": "<frequency>",
+        "sentiment": "POSITIVE"
+      }
+    ],
+    "negative_themes": [
+      {
+        "theme": "<Pain point e.g., Slow service>",
+        "quote": "<Actual quote from review>",
+        "frequency": "<HIGH|MEDIUM|LOW>",
+        "sentiment": "NEGATIVE"
+      }
+    ],
+    "key_strengths": ["<customer-validated strength 1>", "<strength 2>"],
+    "key_concerns": ["<customer pain point 1>", "<pain point 2>"],
+    "analysis": "<300+ word detailed analysis of customer perception, rating trends, and sentiment>"
+  },
+  
   "competitive_positioning": {
     "competitive_advantages": ["<advantage1>", "<advantage2>"],
     "incumbent_weaknesses": ["<weakness1>", "<weakness2>"],
