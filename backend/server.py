@@ -2118,6 +2118,61 @@ async def brand_audit(request: BrandAuditRequest):
     
     logging.info(f"Research completed. Executing LLM analysis...")
     
+    # Helper function to parse customer perception analysis
+    def parse_customer_perception(cpa_data):
+        if not cpa_data or not isinstance(cpa_data, dict):
+            return None
+        try:
+            from schemas import CustomerPerceptionAnalysis, PlatformRating, CustomerTheme
+            
+            platform_ratings = []
+            for pr in cpa_data.get('platform_ratings', []):
+                if isinstance(pr, dict):
+                    platform_ratings.append(PlatformRating(
+                        platform=pr.get('platform', 'Unknown'),
+                        rating=pr.get('rating'),
+                        review_count=pr.get('review_count'),
+                        url=pr.get('url')
+                    ))
+            
+            positive_themes = []
+            for pt in cpa_data.get('positive_themes', []):
+                if isinstance(pt, dict):
+                    positive_themes.append(CustomerTheme(
+                        theme=pt.get('theme', ''),
+                        quote=pt.get('quote'),
+                        frequency=pt.get('frequency', 'MEDIUM'),
+                        sentiment='POSITIVE'
+                    ))
+            
+            negative_themes = []
+            for nt in cpa_data.get('negative_themes', []):
+                if isinstance(nt, dict):
+                    negative_themes.append(CustomerTheme(
+                        theme=nt.get('theme', ''),
+                        quote=nt.get('quote'),
+                        frequency=nt.get('frequency', 'MEDIUM'),
+                        sentiment='NEGATIVE'
+                    ))
+            
+            return CustomerPerceptionAnalysis(
+                overall_sentiment=cpa_data.get('overall_sentiment', 'NEUTRAL'),
+                sentiment_score=cpa_data.get('sentiment_score'),
+                platform_ratings=platform_ratings,
+                average_rating=cpa_data.get('average_rating'),
+                total_reviews=cpa_data.get('total_reviews'),
+                rating_vs_competitors=cpa_data.get('rating_vs_competitors'),
+                competitor_ratings=cpa_data.get('competitor_ratings', {}),
+                positive_themes=positive_themes,
+                negative_themes=negative_themes,
+                key_strengths=cpa_data.get('key_strengths', []),
+                key_concerns=cpa_data.get('key_concerns', []),
+                analysis=cpa_data.get('analysis')
+            )
+        except Exception as e:
+            logging.warning(f"Error parsing customer perception analysis: {e}")
+            return None
+    
     # Build prompt
     user_prompt = build_brand_audit_prompt(
         brand_name=request.brand_name,
