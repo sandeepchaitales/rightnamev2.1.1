@@ -1970,43 +1970,42 @@ async def login_email(request: EmailLoginRequest, response: Response):
 # ==================== BRAND AUDIT ENDPOINTS ====================
 
 async def perform_web_search(query: str) -> str:
-    """Perform web search using multiple methods for reliability"""
+    """Perform web search using DuckDuckGo HTML (most reliable method)"""
     import aiohttp
     from bs4 import BeautifulSoup
     
     results = []
     
-    # Method 1: Try aiohttp Bing search (more reliable)
+    # Use DuckDuckGo HTML version - works reliably without JavaScript
     try:
-        search_url = f"https://www.bing.com/search?q={query.replace(' ', '+')}"
+        search_url = f"https://html.duckduckgo.com/html/?q={query.replace(' ', '+')}"
         async with aiohttp.ClientSession() as session:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
             async with session.get(search_url, headers=headers, timeout=aiohttp.ClientTimeout(total=15)) as response:
                 if response.status == 200:
                     html = await response.text()
                     soup = BeautifulSoup(html, 'html.parser')
                     
-                    # Extract search results
-                    for i, result in enumerate(soup.select('.b_algo')[:5], 1):
-                        title_elem = result.select_one('h2')
-                        desc_elem = result.select_one('.b_caption p')
-                        link_elem = result.select_one('a')
+                    # DuckDuckGo HTML uses .result class
+                    for i, r in enumerate(soup.select('.result')[:5], 1):
+                        title_elem = r.select_one('.result__title')
+                        snippet_elem = r.select_one('.result__snippet')
+                        url_elem = r.select_one('.result__url')
                         
                         title = title_elem.get_text(strip=True) if title_elem else 'No title'
-                        desc = desc_elem.get_text(strip=True) if desc_elem else 'No description'
-                        url = link_elem.get('href', '') if link_elem else ''
+                        snippet = snippet_elem.get_text(strip=True) if snippet_elem else 'No description'
+                        url = url_elem.get('href', '') if url_elem else ''
                         
-                        results.append(f"[{i}] {title}\n{desc}\nURL: {url}")
+                        results.append(f"[{i}] {title}\n{snippet}\nURL: {url}")
                     
-                    logging.info(f"Bing search returned {len(results)} results for: {query[:50]}...")
+                    if results:
+                        logging.info(f"DuckDuckGo HTML search returned {len(results)} results for: {query[:50]}...")
     except Exception as e:
-        logging.warning(f"Bing search failed: {e}")
+        logging.warning(f"DuckDuckGo HTML search failed: {e}")
     
-    # Method 2: Fallback to DuckDuckGo
+    # Fallback: Try DuckDuckGo Python library
     if not results:
         try:
             from duckduckgo_search import DDGS
@@ -2015,9 +2014,9 @@ async def perform_web_search(query: str) -> str:
                 if ddg_results:
                     for i, r in enumerate(ddg_results, 1):
                         results.append(f"[{i}] {r.get('title', 'No title')}\n{r.get('body', 'No description')}\nURL: {r.get('href', 'No URL')}")
-                    logging.info(f"DuckDuckGo fallback returned {len(results)} results")
+                    logging.info(f"DuckDuckGo API fallback returned {len(results)} results")
         except Exception as e:
-            logging.warning(f"DuckDuckGo search also failed: {e}")
+            logging.warning(f"DuckDuckGo API also failed: {e}")
     
     if results:
         return "\n\n".join(results)
