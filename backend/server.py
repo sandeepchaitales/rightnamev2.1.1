@@ -1979,6 +1979,7 @@ async def perform_web_search(query: str) -> str:
     # Use DuckDuckGo HTML version - works reliably without JavaScript
     try:
         search_url = f"https://html.duckduckgo.com/html/?q={query.replace(' ', '+')}"
+        logging.info(f"Searching DuckDuckGo HTML: {query[:50]}...")
         async with aiohttp.ClientSession() as session:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -1989,7 +1990,10 @@ async def perform_web_search(query: str) -> str:
                     soup = BeautifulSoup(html, 'html.parser')
                     
                     # DuckDuckGo HTML uses .result class
-                    for i, r in enumerate(soup.select('.result')[:5], 1):
+                    result_elements = soup.select('.result')
+                    logging.info(f"Found {len(result_elements)} result elements")
+                    
+                    for i, r in enumerate(result_elements[:5], 1):
                         title_elem = r.select_one('.result__title')
                         snippet_elem = r.select_one('.result__snippet')
                         url_elem = r.select_one('.result__url')
@@ -2001,7 +2005,9 @@ async def perform_web_search(query: str) -> str:
                         results.append(f"[{i}] {title}\n{snippet}\nURL: {url}")
                     
                     if results:
-                        logging.info(f"DuckDuckGo HTML search returned {len(results)} results for: {query[:50]}...")
+                        logging.info(f"DuckDuckGo HTML returned {len(results)} results for: {query[:50]}...")
+                else:
+                    logging.warning(f"DuckDuckGo HTML returned status {response.status}")
     except Exception as e:
         logging.warning(f"DuckDuckGo HTML search failed: {e}")
     
