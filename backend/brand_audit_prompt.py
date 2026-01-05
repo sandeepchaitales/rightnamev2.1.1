@@ -552,14 +552,23 @@ Respond with ONLY valid JSON in this structure:
 CRITICAL INSTRUCTIONS
 ================================================================================
 
-1. BE THOROUGH: Every section must meet minimum word counts
-2. BE SPECIFIC: Use actual numbers, percentages, ₹ values
-3. BE CRITICAL: Honestly assess weaknesses and risks
-4. BE ACTIONABLE: Recommendations must have clear steps, costs, timelines
-5. USE FRAMEWORKS: Apply Porter's Five Forces, BCG Matrix, SWOT properly
-6. CITE SOURCES: Reference [1], [2], etc. throughout
+⚠️ DATA ACCURACY IS PARAMOUNT ⚠️
 
-DO NOT generate generic content. Every insight must be specific to THIS brand.
+1. **ONLY USE DATA FROM RESEARCH**: Every fact must come from the research data provided
+2. **NO HALLUCINATION**: If data is not found, explicitly state "Not found in research" or "Data unavailable"
+3. **CITE SOURCES**: Reference [1], [2], etc. from the actual search results
+4. **RATINGS**: Only report Google/Justdial/Zomato ratings if EXPLICITLY found in research
+5. **STORE COUNTS**: Only report outlet numbers if EXPLICITLY mentioned
+6. **FOUNDING YEAR**: Only state if EXPLICITLY found in research
+7. **REVENUE/FUNDING**: Only report if EXPLICITLY found - otherwise say "Not publicly disclosed"
+
+EXAMPLES:
+- Research says "Chai Bunk 120 outlets" → Report "120 outlets" ✅
+- Research doesn't mention founding year → Say "Founding year not found in research" ✅
+- Research shows "4.3 rating on Justdial" → Report exactly "4.3 on Justdial" ✅
+- No rating found → Say "Rating data not available in research" ✅
+
+DO NOT INVENT NUMBERS. DO NOT GUESS. USE ONLY RESEARCH DATA.
 """
 
 
