@@ -1970,62 +1970,64 @@ async def login_email(request: EmailLoginRequest, response: Response):
 # ==================== BRAND AUDIT ENDPOINTS ====================
 
 async def perform_web_search(query: str) -> str:
-    """Perform web search using Bing via primp (reliable) + AI extraction"""
-    import aiohttp
-    from bs4 import BeautifulSoup
+    """Perform web search using Claude with web search capability (via Emergent)"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     results_text = ""
     
-    # Use Bing search via aiohttp (primp shows this works)
     try:
-        search_url = f"https://www.bing.com/search?q={query.replace(' ', '+')}"
-        logging.info(f"Searching Bing: {query[:50]}...")
+        # Use Claude which has web search capability
+        llm_chat = LlmChat(
+            api_key=EMERGENT_KEY,
+            session_id=f"search_{uuid.uuid4()}",
+            system_message="You are a research assistant with web search access. Search the web and provide ONLY factual, verifiable information. Include specific numbers, dates, and ratings. If you cannot find specific data, say 'Not found in search'."
+        ).with_model("anthropic", "claude-sonnet-4-20250514")
         
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-            }
-            async with session.get(search_url, headers=headers, timeout=aiohttp.ClientTimeout(total=20)) as response:
-                if response.status == 200:
-                    html = await response.text()
-                    soup = BeautifulSoup(html, 'html.parser')
-                    
-                    # Extract all text content from the page
-                    # Remove script and style elements
-                    for script in soup(["script", "style"]):
-                        script.decompose()
-                    
-                    # Get text from main content area
-                    main_content = soup.find('main') or soup.find('body')
-                    if main_content:
-                        text = main_content.get_text(separator=' ', strip=True)
-                        # Limit to first 4000 chars to avoid token limits
-                        results_text = text[:4000]
-                        logging.info(f"Bing search extracted {len(results_text)} chars for: {query[:50]}...")
-                else:
-                    logging.warning(f"Bing returned status {response.status}")
-    except Exception as e:
-        logging.warning(f"Bing search failed: {e}")
-    
-    # Fallback to DuckDuckGo API
-    if not results_text:
-        try:
-            from duckduckgo_search import DDGS
-            with DDGS() as ddgs:
-                ddg_results = list(ddgs.text(query, max_results=5))
-                if ddg_results:
-                    formatted = []
-                    for r in ddg_results:
-                        formatted.append(f"{r.get('title', '')}: {r.get('body', '')}")
-                    results_text = "\n".join(formatted)
-                    logging.info(f"DuckDuckGo returned {len(ddg_results)} results")
-        except Exception as ddg_error:
-            logging.warning(f"DuckDuckGo failed: {ddg_error}")
-    
-    if results_text:
+        search_prompt = f"""Search the web for: {query}
+
+Return ONLY factual information you find from search results. Include:
+- Exact numbers (store counts, ratings, revenue figures)
+- Specific dates (founding year, expansion dates)
+- Platform ratings (Google Maps rating, Justdial rating, Zomato rating)
+- Source names when possible
+
+Be specific and factual. Do not make assumptions."""
+
+        user_message = UserMessage(text=search_prompt)
+        response = await asyncio.wait_for(
+            llm_chat.send_message(user_message),
+            timeout=30.0
+        )
+        
+        if hasattr(response, 'text'):
+            results_text = response.text
+        elif isinstance(response, str):
+            results_text = response
+        else:
+            results_text = str(response)
+        
+        logging.info(f"Claude web search completed for: {query[:50]}...")
         return f"Query: {query}\n\nSearch Results:\n{results_text}"
+        
+    except asyncio.TimeoutError:
+        logging.warning(f"Claude search timed out for: {query[:50]}")
+    except Exception as e:
+        logging.warning(f"Claude search failed: {e}")
+    
+    # Fallback to DuckDuckGo
+    try:
+        from duckduckgo_search import DDGS
+        with DDGS() as ddgs:
+            ddg_results = list(ddgs.text(query, max_results=5))
+            if ddg_results:
+                formatted = []
+                for r in ddg_results:
+                    formatted.append(f"{r.get('title', '')}: {r.get('body', '')}")
+                results_text = "\n".join(formatted)
+                return f"Query: {query}\n\nSearch Results:\n{results_text}"
+    except Exception as ddg_error:
+        logging.warning(f"DuckDuckGo fallback failed: {ddg_error}")
+    
     return f"Query: {query}\n\nNo search results found"
 
 async def gather_brand_audit_research(brand_name: str, brand_website: str, competitor_1: str, 
