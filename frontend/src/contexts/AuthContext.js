@@ -38,11 +38,20 @@ export const AuthProvider = ({ children }) => {
             const response = await fetch(`${API_URL}/auth/me`, {
                 credentials: 'include'
             });
+            
+            // Read response text first to avoid body stream issues
+            const responseText = await response.text();
+            
             if (response.ok) {
-                const userData = await response.json();
-                setUser(userData);
-                localStorage.setItem('user_authenticated', 'true');
-                localStorage.setItem('user_data', JSON.stringify(userData));
+                try {
+                    const userData = JSON.parse(responseText);
+                    setUser(userData);
+                    localStorage.setItem('user_authenticated', 'true');
+                    localStorage.setItem('user_data', JSON.stringify(userData));
+                } catch (parseError) {
+                    console.error('Failed to parse auth response:', parseError);
+                    setUser(null);
+                }
             } else {
                 // Check localStorage as fallback
                 const storedAuth = localStorage.getItem('user_authenticated');
