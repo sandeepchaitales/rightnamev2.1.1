@@ -2322,62 +2322,62 @@ async def brand_audit(request: BrandAuditRequest):
                     llm_chat.send_message(user_message),
                     timeout=120.0  # 2 minute timeout per model
                 )
-            
-            if hasattr(response, 'text'):
-                content = response.text
-            elif isinstance(response, str):
-                content = response
-            else:
-                content = str(response)
-            
-            logging.info(f"Brand Audit: {provider}/{model} raw response length: {len(content) if content else 0}")
-            logging.info(f"Brand Audit: {provider}/{model} raw response preview: {content[:200] if content else 'EMPTY'}...")
-            
-            # Check for empty response
-            if not content or content.strip() == "":
-                logging.warning(f"Brand Audit: {provider}/{model} returned empty response")
-                raise ValueError("Empty response from LLM")
-            
-            # Extract JSON
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0]
-            elif "```" in content:
-                parts = content.split("```")
-                if len(parts) >= 2:
-                    content = parts[1]
-                    if content.startswith("json"):
-                        content = content[4:]
-            
-            content = content.strip()
-            
-            logging.info(f"Brand Audit: After JSON extraction, content length: {len(content)}")
-            
-            # Check again after extraction
-            if not content:
-                logging.warning(f"Brand Audit: {provider}/{model} JSON extraction failed - empty content")
-                raise ValueError("JSON extraction failed - empty content")
-            
-            # Parse JSON
-            try:
-                data = json.loads(content)
-            except json.JSONDecodeError as je:
-                logging.warning(f"Brand Audit: JSON decode failed, attempting repair. Content length: {len(content)}")
-                from json_repair import repair_json
-                content = repair_json(content)
-                data = json.loads(content)
-            
-            # Verify we got valid data
-            if not data or not isinstance(data, dict):
-                logging.warning(f"Brand Audit: {provider}/{model} returned invalid data structure")
-                raise ValueError("Invalid data structure from LLM")
-            
-            logging.info(f"Brand Audit: {provider}/{model} succeeded!")
-            break  # Success, exit the retry loop
-            
+                
+                if hasattr(response, 'text'):
+                    content = response.text
+                elif isinstance(response, str):
+                    content = response
+                else:
+                    content = str(response)
+                
+                logging.info(f"Brand Audit: {provider}/{model} raw response length: {len(content) if content else 0}")
+                logging.info(f"Brand Audit: {provider}/{model} raw response preview: {content[:200] if content else 'EMPTY'}...")
+                
+                # Check for empty response
+                if not content or content.strip() == "":
+                    logging.warning(f"Brand Audit: {provider}/{model} returned empty response")
+                    raise ValueError("Empty response from LLM")
+                
+                # Extract JSON
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0]
+                elif "```" in content:
+                    parts = content.split("```")
+                    if len(parts) >= 2:
+                        content = parts[1]
+                        if content.startswith("json"):
+                            content = content[4:]
+                
+                content = content.strip()
+                
+                logging.info(f"Brand Audit: After JSON extraction, content length: {len(content)}")
+                
+                # Check again after extraction
+                if not content:
+                    logging.warning(f"Brand Audit: {provider}/{model} JSON extraction failed - empty content")
+                    raise ValueError("JSON extraction failed - empty content")
+                
+                # Parse JSON
+                try:
+                    data = json.loads(content)
+                except json.JSONDecodeError as je:
+                    logging.warning(f"Brand Audit: JSON decode failed, attempting repair. Content length: {len(content)}")
+                    from json_repair import repair_json
+                    content = repair_json(content)
+                    data = json.loads(content)
+                
+                # Verify we got valid data
+                if not data or not isinstance(data, dict):
+                    logging.warning(f"Brand Audit: {provider}/{model} returned invalid data structure")
+                    raise ValueError("Invalid data structure from LLM")
+                
+                logging.info(f"Brand Audit: {provider}/{model} succeeded!")
+                break  # Success, exit retry loop
+                
             except asyncio.TimeoutError:
                 last_error = f"Timeout after 120s"
                 logging.warning(f"Brand Audit: {provider}/{model} timed out (attempt {retry + 1})")
-                continue  # Try same model again
+                continue  # Retry same model
             except Exception as e:
                 error_str = str(e)
                 last_error = e
