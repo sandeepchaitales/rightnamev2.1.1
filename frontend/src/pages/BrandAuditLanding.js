@@ -113,26 +113,29 @@ const BrandAuditLanding = () => {
                 body: JSON.stringify(formData)
             });
 
-            // Clone response before reading to avoid "body stream already read" error
-            const responseClone = response.clone();
+            // Get response text first to avoid "body stream already read" error
+            const responseText = await response.text();
             
             if (!response.ok) {
                 let errorMessage = 'Audit failed';
                 try {
-                    const error = await response.json();
-                    errorMessage = error.detail || errorMessage;
+                    const errorData = JSON.parse(responseText);
+                    errorMessage = errorData.detail || errorMessage;
                 } catch {
-                    // Response wasn't JSON, try text
-                    try {
-                        errorMessage = await responseClone.text();
-                    } catch {
-                        errorMessage = `Server error: ${response.status}`;
-                    }
+                    errorMessage = responseText || `Server error: ${response.status}`;
                 }
                 throw new Error(errorMessage);
             }
 
-            const result = await response.json();
+            // Parse the successful response
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError, 'Response:', responseText.substring(0, 500));
+                throw new Error('Invalid response from server');
+            }
+            
             navigate('/brand-audit/results', { state: { data: result, query: formData } });
         } catch (error) {
             console.error(error);
