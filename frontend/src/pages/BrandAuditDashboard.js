@@ -228,6 +228,19 @@ const PerformanceRadar = ({ dimensions, brandName }) => {
 
 // ============ DETAILED DIMENSION CARD ============
 const DetailedDimensionCard = ({ dimension, index }) => {
+    // Debug logging
+    console.log(`[DetailedDimensionCard ${index}] Received:`, dimension);
+    
+    // Fallback for missing dimension
+    if (!dimension) {
+        return (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center">
+                <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">Dimension data unavailable</p>
+            </div>
+        );
+    }
+    
     const icons = ['🏛️', '⭐', '🎯', '📈', '⚙️', '📢', '💰', '🌐'];
     
     const getScoreColorClasses = (score) => {
