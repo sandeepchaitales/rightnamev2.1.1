@@ -324,27 +324,46 @@ const DetailedDimensionCard = ({ dimension, index }) => {
 };
 
 // ============ QUICK DIMENSIONS GRID ============
-const QuickDimensionsGrid = ({ dimensions }) => (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {dimensions?.slice(0, 8).map((dim, i) => {
-            const icons = ['🏛️', '⭐', '🎯', '📈', '⚙️', '📢', '💰', '🌐'];
-            const bgColor = dim.score >= 8 ? 'bg-emerald-50 border-emerald-200' : 
-                           dim.score >= 6 ? 'bg-violet-50 border-violet-200' : 
-                           dim.score >= 4 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
-            const textColor = dim.score >= 8 ? 'text-emerald-700' : 
-                             dim.score >= 6 ? 'text-violet-700' : 
-                             dim.score >= 4 ? 'text-amber-700' : 'text-red-700';
-            
-            return (
-                <div key={i} className={`${bgColor} border rounded-xl p-3 text-center`}>
-                    <span className="text-xl block mb-1">{icons[i]}</span>
-                    <div className={`text-2xl font-black ${textColor}`}>{dim.score}</div>
-                    <div className="text-xs text-slate-600 truncate">{dim.name}</div>
+const QuickDimensionsGrid = ({ dimensions }) => {
+    // Debug logging
+    console.log('[QuickDimensionsGrid] Received dimensions:', dimensions);
+    
+    // Fallback UI
+    if (!dimensions || dimensions.length === 0) {
+        console.warn('[QuickDimensionsGrid] No dimensions data');
+        return (
+            <div className="flex items-center justify-center h-32 bg-slate-50 rounded-xl">
+                <div className="text-center">
+                    <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Score data not available</p>
                 </div>
-            );
-        })}
-    </div>
-);
+            </div>
+        );
+    }
+    
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {dimensions.slice(0, 8).map((dim, i) => {
+                const icons = ['🏛️', '⭐', '🎯', '📈', '⚙️', '📢', '💰', '🌐'];
+                const score = dim.score || 0;
+                const bgColor = score >= 8 ? 'bg-emerald-50 border-emerald-200' : 
+                               score >= 6 ? 'bg-violet-50 border-violet-200' : 
+                               score >= 4 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
+                const textColor = score >= 8 ? 'text-emerald-700' : 
+                                 score >= 6 ? 'text-violet-700' : 
+                                 score >= 4 ? 'text-amber-700' : 'text-red-700';
+                
+                return (
+                    <div key={i} className={`${bgColor} border rounded-xl p-3 text-center`}>
+                        <span className="text-xl block mb-1">{icons[i]}</span>
+                        <div className={`text-2xl font-black ${textColor}`}>{score}</div>
+                        <div className="text-xs text-slate-600 truncate">{dim.name || 'Unknown'}</div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
 
 // ============ CUSTOMER PERCEPTION & BRAND HEALTH SECTION ============
 const CustomerPerceptionSection = ({ data }) => {
