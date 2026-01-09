@@ -619,13 +619,28 @@ const StrategySnapshot = ({ classification, pros, cons }) => (
 
 // ============ DETAILED DIMENSION CARD ============
 const DetailedDimensionCard = ({ dimension, index }) => {
+    // Debug logging
+    console.log(`[EVAL Dashboard] DetailedDimensionCard ${index}:`, dimension);
+    
+    // Fallback for missing dimension
+    if (!dimension) {
+        return (
+            <PrintCard>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center">
+                    <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Dimension data unavailable</p>
+                </div>
+            </PrintCard>
+        );
+    }
+    
     const icons = ['✨', '🌍', '💎', '📈', '⚖️', '🎯', '🔮', '🎨'];
     const getScoreColor = (score) => {
         if (score >= 8) return 'from-emerald-400 to-emerald-500 bg-emerald-100 text-emerald-700';
         if (score >= 6) return 'from-violet-400 to-fuchsia-500 bg-violet-100 text-violet-700';
         return 'from-amber-400 to-orange-500 bg-amber-100 text-amber-700';
     };
-    const colors = getScoreColor(dimension.score);
+    const colors = getScoreColor(dimension.score || 0);
     
     // Parse sub-sections from reasoning if available
     const parseReasoning = (text) => {
