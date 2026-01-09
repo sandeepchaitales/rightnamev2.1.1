@@ -2411,14 +2411,20 @@ async def brand_audit(request: BrandAuditRequest):
     
     # Parse dimensions
     dimensions = []
-    for dim in data.get('dimensions', []):
+    raw_dimensions = data.get('dimensions', [])
+    logging.info(f"Brand Audit: Raw dimensions count: {len(raw_dimensions)}")
+    logging.info(f"Brand Audit: Raw dimensions data: {raw_dimensions[:2] if raw_dimensions else 'EMPTY'}")  # Log first 2
+    
+    for dim in raw_dimensions:
         dimensions.append(BrandAuditDimension(
             name=dim.get('name', ''),
             score=float(dim.get('score', 0)),
-            reasoning=dim.get('reasoning', ''),
-            data_sources=dim.get('data_sources', []),
+            reasoning=dim.get('reasoning', 'No reasoning provided'),
+            data_sources=dim.get('data_sources', dim.get('evidence', [])),
             confidence=dim.get('confidence', 'MEDIUM')
         ))
+    
+    logging.info(f"Brand Audit: Parsed {len(dimensions)} dimensions")
     
     # Ensure we have 8 dimensions
     dimension_names = ["Heritage & Authenticity", "Customer Satisfaction", "Market Positioning", 
