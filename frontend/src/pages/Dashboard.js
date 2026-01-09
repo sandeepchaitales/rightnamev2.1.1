@@ -1768,20 +1768,34 @@ const Dashboard = () => {
     const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     useEffect(() => {
+        console.log('='.repeat(50));
+        console.log('[EVAL Dashboard] VERSION: 2.1.0-20250108');
+        console.log('[EVAL Dashboard] location.state:', location.state);
+        
         if (location.state?.data) {
+            console.log('[EVAL Dashboard] Setting data from location.state');
+            console.log('[EVAL Dashboard] Full data:', location.state.data);
+            console.log('[EVAL Dashboard] brand_scores:', location.state.data?.brand_scores);
+            console.log('[EVAL Dashboard] First brand dimensions:', location.state.data?.brand_scores?.[0]?.dimensions);
+            
             setReportData(location.state.data);
             setQueryData(location.state.query);
             localStorage.setItem('current_report', JSON.stringify(location.state.data));
             localStorage.setItem('current_query', JSON.stringify(location.state.query));
         } else {
+            console.log('[EVAL Dashboard] Loading from localStorage');
             const savedReport = localStorage.getItem('current_report');
             const savedQuery = localStorage.getItem('current_query');
             if (savedReport && savedQuery) {
-                setReportData(JSON.parse(savedReport));
+                const parsedReport = JSON.parse(savedReport);
+                console.log('[EVAL Dashboard] Loaded from localStorage:', parsedReport);
+                console.log('[EVAL Dashboard] First brand dimensions from storage:', parsedReport?.brand_scores?.[0]?.dimensions);
+                setReportData(parsedReport);
                 setQueryData(JSON.parse(savedQuery));
             }
         }
         setLoading(false);
+        console.log('='.repeat(50));
     }, [location.state]);
 
     const handleRegister = () => {
