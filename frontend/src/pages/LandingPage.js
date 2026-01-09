@@ -283,17 +283,19 @@ const LandingPage = () => {
         brand_names: brandNames,
         industry: formData.industry || 'General',
         category: formData.category || 'General',
-        product_type: formData.product_type,
+        product_type: formData.product_type || 'Digital',
         usp: formData.usp || '',
         brand_vibe: formData.brand_vibe || '',
-        positioning: formData.positioning,
-        market_scope: formData.market_scope,
-        countries: countries.length > 0 ? countries : ['USA'],
+        positioning: formData.positioning || 'Premium',  // Ensure default
+        market_scope: formData.market_scope || 'Multi-Country',  // Ensure default
+        countries: countries.length > 0 ? countries : ['India'],
         // NEW: Enhanced input fields (Improvements #2 & #3)
         known_competitors: formData.known_competitors ? formData.known_competitors.split(',').map(c => c.trim()).filter(c => c) : [],
         product_keywords: formData.product_keywords ? formData.product_keywords.split(',').map(k => k.trim()).filter(k => k) : [],
         problem_statement: formData.problem_statement || ''
       };
+      
+      console.log('Sending payload:', payload);  // Debug log
 
       const result = await api.evaluate(payload);
       navigate('/dashboard', { state: { data: result, query: payload } });
