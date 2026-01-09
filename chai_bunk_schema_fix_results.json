@@ -1,0 +1,38 @@
+{
+  "test_focus": "Chai Bunk Brand Audit API - Schema Fix Test",
+  "description": "Test Brand Audit API with Chai Bunk after StrategicRecommendation schema fix",
+  "test_case": {
+    "brand_name": "Chai Bunk",
+    "brand_website": "https://www.chaibunk.com",
+    "competitor_1": "https://www.chaayos.com",
+    "competitor_2": "https://www.chaipoint.com",
+    "category": "Cafe/QSR",
+    "geography": "India"
+  },
+  "schema_fix_details": [
+    "StrategicRecommendation schema now has optional fields",
+    "parse_recommendation() function maps title<->recommended_action"
+  ],
+  "expected_behavior": [
+    "200 OK response (not 500 Internal Server Error)",
+    "Valid JSON with report_id, overall_score, dimensions, recommendations, swot",
+    "No Pydantic validation errors",
+    "No 'Field required' errors for recommended_action"
+  ],
+  "timeout": "180 seconds (3 minutes)",
+  "summary": {
+    "tests_run": 1,
+    "tests_passed": 0,
+    "success_rate": 0.0,
+    "overall_success": false
+  },
+  "results": [
+    {
+      "test": "Brand Audit Schema Fix - HTTP Error",
+      "success": false,
+      "details": "HTTP 520: Internal Server Error",
+      "timestamp": "2026-01-09T09:12:22.861437"
+    }
+  ],
+  "timestamp": "2026-01-09T09:12:22.861690"
+}
