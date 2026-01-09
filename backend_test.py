@@ -4880,6 +4880,10 @@ class BrandEvaluationTester:
         print("\n🔄 PRIORITY TEST: Testing fallback model feature...")
         self.test_fallback_model_feature()
         
+        # PRIORITY: Test dimensions population (as per review request)
+        print("\n📊 PRIORITY TEST: Testing dimensions population...")
+        self.test_dimensions_population_nexaflow()
+        
         # Test main evaluate endpoint
         self.test_evaluate_endpoint_structure()
         
