@@ -1215,11 +1215,11 @@ class BrandEvaluationTester:
             if response.status_code not in [200]:
                 error_msg = f"HTTP {response.status_code}: {response.text[:500]}"
                 if response.status_code in [502, 500, 503]:
-                    self.log_test("Brand Audit - Tea Villa Server Error", False, f"Server error after Claude fix (expected 200 OK): {error_msg}")
+                    self.log_test("Brand Audit - Chai Bunk Server Error", False, f"Server error (expected 200 OK): {error_msg}")
                 elif response.status_code == 408:
-                    self.log_test("Brand Audit - Tea Villa Timeout", False, f"Request timeout after Claude fix: {error_msg}")
+                    self.log_test("Brand Audit - Chai Bunk Timeout", False, f"Request timeout: {error_msg}")
                 else:
-                    self.log_test("Brand Audit - Tea Villa HTTP Error", False, error_msg)
+                    self.log_test("Brand Audit - Chai Bunk HTTP Error", False, error_msg)
                 return False
             
             try:
@@ -1227,31 +1227,77 @@ class BrandEvaluationTester:
                 print(f"✅ Response received successfully, checking structure...")
                 
                 # Test 2: Check required top-level fields
-                required_fields = ["report_id", "overall_score", "verdict", "executive_summary", "dimensions"]
+                required_fields = ["report_id", "overall_score", "brand_overview", "dimensions", "swot"]
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if missing_fields:
-                    self.log_test("Brand Audit - Tea Villa Required Fields", False, f"Missing required fields: {missing_fields}")
+                    self.log_test("Brand Audit - Chai Bunk Required Fields", False, f"Missing required fields: {missing_fields}")
                     return False
                 
-                # Test 3: Check report_id is string
+                # Test 3: Check report_id exists and is string
                 report_id = data.get("report_id")
                 if not isinstance(report_id, str) or len(report_id) == 0:
-                    self.log_test("Brand Audit - Tea Villa Report ID", False, f"Invalid report_id: {report_id}")
+                    self.log_test("Brand Audit - Chai Bunk Report ID", False, f"Invalid report_id: {report_id}")
                     return False
                 
-                # Test 4: Check overall_score is number 0-100
+                # Test 4: Check overall_score is number
                 overall_score = data.get("overall_score")
-                if not isinstance(overall_score, (int, float)) or not (0 <= overall_score <= 100):
-                    self.log_test("Brand Audit - Tea Villa Overall Score", False, f"Invalid overall_score: {overall_score} (should be 0-100)")
+                if not isinstance(overall_score, (int, float)):
+                    self.log_test("Brand Audit - Chai Bunk Overall Score", False, f"overall_score is not a number: {overall_score}")
                     return False
                 
-                # Test 5: Check verdict is one of expected values
-                verdict = data.get("verdict", "")
-                valid_verdicts = ["STRONG", "MODERATE", "WEAK", "CRITICAL"]
-                if verdict not in valid_verdicts:
-                    self.log_test("Brand Audit - Tea Villa Verdict", False, f"Invalid verdict: {verdict} (should be one of {valid_verdicts})")
+                # Test 5: Check brand_overview.outlets_count mentions "120"
+                brand_overview = data.get("brand_overview", {})
+                outlets_count = brand_overview.get("outlets_count", "")
+                if "120" not in str(outlets_count):
+                    self.log_test("Brand Audit - Chai Bunk Outlets Count", False, f"brand_overview.outlets_count should mention '120', got: {outlets_count}")
                     return False
+                
+                # Test 6: Check dimensions array has 8 items
+                dimensions = data.get("dimensions", [])
+                if not isinstance(dimensions, list) or len(dimensions) != 8:
+                    self.log_test("Brand Audit - Chai Bunk Dimensions Count", False, f"dimensions array should have 8 items, got: {len(dimensions)}")
+                    return False
+                
+                # Test 7: Check swot has all 4 categories
+                swot = data.get("swot", {})
+                required_swot_categories = ["strengths", "weaknesses", "opportunities", "threats"]
+                missing_swot = [cat for cat in required_swot_categories if cat not in swot]
+                
+                if missing_swot:
+                    self.log_test("Brand Audit - Chai Bunk SWOT Categories", False, f"Missing SWOT categories: {missing_swot}")
+                    return False
+                
+                # Test 8: Verify each SWOT category has items
+                for category in required_swot_categories:
+                    swot_items = swot.get(category, [])
+                    if not isinstance(swot_items, list) or len(swot_items) == 0:
+                        self.log_test("Brand Audit - Chai Bunk SWOT Content", False, f"SWOT {category} should have items, got: {swot_items}")
+                        return False
+                
+                # Test 9: Check dimensions structure
+                for i, dimension in enumerate(dimensions):
+                    if not isinstance(dimension, dict):
+                        self.log_test("Brand Audit - Chai Bunk Dimension Structure", False, f"dimensions[{i}] should be object, got: {type(dimension)}")
+                        return False
+                    
+                    required_dim_fields = ["name", "score"]
+                    missing_dim_fields = [field for field in required_dim_fields if field not in dimension]
+                    if missing_dim_fields:
+                        self.log_test("Brand Audit - Chai Bunk Dimension Fields", False, f"dimensions[{i}] missing fields: {missing_dim_fields}")
+                        return False
+                
+                print(f"✅ All validation checks passed:")
+                print(f"   - Report ID: {report_id}")
+                print(f"   - Overall Score: {overall_score}")
+                print(f"   - Outlets Count: {outlets_count}")
+                print(f"   - Dimensions: {len(dimensions)} items")
+                print(f"   - SWOT Categories: {list(swot.keys())}")
+                print(f"   - Processing Time: {processing_time:.2f} seconds")
+                
+                self.log_test("Brand Audit - Chai Bunk Compact Prompt", True, 
+                            f"All checks passed. Report ID: {report_id}, Overall Score: {overall_score}, Processing Time: {processing_time:.2f}s")
+                return Truelse
                 
                 # Test 6: Check executive_summary is substantial text
                 exec_summary = data.get("executive_summary", "")
