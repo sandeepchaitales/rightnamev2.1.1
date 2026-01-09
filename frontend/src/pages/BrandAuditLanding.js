@@ -108,42 +108,34 @@ const BrandAuditLanding = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/brand-audit`, {
-                method: 'POST',
+            // Use axios instead of fetch to avoid Response body issues
+            const response = await axios.post(`${API_URL}/brand-audit`, formData, {
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                timeout: 300000 // 5 minute timeout for long LLM operations
             });
-
-            // Get response text first to avoid "body stream already read" error
-            const responseText = await response.text();
             
-            if (!response.ok) {
-                let errorMessage = 'Audit failed';
-                try {
-                    const errorData = JSON.parse(responseText);
-                    errorMessage = errorData.detail || errorMessage;
-                } catch {
-                    errorMessage = responseText || `Server error: ${response.status}`;
-                }
-                throw new Error(errorMessage);
-            }
-
-            // Parse the successful response
-            let result;
-            try {
-                result = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error('JSON parse error:', parseError, 'Response:', responseText.substring(0, 500));
+            // Axios automatically parses JSON and handles response body correctly
+            const result = response.data;
+            
+            if (!result || !result.report_id) {
                 throw new Error('Invalid response from server');
             }
             
             navigate('/brand-audit/results', { state: { data: result, query: formData } });
         } catch (error) {
-            console.error(error);
+            console.error('Brand Audit Error:', error);
+            
+            let errorMessage = 'Audit failed';
+            if (error.response?.data?.detail) {
+                errorMessage = error.response.data.detail;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
             toast.error(
                 <div className="flex flex-col gap-1">
                     <span className="font-bold">Audit Failed</span>
-                    <span className="text-xs">{error.message}</span>
+                    <span className="text-xs">{errorMessage}</span>
                 </div>,
                 { duration: 5000 }
             );
