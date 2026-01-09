@@ -1173,6 +1173,185 @@ class BrandEvaluationTester:
             self.log_test("ACTUAL USPTO Costs - Exception", False, str(e))
             return False
 
+    def test_dimensions_population_nexaflow(self):
+        """Test /api/evaluate endpoint to verify dimensions are populated as requested in review"""
+        payload = {
+            "brand_names": ["NexaFlow"],
+            "category": "Technology",
+            "positioning": "Premium",
+            "market_scope": "Multi-Country",
+            "countries": ["India"]
+        }
+        
+        try:
+            print(f"\n🔍 DIMENSIONS POPULATION TEST: Testing /api/evaluate with NexaFlow...")
+            print(f"Payload: {json.dumps(payload, indent=2)}")
+            print(f"Critical Checks:")
+            print(f"  1. Response returns 200 OK")
+            print(f"  2. brand_scores[0].dimensions must be array with 6 items")
+            print(f"  3. Each dimension must have: name, score, reasoning")
+            print(f"  4. trademark_research should NOT be null")
+            print(f"  5. All required sections present")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=180  # 180 seconds as specified in review
+            )
+            
+            processing_time = time.time() - start_time
+            print(f"Response Status: {response.status_code}")
+            print(f"Processing Time: {processing_time:.2f} seconds")
+            
+            # Critical Check 1: Response Returns 200 OK
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:500]}"
+                self.log_test("Dimensions Test - HTTP Status", False, f"Expected 200 OK, got {response.status_code}: {error_msg}")
+                return False
+            
+            try:
+                data = response.json()
+                print(f"✅ Response received successfully, checking dimensions...")
+                
+                # Check basic structure first
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Dimensions Test - Brand Scores Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # Critical Check 2: DIMENSIONS MUST BE POPULATED
+                if "dimensions" not in brand:
+                    self.log_test("Dimensions Test - Dimensions Field Missing", False, "brand_scores[0].dimensions field is missing")
+                    return False
+                
+                dimensions = brand["dimensions"]
+                if not isinstance(dimensions, list):
+                    self.log_test("Dimensions Test - Dimensions Type", False, f"dimensions should be array, got {type(dimensions)}")
+                    return False
+                
+                if len(dimensions) != 6:
+                    self.log_test("Dimensions Test - Dimensions Count", False, f"dimensions must have 6 items, got {len(dimensions)}")
+                    return False
+                
+                print(f"✅ Found {len(dimensions)} dimensions")
+                
+                # Check each dimension has required fields: name, score, reasoning
+                for i, dim in enumerate(dimensions):
+                    if not isinstance(dim, dict):
+                        self.log_test("Dimensions Test - Dimension Structure", False, f"dimensions[{i}] should be object, got {type(dim)}")
+                        return False
+                    
+                    required_dim_fields = ["name", "score", "reasoning"]
+                    missing_dim_fields = [field for field in required_dim_fields if field not in dim]
+                    
+                    if missing_dim_fields:
+                        self.log_test("Dimensions Test - Dimension Fields", False, f"dimensions[{i}] missing fields: {missing_dim_fields}")
+                        return False
+                    
+                    # Validate score is numeric
+                    if not isinstance(dim["score"], (int, float)):
+                        self.log_test("Dimensions Test - Dimension Score Type", False, f"dimensions[{i}].score should be number, got {type(dim['score'])}")
+                        return False
+                    
+                    # Validate name and reasoning are strings
+                    if not isinstance(dim["name"], str) or len(dim["name"]) == 0:
+                        self.log_test("Dimensions Test - Dimension Name", False, f"dimensions[{i}].name should be non-empty string")
+                        return False
+                    
+                    if not isinstance(dim["reasoning"], str) or len(dim["reasoning"]) < 10:
+                        self.log_test("Dimensions Test - Dimension Reasoning", False, f"dimensions[{i}].reasoning should be substantial string (>10 chars)")
+                        return False
+                    
+                    print(f"  ✅ Dimension {i+1}: {dim['name']} (Score: {dim['score']}, Reasoning: {len(dim['reasoning'])} chars)")
+                
+                # Critical Check 3: Trademark Research Present
+                if "trademark_research" not in brand:
+                    self.log_test("Dimensions Test - Trademark Research Field", False, "brand_scores[0].trademark_research field is missing")
+                    return False
+                
+                trademark_research = brand["trademark_research"]
+                if trademark_research is None:
+                    self.log_test("Dimensions Test - Trademark Research Null", False, "brand_scores[0].trademark_research should NOT be null")
+                    return False
+                
+                # Check trademark_research has required fields
+                if not isinstance(trademark_research, dict):
+                    self.log_test("Dimensions Test - Trademark Research Type", False, f"trademark_research should be object, got {type(trademark_research)}")
+                    return False
+                
+                required_tm_fields = ["overall_risk_score", "registration_success_probability"]
+                missing_tm_fields = [field for field in required_tm_fields if field not in trademark_research]
+                
+                if missing_tm_fields:
+                    self.log_test("Dimensions Test - Trademark Research Fields", False, f"trademark_research missing fields: {missing_tm_fields}")
+                    return False
+                
+                print(f"✅ Trademark Research: Risk {trademark_research.get('overall_risk_score')}/10, Success {trademark_research.get('registration_success_probability')}%")
+                
+                # Critical Check 4: All Required Sections
+                required_sections = ["executive_summary", "verdict", "namescore", "final_assessment"]
+                
+                # Check executive_summary at top level
+                if "executive_summary" not in data:
+                    self.log_test("Dimensions Test - Executive Summary", False, "executive_summary missing from response")
+                    return False
+                
+                exec_summary = data["executive_summary"]
+                if not isinstance(exec_summary, str) or len(exec_summary) < 50:
+                    self.log_test("Dimensions Test - Executive Summary Content", False, f"executive_summary should be substantial string, got {len(exec_summary) if isinstance(exec_summary, str) else type(exec_summary)}")
+                    return False
+                
+                # Check brand-level required fields
+                brand_required = ["verdict", "namescore", "final_assessment"]
+                missing_brand_fields = [field for field in brand_required if field not in brand]
+                
+                if missing_brand_fields:
+                    self.log_test("Dimensions Test - Brand Required Fields", False, f"brand_scores[0] missing fields: {missing_brand_fields}")
+                    return False
+                
+                # Validate verdict
+                verdict = brand["verdict"]
+                valid_verdicts = ["GO", "CONDITIONAL GO", "REJECT"]
+                if verdict not in valid_verdicts:
+                    self.log_test("Dimensions Test - Verdict Value", False, f"verdict should be one of {valid_verdicts}, got '{verdict}'")
+                    return False
+                
+                # Validate namescore
+                namescore = brand["namescore"]
+                if not isinstance(namescore, (int, float)) or not (0 <= namescore <= 100):
+                    self.log_test("Dimensions Test - NameScore Range", False, f"namescore should be 0-100, got {namescore}")
+                    return False
+                
+                # Validate final_assessment
+                final_assessment = brand["final_assessment"]
+                if not isinstance(final_assessment, str) or len(final_assessment) < 20:
+                    self.log_test("Dimensions Test - Final Assessment", False, f"final_assessment should be substantial string, got {len(final_assessment) if isinstance(final_assessment, str) else type(final_assessment)}")
+                    return False
+                
+                print(f"✅ All Required Sections Present:")
+                print(f"  - Executive Summary: {len(exec_summary)} chars")
+                print(f"  - Verdict: {verdict}")
+                print(f"  - NameScore: {namescore}/100")
+                print(f"  - Final Assessment: {len(final_assessment)} chars")
+                
+                self.log_test("Dimensions Population Test - NexaFlow Complete", True, 
+                            f"✅ ALL CHECKS PASSED: 6 dimensions populated, trademark_research present, all required sections found. NameScore: {namescore}/100, Verdict: {verdict}")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Dimensions Test - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Dimensions Test - Timeout", False, "Request timed out after 180 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Dimensions Test - Exception", False, str(e))
+            return False
+
     def test_brand_audit_chai_bunk_compact_prompt(self):
         """Test Brand Audit API with Chai Bunk using compact prompt for faster processing"""
         payload = {
