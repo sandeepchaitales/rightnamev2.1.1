@@ -744,8 +744,21 @@ const BrandAuditDashboard = () => {
     
     const { data, query } = location.state || {};
     
+    // ============ DEBUG LOGGING ============
+    console.log('='.repeat(50));
+    console.log('[BrandAuditDashboard] VERSION: 2.1.0-20250108');
+    console.log('[BrandAuditDashboard] Full data received:', data);
+    console.log('[BrandAuditDashboard] Query:', query);
+    console.log('[BrandAuditDashboard] Data keys:', data ? Object.keys(data) : 'NO DATA');
+    console.log('[BrandAuditDashboard] Dimensions:', data?.dimensions);
+    console.log('[BrandAuditDashboard] Dimensions count:', data?.dimensions?.length);
+    console.log('[BrandAuditDashboard] SWOT:', data?.swot);
+    console.log('[BrandAuditDashboard] Recommendations:', data?.recommendations);
+    console.log('='.repeat(50));
+    
     // Handle missing data
     if (!data) {
+        console.error('[BrandAuditDashboard] NO DATA RECEIVED!');
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="text-center">
