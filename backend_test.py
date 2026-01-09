@@ -5000,7 +5000,6 @@ if __name__ == "__main__":
                         return False
                     
                     # Test 6: Check recommendations array exists (this was the problematic field)
-                    recommendations = data.get("recommendations", [])
                     if not isinstance(recommendations, list):
                         tester.log_test("Brand Audit Schema Fix - Recommendations Type", False, f"recommendations should be array, got: {type(recommendations)}")
                         return False
