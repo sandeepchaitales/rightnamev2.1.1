@@ -10,21 +10,62 @@ const axiosInstance = axios.create({
     timeout: 300000, // 5 minutes timeout for comprehensive LLM operations
 });
 
+// Poll interval for checking job status
+const POLL_INTERVAL = 3000; // 3 seconds
+const MAX_POLL_TIME = 300000; // 5 minutes max
+
 export const api = {
-    evaluate: async (data) => {
+    // Async job-based evaluation (prevents 524 timeout)
+    evaluate: async (data, onProgress) => {
         try {
-            console.log('[API] Starting evaluation request to:', `${API_URL}/evaluate`);
-            console.log('[API] Request data:', data);
-            const response = await axiosInstance.post(`${API_URL}/evaluate`, data);
-            console.log('[API] Evaluation successful, response:', response.data);
-            return response.data;
+            console.log('[API] Starting async evaluation...');
+            
+            // Step 1: Start the job
+            const startResponse = await axiosInstance.post(`${API_URL}/evaluate/start`, data);
+            const jobId = startResponse.data.job_id;
+            console.log('[API] Job started:', jobId);
+            
+            if (onProgress) onProgress('Job started, analyzing your brand...');
+            
+            // Step 2: Poll for results
+            const startTime = Date.now();
+            
+            while (Date.now() - startTime < MAX_POLL_TIME) {
+                await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+                
+                const statusResponse = await axiosInstance.get(`${API_URL}/evaluate/status/${jobId}`);
+                const status = statusResponse.data;
+                
+                console.log('[API] Job status:', status.status);
+                
+                if (status.status === 'completed') {
+                    console.log('[API] Evaluation completed!');
+                    return status.result;
+                } else if (status.status === 'failed') {
+                    throw new Error(status.error || 'Evaluation failed');
+                }
+                
+                // Update progress
+                const elapsed = Math.round((Date.now() - startTime) / 1000);
+                if (onProgress) onProgress(`Analyzing... (${elapsed}s)`);
+            }
+            
+            throw new Error('Evaluation timed out after 5 minutes');
+            
         } catch (error) {
             console.error("[API] Evaluation API Error:", error);
-            console.error("[API] Error response:", error.response?.data);
-            console.error("[API] Error status:", error.response?.status);
+            
+            // Fallback to synchronous endpoint if async fails
+            if (error.response?.status === 404 || error.code === 'ECONNABORTED') {
+                console.log('[API] Falling back to sync endpoint...');
+                const response = await axiosInstance.post(`${API_URL}/evaluate`, data);
+                return response.data;
+            }
+            
             throw error;
         }
     },
+    
     getReport: async (reportId) => {
         try {
             const response = await axiosInstance.get(`${API_URL}/reports/${reportId}`, {
@@ -36,6 +77,7 @@ export const api = {
             throw error;
         }
     },
+    
     status: async () => {
         return axiosInstance.get(`${API_URL}/`);
     }
