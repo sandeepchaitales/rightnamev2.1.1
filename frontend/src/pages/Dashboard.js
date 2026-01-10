@@ -2162,15 +2162,23 @@ const Dashboard = () => {
                 {brand.trademark_research && (
                     <section className="print-new-page">
                         <SectionHeader icon={Shield} title="Trademark Research Intelligence" subtitle="Real-Time Conflict Discovery & Risk Analysis" color="violet" badge="NEW" />
-                        {isAuthenticated ? (
-                            <TrademarkResearchSection 
-                                trademarkResearch={brand.trademark_research} 
-                                registrationTimeline={brand.registration_timeline}
-                                mitigationStrategies={brand.mitigation_strategies}
-                            />
-                        ) : (
-                            <LockedSection title="Trademark Research Intelligence" onUnlock={handleRegister} />
-                        )}
+                        <TrademarkResearchSection 
+                            trademarkResearch={brand.trademark_research} 
+                            registrationTimeline={brand.registration_timeline}
+                            mitigationStrategies={brand.mitigation_strategies}
+                        />
+                    </section>
+                )}
+                
+                {/* Debug: Show if trademark_research is missing */}
+                {!brand.trademark_research && (
+                    <section className="print-new-page">
+                        <SectionHeader icon={Shield} title="Trademark Research Intelligence" subtitle="Real-Time Conflict Discovery & Risk Analysis" color="violet" badge="NEW" />
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+                            <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+                            <p className="text-amber-700 font-medium">Trademark research data is being processed</p>
+                            <p className="text-amber-600 text-sm mt-1">This section will populate with detailed conflict analysis</p>
+                        </div>
                     </section>
                 )}
 
