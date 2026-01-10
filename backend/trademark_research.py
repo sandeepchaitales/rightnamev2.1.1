@@ -673,26 +673,39 @@ def generate_phonetic_variants(brand_name: str) -> List[str]:
     return variants[:5]  # Return top 5 variants
 
 
-async def execute_web_search(query: str, timeout: int = 30) -> List[Dict[str, Any]]:
+async def execute_web_search(query: str, timeout: int = 15) -> List[Dict[str, Any]]:
     """
-    Execute a web search query.
+    Execute a web search query with timeout protection.
     Uses DuckDuckGo search as a fallback-friendly option.
     """
     try:
         from duckduckgo_search import DDGS
         
-        results = []
-        with DDGS() as ddgs:
-            search_results = list(ddgs.text(query, max_results=10))
-            for r in search_results:
-                results.append({
-                    "title": r.get("title", ""),
-                    "url": r.get("href", r.get("link", "")),
-                    "snippet": r.get("body", r.get("snippet", "")),
-                    "source": "DuckDuckGo"
-                })
+        # Run DuckDuckGo search in executor with timeout
+        loop = asyncio.get_event_loop()
         
-        return results
+        def _do_search():
+            results = []
+            with DDGS() as ddgs:
+                search_results = list(ddgs.text(query, max_results=10))
+                for r in search_results:
+                    results.append({
+                        "title": r.get("title", ""),
+                        "url": r.get("href", r.get("link", "")),
+                        "snippet": r.get("body", r.get("snippet", "")),
+                        "source": "DuckDuckGo"
+                    })
+            return results
+        
+        try:
+            results = await asyncio.wait_for(
+                loop.run_in_executor(None, _do_search),
+                timeout=float(timeout)
+            )
+            return results
+        except asyncio.TimeoutError:
+            logger.warning(f"Web search timeout for query '{query}'")
+            return []
     
     except Exception as e:
         logger.warning(f"Web search failed for query '{query}': {str(e)}")
