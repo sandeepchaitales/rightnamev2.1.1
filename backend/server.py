@@ -990,21 +990,44 @@ Return ONLY the JSON, no other text."""
             has_conflict = llm_result.get("has_conflict", False)
             
             if (has_conflict or brand_exists) and llm_result.get("confidence") in ["HIGH", "MEDIUM"]:
-                result["exists"] = True
-                result["confidence"] = llm_result.get("confidence", "MEDIUM")
-                result["matched_brand"] = llm_result.get("conflicting_brand", brand_name)
-                result["evidence"] = [
-                    f"Similarity: {llm_result.get('similarity_percentage', 0)}%",
-                    llm_result.get("brand_info", "")
-                ]
-                if web_evidence:
-                    result["evidence"].extend([f"Web: {e}" for e in web_evidence])
-                result["reason"] = llm_result.get("reason", "Conflict detected by AI analysis")
-                if brand_exists:
-                    result["reason"] = f"EXISTING BRAND: {result['reason']}"
+                # ============ VERIFICATION LAYER ============
+                # LLM flagged a conflict - now VERIFY with real evidence
+                print(f"⚠️ LLM flagged '{brand_name}' - Running verification layer...", flush=True)
+                logging.info(f"⚠️ LLM flagged '{brand_name}' - Running verification layer...")
                 
-                print(f"🚨 LLM DETECTED CONFLICT: '{brand_name}' ~ '{result['matched_brand']}' ({llm_result.get('similarity_percentage')}%)", flush=True)
-                logging.warning(f"🚨 LLM DETECTED CONFLICT: '{brand_name}' ~ '{result['matched_brand']}' ({llm_result.get('similarity_percentage')}%)")
+                verification = await verify_brand_conflict(
+                    brand_name=brand_name,
+                    industry=category,
+                    category=category,
+                    country="India",  # Default to India, can be passed from request
+                    matched_brand=llm_result.get("conflicting_brand")
+                )
+                
+                if verification["verified"]:
+                    # CONFIRMED: Real evidence found - REJECT
+                    result["exists"] = True
+                    result["confidence"] = "VERIFIED"  # Upgraded from LLM confidence
+                    result["matched_brand"] = llm_result.get("conflicting_brand", brand_name)
+                    result["evidence"] = verification["evidence_found"][:5]  # Top 5 evidence items
+                    result["evidence_score"] = verification["evidence_score"]
+                    result["evidence_details"] = verification["evidence_details"]
+                    result["reason"] = llm_result.get("reason", "Conflict detected and verified")
+                    if brand_exists:
+                        result["reason"] = f"VERIFIED EXISTING BRAND: {result['reason']}"
+                    
+                    print(f"🚨 VERIFIED CONFLICT: '{brand_name}' - Evidence Score: {verification['evidence_score']}", flush=True)
+                    logging.warning(f"🚨 VERIFIED CONFLICT: '{brand_name}' - Evidence: {verification['evidence_found'][:3]}")
+                else:
+                    # FALSE POSITIVE: LLM was wrong - no real evidence found
+                    result["exists"] = False
+                    result["confidence"] = "LOW"
+                    result["matched_brand"] = None
+                    result["evidence"] = []
+                    result["reason"] = f"AI initially flagged but verification found NO evidence of existing brand"
+                    result["false_positive_avoided"] = True
+                    
+                    print(f"✅ FALSE POSITIVE AVOIDED: '{brand_name}' - LLM flagged but no real evidence found (score: {verification['evidence_score']})", flush=True)
+                    logging.info(f"✅ FALSE POSITIVE AVOIDED: '{brand_name}' - Verification score: {verification['evidence_score']} (below threshold)")
             
             # If LLM says no conflict but web search found evidence, check confidence
             elif brand_found_online and not has_conflict:
