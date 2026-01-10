@@ -1,9 +1,11 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import gc
 from pathlib import Path
 from pydantic import ConfigDict, Field, BaseModel, EmailStr
 from typing import List, Optional
@@ -16,6 +18,7 @@ import random
 import re
 import httpx
 from passlib.context import CryptContext
+from contextlib import asynccontextmanager
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -40,9 +43,16 @@ except ImportError:
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+# MongoDB connection with connection pooling
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-client = AsyncIOMotorClient(mongo_url)
+client = AsyncIOMotorClient(
+    mongo_url,
+    maxPoolSize=50,
+    minPoolSize=10,
+    serverSelectionTimeoutMS=5000,
+    connectTimeoutMS=10000,
+    retryWrites=True
+)
 db = client[os.environ.get('DB_NAME', 'rightname_db')]
 
 # Initialize LLM Chat
@@ -50,8 +60,21 @@ EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
 if not EMERGENT_KEY:
     logging.warning("EMERGENT_LLM_KEY not found in .env")
 
-# Create the main app
-app = FastAPI()
+# Lifespan context manager for graceful startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logging.info("Application starting... MongoDB pool initialized")
+    yield
+    # Shutdown - cleanup connections
+    if client:
+        client.close()
+        logging.info("MongoDB connection closed")
+    gc.collect()
+    logging.info("Application shutdown complete")
+
+# Create the main app with lifespan
+app = FastAPI(lifespan=lifespan)
 
 # Router
 api_router = APIRouter(prefix="/api")
