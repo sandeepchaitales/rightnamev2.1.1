@@ -275,6 +275,16 @@ const LandingPage = () => {
       return;
     }
     setLoading(true);
+    
+    // Show loading toast with progress info
+    const loadingToast = toast.loading(
+      <div className="flex flex-col gap-1">
+        <span className="font-bold">🔍 Analyzing your brand...</span>
+        <span className="text-xs">This may take 2-4 minutes for comprehensive analysis</span>
+      </div>,
+      { duration: 300000 }
+    );
+    
     try {
       const brandNames = formData.brand_names.split(',').map(n => n.trim()).filter(n => n);
       const countries = formData.countries.split(',').map(c => c.trim()).filter(c => c);
@@ -286,34 +296,42 @@ const LandingPage = () => {
         product_type: formData.product_type || 'Digital',
         usp: formData.usp || '',
         brand_vibe: formData.brand_vibe || '',
-        positioning: formData.positioning || 'Premium',  // Ensure default
-        market_scope: formData.market_scope || 'Multi-Country',  // Ensure default
+        positioning: formData.positioning || 'Premium',
+        market_scope: formData.market_scope || 'Multi-Country',
         countries: countries.length > 0 ? countries : ['India'],
-        // NEW: Enhanced input fields (Improvements #2 & #3)
         known_competitors: formData.known_competitors ? formData.known_competitors.split(',').map(c => c.trim()).filter(c => c) : [],
         product_keywords: formData.product_keywords ? formData.product_keywords.split(',').map(k => k.trim()).filter(k => k) : [],
         problem_statement: formData.problem_statement || ''
       };
       
-      console.log('Sending payload:', payload);  // Debug log
+      console.log('[LandingPage] Sending payload:', payload);
 
       const result = await api.evaluate(payload);
+      console.log('[LandingPage] Received result:', result);
+      
+      toast.dismiss(loadingToast);
+      toast.success("Analysis complete!");
       navigate('/dashboard', { state: { data: result, query: payload } });
     } catch (error) {
-      console.error(error);
+      console.error('[LandingPage] Error:', error);
+      toast.dismiss(loadingToast);
+      
       let errorMsg = "Evaluation failed. Please try again.";
       
-      // Handle different error formats
-      const detail = error.response?.data?.detail;
-      if (detail) {
+      // Handle timeout errors
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        errorMsg = "Request timed out. The analysis is taking longer than expected. Please try again.";
+      } else if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
         if (typeof detail === 'string') {
           errorMsg = detail;
         } else if (Array.isArray(detail)) {
-          // Pydantic validation errors come as array of objects
           errorMsg = detail.map(err => err.msg || err.message || JSON.stringify(err)).join(', ');
         } else if (typeof detail === 'object') {
           errorMsg = detail.msg || detail.message || JSON.stringify(detail);
         }
+      } else if (error.message) {
+        errorMsg = error.message;
       }
       
       toast.error(
