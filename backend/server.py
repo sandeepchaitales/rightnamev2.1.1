@@ -1787,17 +1787,17 @@ async def evaluate_brands(request: BrandEvaluationRequest):
                         # Use the trademark research we collected earlier
                         if brand_name in trademark_research_data:
                             tr_data = trademark_research_data[brand_name]
-                            from schemas import TrademarkResearchResult, TrademarkConflict, ClassRecommendation
-                            brand_score.trademark_research = TrademarkResearchResult(
+                            from schemas import TrademarkResearchData, TrademarkConflictInfo, CompanyConflictInfo
+                            brand_score.trademark_research = TrademarkResearchData(
                                 overall_risk_score=tr_data.get('overall_risk_score', 5),
                                 registration_success_probability=tr_data.get('registration_success_probability', 70),
-                                conflicts=[TrademarkConflict(**c) for c in tr_data.get('conflicts', [])],
-                                class_recommendations=[ClassRecommendation(**cr) for cr in tr_data.get('class_recommendations', [])],
-                                geographic_considerations=tr_data.get('geographic_considerations', []),
-                                search_methodology=tr_data.get('search_methodology', 'Automated trademark database search'),
-                                data_sources=tr_data.get('data_sources', ['WIPO Global Brand Database', 'Indian Trademark Registry']),
-                                next_steps=tr_data.get('next_steps', ['Conduct professional trademark search', 'File trademark application']),
-                                monitoring_recommendations=tr_data.get('monitoring_recommendations', ['Set up trademark monitoring alerts'])
+                                opposition_probability=tr_data.get('opposition_probability', 30),
+                                trademark_conflicts=[TrademarkConflictInfo(**c) if isinstance(c, dict) else c for c in tr_data.get('trademark_conflicts', tr_data.get('conflicts', []))],
+                                company_conflicts=[CompanyConflictInfo(**c) if isinstance(c, dict) else c for c in tr_data.get('company_conflicts', [])],
+                                common_law_conflicts=tr_data.get('common_law_conflicts', []),
+                                critical_conflicts_count=tr_data.get('critical_conflicts_count', 0),
+                                high_risk_conflicts_count=tr_data.get('high_risk_conflicts_count', 0),
+                                total_conflicts_found=tr_data.get('total_conflicts_found', 0)
                             )
                             logging.info(f"Added trademark_research for '{brand_name}' from collected data")
                     
