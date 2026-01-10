@@ -646,18 +646,31 @@ const DetailedDimensionCard = ({ dimension, index }) => {
     const parseReasoning = (text) => {
         if (!text) return { main: '', sections: [] };
         const sections = [];
-        const patterns = [
-            /\*\*([^*]+)\*\*:?\s*([^*]+?)(?=\*\*|$)/g,
-            /([A-Z][a-z]+ [A-Z][a-z]+):\s*([^.]+\.)/g
-        ];
         
-        let main = text;
-        patterns.forEach(pattern => {
-            let match;
-            while ((match = pattern.exec(text)) !== null) {
-                sections.push({ title: match[1].trim(), content: match[2].trim() });
+        // Pattern 1: **HEADER:** content (most common format)
+        // Matches: **PHONETIC ARCHITECTURE:**\nContent here...
+        const headerPattern = /\*\*([A-Z][A-Z\s&]+):\*\*\s*\n?([^*]+?)(?=\*\*[A-Z]|$)/gi;
+        
+        let match;
+        while ((match = headerPattern.exec(text)) !== null) {
+            const title = match[1].trim();
+            const content = match[2].trim();
+            if (title && content) {
+                sections.push({ title, content });
             }
-        });
+        }
+        
+        // Pattern 2: HEADER:\n content (alternate format without **)
+        if (sections.length === 0) {
+            const altPattern = /([A-Z][A-Z\s&]+):\s*\n?([^A-Z\n]+(?:\n[^A-Z\n]+)*)/g;
+            while ((match = altPattern.exec(text)) !== null) {
+                const title = match[1].trim();
+                const content = match[2].trim();
+                if (title && content && title.length > 3) {
+                    sections.push({ title, content });
+                }
+            }
+        }
         
         return { main: sections.length > 0 ? '' : text, sections };
     };
