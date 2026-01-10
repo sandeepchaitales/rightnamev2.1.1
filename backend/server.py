@@ -76,6 +76,32 @@ async def lifespan(app: FastAPI):
 # Create the main app with lifespan
 app = FastAPI(lifespan=lifespan)
 
+# ============ TIMEOUT MIDDLEWARE ============
+# Prevents hung requests and provides graceful timeout handling
+@app.middleware("http")
+async def timeout_middleware(request: Request, call_next):
+    # Longer timeout for LLM-heavy endpoints
+    if "/evaluate" in str(request.url) or "/brand-audit" in str(request.url):
+        timeout = 300.0  # 5 minutes for LLM operations
+    else:
+        timeout = 60.0   # 1 minute for regular endpoints
+    
+    try:
+        response = await asyncio.wait_for(call_next(request), timeout=timeout)
+        return response
+    except asyncio.TimeoutError:
+        logging.error(f"Request timeout after {timeout}s: {request.url}")
+        return JSONResponse(
+            status_code=504,
+            content={"detail": "Request timeout - the operation took too long. Please try again."}
+        )
+    except Exception as e:
+        logging.error(f"Middleware error: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"}
+        )
+
 # Router
 api_router = APIRouter(prefix="/api")
 
