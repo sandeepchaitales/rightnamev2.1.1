@@ -2225,6 +2225,38 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest):
                                 "evidence_score": evidence_score
                             }
                             
+                            # ============ FIX: UPDATE TRADEMARK RESEARCH TO REFLECT REJECTION ============
+                            # The trademark_research section should match the rejection verdict
+                            from schemas import TrademarkResearchData, TrademarkConflictInfo
+                            evaluation.brand_scores[i].trademark_research = TrademarkResearchData(
+                                overall_risk_score=9,  # HIGH RISK
+                                registration_success_probability=10,  # LOW SUCCESS
+                                opposition_probability=90,  # HIGH OPPOSITION RISK
+                                trademark_conflicts=[
+                                    TrademarkConflictInfo(
+                                        name=matched_brand,
+                                        similarity=95,
+                                        status="ACTIVE",
+                                        owner=f"{matched_brand} (Existing Brand)",
+                                        risk_level="CRITICAL",
+                                        jurisdiction="Global"
+                                    )
+                                ],
+                                company_conflicts=[],
+                                common_law_conflicts=[f"Conflict with {matched_brand}"],
+                                critical_conflicts_count=1,
+                                high_risk_conflicts_count=1,
+                                total_conflicts_found=1
+                            )
+                            
+                            # ============ FIX: UPDATE DIMENSIONS TO REFLECT REJECTION ============
+                            # Trademark & Legal Sensitivity should be 0-1, not 7+
+                            if evaluation.brand_scores[i].dimensions:
+                                for dim in evaluation.brand_scores[i].dimensions:
+                                    if "trademark" in dim.name.lower() or "legal" in dim.name.lower():
+                                        dim.score = 1.0
+                                        dim.reasoning = f"**CRITICAL CONFLICT:**\nBrand name conflicts with existing trademark '{matched_brand}'. Registration would be rejected or opposed.\n\n**LEGAL RISK:**\nHigh risk of trademark infringement lawsuit if used."
+                            
                             # Clear recommendations (no point recommending anything for a rejected name)
                             if evaluation.brand_scores[i].domain_analysis:
                                 evaluation.brand_scores[i].domain_analysis.alternatives = []
