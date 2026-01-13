@@ -177,6 +177,16 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [openFAQ, setOpenFAQ] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Loading progress state for elegant loader
+  const [loadingProgress, setLoadingProgress] = useState({
+    progress: 0,
+    currentStep: 'starting',
+    currentStepLabel: 'Initializing...',
+    completedSteps: [],
+    etaSeconds: 90
+  });
+  
   const [formData, setFormData] = useState({
     brand_names: '',
     industry: '',
