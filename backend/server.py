@@ -1657,7 +1657,7 @@ async def start_evaluation(request: BrandEvaluationRequest):
 
 @api_router.get("/evaluate/status/{job_id}")
 async def get_evaluation_status(job_id: str):
-    """Check status of evaluation job"""
+    """Check status of evaluation job with progress tracking"""
     if job_id not in evaluation_jobs:
         raise HTTPException(status_code=404, detail="Job not found")
     
@@ -1666,6 +1666,7 @@ async def get_evaluation_status(job_id: str):
     if job["status"] == JobStatus.COMPLETED:
         return {
             "status": "completed",
+            "progress": 100,
             "result": job["result"]
         }
     elif job["status"] == JobStatus.FAILED:
@@ -1674,9 +1675,15 @@ async def get_evaluation_status(job_id: str):
             "error": job["error"]
         }
     else:
+        # Return progress info for elegant loading experience
         return {
             "status": job["status"],
-            "message": "Evaluation in progress..."
+            "progress": job.get("progress", 5),
+            "current_step": job.get("current_step", "starting"),
+            "current_step_label": job.get("current_step_label", "Initializing analysis..."),
+            "completed_steps": job.get("completed_steps", []),
+            "eta_seconds": job.get("eta_seconds", 90),
+            "steps": EVALUATION_STEPS
         }
 
 async def run_evaluation_job(job_id: str, request: BrandEvaluationRequest):
