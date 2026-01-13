@@ -645,9 +645,9 @@ Return ONLY valid JSON.
       "trademark_research": {
           "CRITICAL_INSTRUCTION": "Populate this section using the REAL-TIME TRADEMARK RESEARCH DATA provided in the prompt. Reference actual conflicts found.",
           "nice_classification": {
-              "class_number": 25,
-              "class_description": "Clothing, footwear, headgear",
-              "matched_term": "fashion"
+              "class_number": "SELECT FROM NICE CLASS REFERENCE BASED ON USER'S CATEGORY - e.g., Cleaning products=3, Cafe/Restaurant=43, Fashion=25, SaaS=42, Finance=36",
+              "class_description": "Description matching the selected class",
+              "matched_term": "The user's category/industry term"
           },
           "trademark_conflicts": [
               {
