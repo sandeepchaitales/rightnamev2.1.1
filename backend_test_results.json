@@ -26,23 +26,23 @@
   ],
   "summary": {
     "tests_run": 2,
-    "tests_passed": 1,
-    "success_rate": 50.0,
-    "overall_success": false
+    "tests_passed": 2,
+    "success_rate": 100.0,
+    "overall_success": true
   },
   "results": [
     {
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2026-01-04T06:54:22.718260"
+      "timestamp": "2026-01-13T08:51:52.477290"
     },
     {
-      "test": "Brand Audit - Bikanervala Timeout",
-      "success": false,
-      "details": "Request timed out after 180 seconds",
-      "timestamp": "2026-01-04T06:57:22.844450"
+      "test": "Brand Audit - Bikanervala Final Test",
+      "success": true,
+      "details": "SUCCESS: Valid JSON response received. Report ID: audit_289a1d04e73a4585, Score: 80.0/100, Verdict: MODERATE, Time: 95.67s",
+      "timestamp": "2026-01-13T08:53:28.143285"
     }
   ],
-  "timestamp": "2026-01-04T06:57:22.844606"
+  "timestamp": "2026-01-13T08:53:28.143476"
 }
