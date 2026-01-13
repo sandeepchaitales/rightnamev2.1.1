@@ -1703,11 +1703,12 @@ async def run_evaluation_job(job_id: str, request: BrandEvaluationRequest):
         evaluation_jobs[job_id]["status"] = JobStatus.PROCESSING
         logging.info(f"Job {job_id}: Starting evaluation for {request.brand_names}")
         
-        # Call the actual evaluation function
-        result = await evaluate_brands_internal(request)
+        # Call the actual evaluation function with job_id for progress tracking
+        result = await evaluate_brands_internal(request, job_id=job_id)
         
         # Store result
         evaluation_jobs[job_id]["status"] = JobStatus.COMPLETED
+        evaluation_jobs[job_id]["progress"] = 100
         evaluation_jobs[job_id]["result"] = result.model_dump() if hasattr(result, 'model_dump') else result
         logging.info(f"Job {job_id}: Completed successfully")
         
@@ -1722,7 +1723,7 @@ async def evaluate_brands(request: BrandEvaluationRequest):
     """Synchronous evaluation - may timeout on long requests. Use /evaluate/start for async."""
     return await evaluate_brands_internal(request)
 
-async def evaluate_brands_internal(request: BrandEvaluationRequest):
+async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str = None):
     import time as time_module
     start_time = time_module.time()
     
