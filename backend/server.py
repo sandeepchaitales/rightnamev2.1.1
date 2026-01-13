@@ -345,6 +345,113 @@ USE THESE US-BASED COSTS IN YOUR RESPONSE:
 IMPORTANT: Use USD ($) for ALL cost estimates when multiple countries are selected.
 """
 
+# NICE Classification mapping based on category/industry keywords
+NICE_CLASS_MAP = {
+    # Class 3 - Cleaning, cosmetics
+    "cleaning": {"class_number": 3, "class_description": "Cleaning preparations, polishing, soaps, cosmetics"},
+    "cleaner": {"class_number": 3, "class_description": "Cleaning preparations, polishing, soaps, cosmetics"},
+    "soap": {"class_number": 3, "class_description": "Cleaning preparations, polishing, soaps, cosmetics"},
+    "detergent": {"class_number": 3, "class_description": "Cleaning preparations, polishing, soaps, cosmetics"},
+    "cosmetic": {"class_number": 3, "class_description": "Cleaning preparations, polishing, soaps, cosmetics"},
+    "beauty": {"class_number": 3, "class_description": "Cleaning preparations, polishing, soaps, cosmetics"},
+    "skincare": {"class_number": 3, "class_description": "Cleaning preparations, polishing, soaps, cosmetics"},
+    
+    # Class 5 - Pharmaceuticals
+    "pharma": {"class_number": 5, "class_description": "Pharmaceuticals, medical preparations, dietary supplements"},
+    "medicine": {"class_number": 5, "class_description": "Pharmaceuticals, medical preparations, dietary supplements"},
+    "health": {"class_number": 5, "class_description": "Pharmaceuticals, medical preparations, dietary supplements"},
+    "supplement": {"class_number": 5, "class_description": "Pharmaceuticals, medical preparations, dietary supplements"},
+    
+    # Class 9 - Software, electronics
+    "software": {"class_number": 9, "class_description": "Computer software, mobile apps, electronic devices"},
+    "app": {"class_number": 9, "class_description": "Computer software, mobile apps, electronic devices"},
+    "tech": {"class_number": 9, "class_description": "Computer software, mobile apps, electronic devices"},
+    "electronics": {"class_number": 9, "class_description": "Computer software, mobile apps, electronic devices"},
+    "digital": {"class_number": 9, "class_description": "Computer software, mobile apps, electronic devices"},
+    
+    # Class 25 - Fashion, clothing
+    "fashion": {"class_number": 25, "class_description": "Clothing, footwear, headgear"},
+    "clothing": {"class_number": 25, "class_description": "Clothing, footwear, headgear"},
+    "apparel": {"class_number": 25, "class_description": "Clothing, footwear, headgear"},
+    "shoes": {"class_number": 25, "class_description": "Clothing, footwear, headgear"},
+    "footwear": {"class_number": 25, "class_description": "Clothing, footwear, headgear"},
+    
+    # Class 29 - Food (processed)
+    "food": {"class_number": 29, "class_description": "Meat, fish, preserved foods, dairy products"},
+    "dairy": {"class_number": 29, "class_description": "Meat, fish, preserved foods, dairy products"},
+    "snack": {"class_number": 29, "class_description": "Meat, fish, preserved foods, dairy products"},
+    
+    # Class 30 - Food (bakery, beverages)
+    "bakery": {"class_number": 30, "class_description": "Coffee, tea, bakery products, confectionery"},
+    "coffee": {"class_number": 30, "class_description": "Coffee, tea, bakery products, confectionery"},
+    "tea": {"class_number": 30, "class_description": "Coffee, tea, bakery products, confectionery"},
+    "chai": {"class_number": 30, "class_description": "Coffee, tea, bakery products, confectionery"},
+    "chocolate": {"class_number": 30, "class_description": "Coffee, tea, bakery products, confectionery"},
+    
+    # Class 32 - Beverages (non-alcoholic)
+    "beverage": {"class_number": 32, "class_description": "Non-alcoholic beverages, mineral waters, fruit juices"},
+    "juice": {"class_number": 32, "class_description": "Non-alcoholic beverages, mineral waters, fruit juices"},
+    "drink": {"class_number": 32, "class_description": "Non-alcoholic beverages, mineral waters, fruit juices"},
+    
+    # Class 35 - Business services
+    "advertising": {"class_number": 35, "class_description": "Advertising, business management, retail services"},
+    "marketing": {"class_number": 35, "class_description": "Advertising, business management, retail services"},
+    "retail": {"class_number": 35, "class_description": "Advertising, business management, retail services"},
+    "ecommerce": {"class_number": 35, "class_description": "Advertising, business management, retail services"},
+    "e-commerce": {"class_number": 35, "class_description": "Advertising, business management, retail services"},
+    
+    # Class 36 - Finance
+    "finance": {"class_number": 36, "class_description": "Insurance, financial affairs, banking, real estate"},
+    "fintech": {"class_number": 36, "class_description": "Insurance, financial affairs, banking, real estate"},
+    "banking": {"class_number": 36, "class_description": "Insurance, financial affairs, banking, real estate"},
+    "insurance": {"class_number": 36, "class_description": "Insurance, financial affairs, banking, real estate"},
+    "payment": {"class_number": 36, "class_description": "Insurance, financial affairs, banking, real estate"},
+    
+    # Class 41 - Education, entertainment
+    "education": {"class_number": 41, "class_description": "Education, training, entertainment, sports"},
+    "edtech": {"class_number": 41, "class_description": "Education, training, entertainment, sports"},
+    "training": {"class_number": 41, "class_description": "Education, training, entertainment, sports"},
+    "entertainment": {"class_number": 41, "class_description": "Education, training, entertainment, sports"},
+    "gaming": {"class_number": 41, "class_description": "Education, training, entertainment, sports"},
+    
+    # Class 42 - Technology services
+    "saas": {"class_number": 42, "class_description": "Scientific and technological services, software as a service"},
+    "cloud": {"class_number": 42, "class_description": "Scientific and technological services, software as a service"},
+    "it services": {"class_number": 42, "class_description": "Scientific and technological services, software as a service"},
+    "platform": {"class_number": 42, "class_description": "Scientific and technological services, software as a service"},
+    
+    # Class 43 - Restaurant, hospitality
+    "restaurant": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+    "cafe": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+    "hotel": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+    "hospitality": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+    "food service": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+    "quick service": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+    "qsr": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+}
+
+def get_nice_classification(category: str) -> dict:
+    """
+    Get NICE classification based on category/industry keywords.
+    Returns a dict with class_number, class_description, and matched_term.
+    """
+    if not category:
+        return {"class_number": 35, "class_description": "Advertising, business management, retail services", "matched_term": "general business"}
+    
+    category_lower = category.lower()
+    
+    # Check each keyword in the NICE_CLASS_MAP
+    for keyword, classification in NICE_CLASS_MAP.items():
+        if keyword in category_lower:
+            return {
+                "class_number": classification["class_number"],
+                "class_description": classification["class_description"],
+                "matched_term": category
+            }
+    
+    # Default to Class 35 for unknown categories
+    return {"class_number": 35, "class_description": "Advertising, business management, retail services", "matched_term": category}
+
 def fix_llm_response_types(data: dict) -> dict:
     """
     Fix common type issues in LLM responses before Pydantic validation.
