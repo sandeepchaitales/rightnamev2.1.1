@@ -2031,6 +2031,9 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     logging.info(f"PARALLEL data gathering completed in {parallel_time:.2f}s (vs ~90s sequential)")
     # ==================== END PARALLEL PROCESSING ====================
     
+    # Update progress - all data gathering done, starting analysis
+    update_progress("trademark", 45)
+    
     # Format all gathered data for LLM prompt
     # 1. Domain data
     domain_statuses = []
