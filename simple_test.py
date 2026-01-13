@@ -5,7 +5,7 @@ import time
 
 def test_quicktest_api():
     """Simple test for QuickTest API"""
-    url = "https://elite-analysis-ui.preview.emergentagent.com/api/evaluate"
+    url = "https://namevalidator-app.preview.emergentagent.com/api/evaluate"
     
     payload = {
         "brand_names": ["QuickTest"],

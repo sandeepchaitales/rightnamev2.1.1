@@ -5,7 +5,7 @@ from datetime import datetime
 
 def test_country_specific_analysis():
     """Test the country-specific competitive analysis feature"""
-    base_url = "https://elite-analysis-ui.preview.emergentagent.com"
+    base_url = "https://namevalidator-app.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Test payload with multiple countries as specified in the review request
