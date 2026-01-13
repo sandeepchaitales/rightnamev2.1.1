@@ -1706,10 +1706,25 @@ async def run_evaluation_job(job_id: str, request: BrandEvaluationRequest):
         # Call the actual evaluation function with job_id for progress tracking
         result = await evaluate_brands_internal(request, job_id=job_id)
         
-        # Store result
+        # Store result - use exclude_none to avoid null values in response
         evaluation_jobs[job_id]["status"] = JobStatus.COMPLETED
         evaluation_jobs[job_id]["progress"] = 100
-        evaluation_jobs[job_id]["result"] = result.model_dump() if hasattr(result, 'model_dump') else result
+        # Serialize with exclude_defaults=False to keep all values, but ensure no None values leak
+        if hasattr(result, 'model_dump'):
+            result_dict = result.model_dump()
+            # Ensure trademark_research has all required fields with defaults
+            for bs in result_dict.get('brand_scores', []):
+                tr = bs.get('trademark_research')
+                if tr:
+                    tr['critical_conflicts_count'] = tr.get('critical_conflicts_count') or 0
+                    tr['high_risk_conflicts_count'] = tr.get('high_risk_conflicts_count') or 0
+                    tr['total_conflicts_found'] = tr.get('total_conflicts_found') or 0
+                    tr['overall_risk_score'] = tr.get('overall_risk_score') or 5
+                    tr['registration_success_probability'] = tr.get('registration_success_probability') or 50
+                    tr['opposition_probability'] = tr.get('opposition_probability') or 50
+            evaluation_jobs[job_id]["result"] = result_dict
+        else:
+            evaluation_jobs[job_id]["result"] = result
         logging.info(f"Job {job_id}: Completed successfully")
         
     except Exception as e:
