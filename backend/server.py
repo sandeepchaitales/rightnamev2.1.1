@@ -1082,16 +1082,34 @@ Return ONLY the JSON, no other text."""
             
             # If LLM says no conflict but web search found evidence, check confidence
             elif brand_found_online and not has_conflict:
-                # ONLY override LLM when web has HIGH confidence (platform presence)
-                # MEDIUM/LOW confidence alone should NOT override LLM
-                if web_confidence == "HIGH":
-                    print(f"⚠️ WEB OVERRIDE: LLM said no conflict, but web found '{brand_name}' on business platform!", flush=True)
-                    logging.warning(f"⚠️ WEB OVERRIDE: LLM missed '{brand_name}' - found on platform")
-                    result["exists"] = True
-                    result["confidence"] = web_confidence
-                    result["matched_brand"] = brand_name
-                    result["evidence"] = [f"Web: {e}" for e in web_evidence]
-                    result["reason"] = f"Brand '{brand_name}' found on business platform (found: {', '.join(web_evidence[:2])})"
+                # ONLY override LLM when web has HIGH confidence WITH STRONG signals (domain or ecommerce)
+                # IMPORTANT: domain signal alone could be misleading, require verification
+                strong_signals = [s for s in web_evidence if s in ["domain", "ecommerce", "zomato", "swiggy"]]
+                
+                if web_confidence == "HIGH" and len(strong_signals) >= 1:
+                    # Even for HIGH confidence, run verification to avoid false positives
+                    print(f"⚠️ WEB FOUND '{brand_name}' with signals {strong_signals} - Running verification...", flush=True)
+                    
+                    verification = await verify_brand_conflict(
+                        brand_name=brand_name,
+                        industry=category,
+                        category=category,
+                        country="India",
+                        matched_brand=brand_name
+                    )
+                    
+                    if verification["verified"]:
+                        print(f"⚠️ WEB OVERRIDE VERIFIED: '{brand_name}' exists - Evidence Score: {verification['evidence_score']}", flush=True)
+                        logging.warning(f"⚠️ WEB OVERRIDE: LLM missed '{brand_name}' - verified on platform")
+                        result["exists"] = True
+                        result["confidence"] = "VERIFIED"
+                        result["matched_brand"] = brand_name
+                        result["evidence"] = verification["evidence_found"][:5]
+                        result["evidence_score"] = verification["evidence_score"]
+                        result["reason"] = f"Brand '{brand_name}' verified via web search (signals: {', '.join(strong_signals)})"
+                    else:
+                        print(f"✅ WEB FALSE POSITIVE: '{brand_name}' - signals found but verification failed (score: {verification['evidence_score']})", flush=True)
+                        logging.info(f"✅ WEB FALSE POSITIVE: '{brand_name}' - Verification failed")
                 else:
                     # MEDIUM/LOW confidence - trust the LLM's judgment
                     print(f"✅ LLM: '{brand_name}' appears unique (web has only {web_confidence} confidence, trusting LLM)", flush=True)
