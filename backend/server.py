@@ -92,6 +92,35 @@ class JobStatus:
     COMPLETED = "completed"
     FAILED = "failed"
 
+# Progress steps for elegant loading experience
+EVALUATION_STEPS = [
+    {"id": "domain", "label": "Checking domain availability", "progress": 10},
+    {"id": "social", "label": "Scanning social platforms", "progress": 25},
+    {"id": "similarity", "label": "Analyzing phonetic conflicts", "progress": 40},
+    {"id": "visibility", "label": "Searching app stores & web", "progress": 55},
+    {"id": "trademark", "label": "Researching trademarks", "progress": 70},
+    {"id": "analysis", "label": "Generating strategic report", "progress": 90},
+]
+
+def update_job_progress(job_id: str, step_id: str, eta_seconds: int = None):
+    """Update job progress with current step"""
+    if job_id in evaluation_jobs:
+        step = next((s for s in EVALUATION_STEPS if s["id"] == step_id), None)
+        if step:
+            evaluation_jobs[job_id]["current_step"] = step_id
+            evaluation_jobs[job_id]["current_step_label"] = step["label"]
+            evaluation_jobs[job_id]["progress"] = step["progress"]
+            evaluation_jobs[job_id]["eta_seconds"] = eta_seconds
+            
+            # Mark completed steps
+            completed = []
+            for s in EVALUATION_STEPS:
+                if s["progress"] <= step["progress"]:
+                    completed.append(s["id"])
+                else:
+                    break
+            evaluation_jobs[job_id]["completed_steps"] = completed
+
 # Country-specific ACTUAL trademark costs (not just currency conversion)
 # These are real trademark office costs for each country
 COUNTRY_TRADEMARK_COSTS = {
