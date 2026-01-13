@@ -668,21 +668,21 @@ const LandingPage = () => {
                     Get instant, <span className="text-violet-600 font-bold">consulting-grade</span> <span className="text-slate-900 font-black">BRAND NAME ANALYSIS</span> on trademark risk, cultural resonance, and domain availability. <span className="text-fuchsia-600 font-bold">No guesswork.</span>
                 </p>
 
-                {/* Quick Stats */}
+                {/* Quick Stats - Honest & Meaningful */}
                 <div className="flex items-center gap-6 pt-2">
                     <div className="text-center">
-                        <div className="text-3xl font-black text-violet-600">50K+</div>
-                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Names Analyzed</div>
+                        <div className="text-3xl font-black text-violet-600">6</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Data Sources</div>
                     </div>
                     <div className="w-px h-12 bg-slate-200"></div>
                     <div className="text-center">
-                        <div className="text-3xl font-black text-fuchsia-600">30s</div>
-                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg. Report Time</div>
+                        <div className="text-3xl font-black text-fuchsia-600">45+</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">NICE Classes</div>
                     </div>
                     <div className="w-px h-12 bg-slate-200"></div>
                     <div className="text-center">
-                        <div className="text-3xl font-black text-orange-500">98%</div>
-                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Accuracy</div>
+                        <div className="text-3xl font-black text-orange-500">Real-Time</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Trademark Search</div>
                     </div>
                 </div>
 
