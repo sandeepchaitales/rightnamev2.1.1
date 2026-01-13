@@ -341,7 +341,7 @@ class BrandScore(BaseModel):
     dimensions: List[DimensionScore] = Field(default=[])
     trademark_risk: Optional[dict] = Field(default={})
     trademark_matrix: Optional[TrademarkRiskMatrix] = None
-    trademark_classes: List[str] = Field(default=[], description="List of Nice Classes")
+    trademark_classes: Optional[Any] = Field(default=[], description="List of Nice Classes or classification info")
     # Enhanced trademark research data - Made flexible to handle LLM variations
     trademark_research: Optional[Any] = Field(default=None, description="Real-time trademark research findings")
     registration_timeline: Optional[Any] = Field(default=None, description="Expected registration timeline and costs")
