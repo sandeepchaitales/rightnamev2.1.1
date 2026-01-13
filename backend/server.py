@@ -2358,7 +2358,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest):
                                         co_conflicts.append(c)
                                 
                                 brand_score.trademark_research = TrademarkResearchData(
-                                    nice_classification=tr_data.get('nice_classification') or get_nice_classification(request.category),
+                                    nice_classification=get_nice_classification(request.category),  # ALWAYS use correct NICE class
                                     overall_risk_score=tr_data.get('overall_risk_score', 5),
                                     registration_success_probability=tr_data.get('registration_success_probability', 70),
                                     opposition_probability=tr_data.get('opposition_probability', 30),
