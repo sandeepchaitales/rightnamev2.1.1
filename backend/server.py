@@ -60,6 +60,14 @@ EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
 if not EMERGENT_KEY:
     logging.warning("EMERGENT_LLM_KEY not found in .env")
 
+# Google Custom Search API credentials
+GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+GOOGLE_SEARCH_ENGINE_ID = os.environ.get('GOOGLE_SEARCH_ENGINE_ID')
+if GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID:
+    logging.info("✅ Google Custom Search API configured")
+else:
+    logging.warning("⚠️ Google Search API not configured - using Bing fallback")
+
 # Lifespan context manager for graceful startup/shutdown
 @asynccontextmanager
 async def lifespan(app: FastAPI):
