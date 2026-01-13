@@ -1626,7 +1626,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest):
     all_rejections = {}
     for brand in request.brand_names:
         dynamic_result = await dynamic_brand_search(brand, request.category)
-        if dynamic_result["exists"] and dynamic_result["confidence"] in ["HIGH", "MEDIUM"]:
+        if dynamic_result["exists"] and dynamic_result["confidence"] in ["HIGH", "MEDIUM", "VERIFIED"]:
             all_rejections[brand] = dynamic_result
             logging.warning(f"🔍 CONFLICT DETECTED: {brand} ~ {dynamic_result['matched_brand']} ({dynamic_result['reason']})")
     
