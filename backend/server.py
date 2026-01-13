@@ -861,50 +861,75 @@ async def dynamic_brand_search(brand_name: str, category: str = "") -> dict:
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
             
-            async with session.get(search_url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as response:
-                if response.status == 200:
-                    html = await response.text()
-                    html_lower = html.lower()
-                    
-                    # Count exact brand mentions
-                    brand_pattern = re.escape(brand_with_space)
-                    mentions = len(re.findall(brand_pattern, html_lower))
-                    
-                    # Check for strong signals (platform presence)
-                    strong_signals = []
-                    if any(f"{brand_lower}.{ext}" in html_lower for ext in ["com", "in", "co.in", "co"]):
-                        strong_signals.append("domain")
-                    if "zomato" in html_lower and mentions >= 1:
-                        strong_signals.append("zomato")
-                    if "swiggy" in html_lower and mentions >= 1:
-                        strong_signals.append("swiggy")
-                    if "justdial" in html_lower and mentions >= 1:
-                        strong_signals.append("justdial")
-                    
-                    print(f"🔎 WEB: '{brand_name}' mentions={mentions}, strong={strong_signals}", flush=True)
-                    logging.warning(f"🔎 WEB: '{brand_name}' mentions={mentions}, strong={strong_signals}")
-                    
-                    # SIMPLE DETECTION RULES:
-                    # Rule 1: Platform presence = HIGH confidence
-                    if len(strong_signals) >= 1:
-                        brand_found_online = True
-                        web_confidence = "HIGH"
-                        web_evidence = [f"mentions:{mentions}"] + strong_signals
-                        logging.warning(f"🌐 WEB HIGH: '{brand_name}' found on business platform!")
-                    
-                    # Rule 2: Multiple mentions = MEDIUM confidence (trust the count)
-                    elif mentions >= 3:
-                        brand_found_online = True
-                        web_confidence = "MEDIUM"
-                        web_evidence = [f"mentions:{mentions}"]
-                        logging.warning(f"🌐 WEB MEDIUM: '{brand_name}' has {mentions} search mentions")
-                    
-                    # Rule 3: Some mentions = LOW confidence
-                    elif mentions >= 1:
-                        brand_found_online = True
-                        web_confidence = "LOW"
-                        web_evidence = [f"mentions:{mentions}"]
-                        logging.warning(f"🌐 WEB LOW: '{brand_name}' has {mentions} mentions")
+            # Run multiple search queries for better detection
+            for search_query in search_queries[:2]:  # Limit to 2 queries to avoid rate limiting
+                try:
+                    search_url = f"https://www.bing.com/search?q={search_query.replace(' ', '+')}"
+                    async with session.get(search_url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                        if response.status == 200:
+                            html = await response.text()
+                            html_lower = html.lower()
+                            
+                            # Count exact brand mentions
+                            brand_pattern = re.escape(brand_with_space)
+                            mentions = len(re.findall(brand_pattern, html_lower))
+                            combined_mentions += mentions
+                            
+                            # Check for strong signals (platform presence)
+                            if any(f"{brand_lower}.{ext}" in html_lower for ext in ["com", "in", "co.in", "co"]):
+                                if "domain" not in combined_signals:
+                                    combined_signals.append("domain")
+                            if "zomato" in html_lower and mentions >= 1:
+                                if "zomato" not in combined_signals:
+                                    combined_signals.append("zomato")
+                            if "swiggy" in html_lower and mentions >= 1:
+                                if "swiggy" not in combined_signals:
+                                    combined_signals.append("swiggy")
+                            if "justdial" in html_lower and mentions >= 1:
+                                if "justdial" not in combined_signals:
+                                    combined_signals.append("justdial")
+                            # E-commerce platforms (important for products like cleaning solutions)
+                            if "amazon" in html_lower and mentions >= 1:
+                                if "amazon" not in combined_signals:
+                                    combined_signals.append("amazon")
+                            if "flipkart" in html_lower and mentions >= 1:
+                                if "flipkart" not in combined_signals:
+                                    combined_signals.append("flipkart")
+                            if "jiomart" in html_lower and mentions >= 1:
+                                if "jiomart" not in combined_signals:
+                                    combined_signals.append("jiomart")
+                            if "bigbasket" in html_lower and mentions >= 1:
+                                if "bigbasket" not in combined_signals:
+                                    combined_signals.append("bigbasket")
+                                    
+                            print(f"🔎 WEB QUERY '{search_query}': '{brand_name}' mentions={mentions}", flush=True)
+                except Exception as e:
+                    logging.warning(f"Search query failed: {search_query}, error: {e}")
+            
+            print(f"🔎 WEB TOTAL: '{brand_name}' total_mentions={combined_mentions}, signals={combined_signals}", flush=True)
+            logging.warning(f"🔎 WEB: '{brand_name}' mentions={combined_mentions}, strong={combined_signals}")
+            
+            # ENHANCED DETECTION RULES:
+            # Rule 1: Platform presence (domain, ecommerce, food platforms) = HIGH confidence
+            if len(combined_signals) >= 1:
+                brand_found_online = True
+                web_confidence = "HIGH"
+                web_evidence = [f"mentions:{combined_mentions}"] + combined_signals
+                logging.warning(f"🌐 WEB HIGH: '{brand_name}' found on business platform!")
+            
+            # Rule 2: Multiple mentions = MEDIUM confidence
+            elif combined_mentions >= 3:
+                brand_found_online = True
+                web_confidence = "MEDIUM"
+                web_evidence = [f"mentions:{combined_mentions}"]
+                logging.warning(f"🌐 WEB MEDIUM: '{brand_name}' has {combined_mentions} search mentions")
+            
+            # Rule 3: Some mentions = LOW confidence
+            elif combined_mentions >= 1:
+                brand_found_online = True
+                web_confidence = "LOW"
+                web_evidence = [f"mentions:{combined_mentions}"]
+                logging.warning(f"🌐 WEB LOW: '{brand_name}' has {combined_mentions} mentions")
                         
     except Exception as e:
         logging.error(f"Web search failed for {brand_name}: {e}")
