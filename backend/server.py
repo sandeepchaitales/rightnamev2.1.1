@@ -955,15 +955,21 @@ TASK: Determine if this brand name:
 
 ⚠️ CRITICAL - CHECK IF THIS EXACT BRAND EXISTS FIRST:
 - Search your knowledge for "{brand_name}" as an existing business
-- Check if there's a company, cafe chain, restaurant, app, or product called "{brand_name}"
+- Check if there's a company, cafe chain, restaurant, app, product, or consumer brand called "{brand_name}"
 - Regional brands in India, USA, or globally count!
-- Even small chains with 5-10+ locations should be flagged
-- Check Zomato, Swiggy, Google Maps presence
+- Even small D2C brands on Amazon, Flipkart, BigBasket should be flagged
+- Check ecommerce platforms: Amazon, Flipkart, JioMart, BigBasket
+- Check Zomato, Swiggy, Google Maps presence for food/cafe brands
 
 ⚠️ INDIAN CAFE/CHAI BRANDS TO CHECK AGAINST:
 - Chai Duniya, Chai Point, Chaayos, Chai Sutta Bar, MBA Chai Wala, Chai Break
 - Chai Bunk, Chai Kings, Chai Waale, Chai Garam, Chai Time
 - Any brand with "Chai" + Hindi word combination
+
+⚠️ INDIAN CONSUMER/CLEANING PRODUCT BRANDS TO CHECK AGAINST:
+- Cleevo (eco-friendly cleaning solutions on JioMart, BigBasket, Flipkart - getcleevo.com)
+- Vim, Harpic, Lizol, Colin, Dettol, Savlon, Surf Excel
+- Any D2C brand selling on Indian ecommerce platforms
 
 ⚠️ STRICT CONFLICT RULES - Flag as conflict if ANY of these apply:
 1. EXACT BRAND EXISTS: A company/brand called "{brand_name}" already operates (even regionally)
@@ -972,14 +978,15 @@ TASK: Determine if this brand name:
 4. PHONETIC SIMILARITY: Sounds similar when spoken (BUMBELL ≈ Bumble)
 5. LETTER VARIATIONS: Extra/missing letters (Nikee = Nike)
 6. SPACING CHANGES: With/without spaces (FaceBook = Facebook)
-7. REGIONAL BRANDS: Indian cafes, restaurants, apps, newspapers (Chaayos, Chai Point, etc.)
+7. REGIONAL BRANDS: Indian cafes, restaurants, apps, newspapers, D2C products
 8. GLOBAL BRANDS: Tech companies, apps, products
+9. D2C/ECOMMERCE BRANDS: Brands selling on Amazon, Flipkart, BigBasket, JioMart
 
 IMPORTANT: 
 - When in doubt, FLAG AS CONFLICT - it's safer to reject
-- If "{brand_name}" sounds like it could be an existing cafe/restaurant/business - CHECK CAREFULLY
+- If "{brand_name}" sounds like it could be an existing brand/product - CHECK CAREFULLY
+- "Cleevo" IS an existing cleaning products brand in India - if asked, REJECT IT
 - "Chai Duniya" IS an existing chai cafe chain - if this exact name or similar is asked, REJECT IT
-- "Red Bucket Biryani" IS an existing biryani chain - if this exact name or similar is asked, REJECT IT
 
 RESPOND IN THIS EXACT JSON FORMAT:
 {{
