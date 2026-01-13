@@ -11,11 +11,11 @@ const axiosInstance = axios.create({
 });
 
 // Poll interval for checking job status
-const POLL_INTERVAL = 3000; // 3 seconds
+const POLL_INTERVAL = 2000; // 2 seconds for smoother progress updates
 const MAX_POLL_TIME = 300000; // 5 minutes max
 
 export const api = {
-    // Async job-based evaluation (prevents 524 timeout)
+    // Async job-based evaluation with progress tracking
     evaluate: async (data, onProgress) => {
         try {
             console.log('[API] Starting async evaluation...');
@@ -23,11 +23,23 @@ export const api = {
             // Step 1: Start the job
             const startResponse = await axiosInstance.post(`${API_URL}/evaluate/start`, data);
             const jobId = startResponse.data.job_id;
-            console.log('[API] Job started:', jobId);
+            const steps = startResponse.data.steps || [];
+            console.log('[API] Job started:', jobId, 'Steps:', steps.length);
             
-            if (onProgress) onProgress('Job started, analyzing your brand...');
+            // Initial progress callback with steps info
+            if (onProgress) {
+                onProgress({
+                    status: 'processing',
+                    progress: 5,
+                    currentStep: 'starting',
+                    currentStepLabel: 'Initializing analysis...',
+                    completedSteps: [],
+                    etaSeconds: 90,
+                    steps: steps
+                });
+            }
             
-            // Step 2: Poll for results
+            // Step 2: Poll for results with progress tracking
             const startTime = Date.now();
             
             while (Date.now() - startTime < MAX_POLL_TIME) {
@@ -36,18 +48,42 @@ export const api = {
                 const statusResponse = await axiosInstance.get(`${API_URL}/evaluate/status/${jobId}`);
                 const status = statusResponse.data;
                 
-                console.log('[API] Job status:', status.status);
+                console.log('[API] Job status:', status.status, 'Progress:', status.progress);
                 
                 if (status.status === 'completed') {
                     console.log('[API] Evaluation completed!');
+                    // Final progress update
+                    if (onProgress) {
+                        onProgress({
+                            status: 'completed',
+                            progress: 100,
+                            currentStep: 'done',
+                            currentStepLabel: 'Analysis complete!',
+                            completedSteps: steps.map(s => s.id),
+                            etaSeconds: 0
+                        });
+                    }
                     return status.result;
                 } else if (status.status === 'failed') {
                     throw new Error(status.error || 'Evaluation failed');
                 }
                 
-                // Update progress
+                // Update progress with detailed info
                 const elapsed = Math.round((Date.now() - startTime) / 1000);
-                if (onProgress) onProgress(`Analyzing... (${elapsed}s)`);
+                const estimatedTotal = 90; // Base estimate in seconds
+                const remaining = Math.max(0, estimatedTotal - elapsed);
+                
+                if (onProgress) {
+                    onProgress({
+                        status: status.status,
+                        progress: status.progress || Math.min(95, (elapsed / estimatedTotal) * 100),
+                        currentStep: status.current_step || 'processing',
+                        currentStepLabel: status.current_step_label || `Analyzing... (${elapsed}s)`,
+                        completedSteps: status.completed_steps || [],
+                        etaSeconds: status.eta_seconds || remaining,
+                        steps: status.steps || steps
+                    });
+                }
             }
             
             throw new Error('Evaluation timed out after 5 minutes');
