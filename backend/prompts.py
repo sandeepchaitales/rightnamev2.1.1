@@ -643,11 +643,12 @@ Return ONLY valid JSON.
       },
 
       "trademark_research": {
-          "CRITICAL_INSTRUCTION": "Populate this section using the REAL-TIME TRADEMARK RESEARCH DATA provided in the prompt. Reference actual conflicts found.",
+          "CRITICAL_INSTRUCTION": "Populate this section using the REAL-TIME TRADEMARK RESEARCH DATA and NICE CLASSIFICATION provided in the prompt. Reference actual conflicts found.",
           "nice_classification": {
-              "class_number": "SELECT FROM NICE CLASS REFERENCE BASED ON USER'S CATEGORY - e.g., Cleaning products=3, Cafe/Restaurant=43, Fashion=25, SaaS=42, Finance=36",
-              "class_description": "Description matching the selected class",
-              "matched_term": "The user's category/industry term"
+              "INSTRUCTION": "USE THE NICE CLASSIFICATION FROM THE PROMPT - DO NOT USE CLASS 25 UNLESS CATEGORY IS CLOTHING/FASHION",
+              "class_number": "USE THE CLASS NUMBER FROM NICE CLASSIFICATION SECTION IN PROMPT",
+              "class_description": "USE THE DESCRIPTION FROM NICE CLASSIFICATION SECTION IN PROMPT",
+              "matched_term": "USE THE MATCHED TERM FROM NICE CLASSIFICATION SECTION IN PROMPT"
           },
           "trademark_conflicts": [
               {
