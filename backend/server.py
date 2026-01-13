@@ -2226,6 +2226,11 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest):
                                         co_conflicts.append(c)
                                 
                                 brand_score.trademark_research = TrademarkResearchData(
+                                    nice_classification=tr_data.get('nice_classification', {
+                                        "class_number": 3 if "clean" in request.category.lower() else 42 if "software" in request.category.lower() or "saas" in request.category.lower() else 35,
+                                        "class_description": "Cleaning preparations" if "clean" in request.category.lower() else "Software services" if "software" in request.category.lower() or "saas" in request.category.lower() else "Advertising and business services",
+                                        "matched_term": request.category
+                                    }),
                                     overall_risk_score=tr_data.get('overall_risk_score', 5),
                                     registration_success_probability=tr_data.get('registration_success_probability', 70),
                                     opposition_probability=tr_data.get('opposition_probability', 30),
