@@ -413,6 +413,8 @@ class BrandScore(BaseModel):
     country_competitor_analysis: List[CountryCompetitorAnalysis] = Field(default=[], description="Competitor analysis per country (max 4 countries)")
     final_assessment: Optional[FinalAssessment] = None
     positioning_fit: Optional[str] = Field(default="Positioning analysis pending")
+    # McKinsey Three-Question Framework Analysis
+    mckinsey_analysis: Optional[McKinseyFrameworkAnalysis] = Field(default=None, description="Deep dive brand DNA analysis")
 
 class BrandEvaluationRequest(BaseModel):
     brand_names: List[str]
