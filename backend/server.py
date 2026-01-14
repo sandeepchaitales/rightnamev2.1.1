@@ -1830,7 +1830,7 @@ async def start_evaluation(request: BrandEvaluationRequest):
         "completed_steps": [],
         "eta_seconds": 90
     }
-    save_job(job_id, job_data)
+    await save_job(job_id, job_data)
     
     # Start background task
     asyncio.create_task(run_evaluation_job(job_id, request))
