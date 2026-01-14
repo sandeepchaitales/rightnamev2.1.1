@@ -1766,6 +1766,318 @@ const TrademarkResearchSection = ({ trademarkResearch, registrationTimeline, mit
     );
 };
 
+// ============ McKINSEY THREE-QUESTION FRAMEWORK ANALYSIS ============
+const McKinseyAnalysisSection = ({ mckinsey }) => {
+    if (!mckinsey) return null;
+    
+    const { benefits_experiences, distinctiveness, brand_architecture, executive_recommendation, recommendation_rationale, critical_assessment, alternative_directions } = mckinsey;
+    
+    const getRecommendationColor = (rec) => {
+        switch (rec?.toUpperCase()) {
+            case 'PROCEED': return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+            case 'REFINE': return 'bg-amber-100 text-amber-700 border-amber-300';
+            case 'PIVOT': return 'bg-red-100 text-red-700 border-red-300';
+            default: return 'bg-slate-100 text-slate-700 border-slate-300';
+        }
+    };
+    
+    const getScoreColor = (score) => {
+        if (score >= 8) return 'text-emerald-600';
+        if (score >= 5) return 'text-amber-600';
+        return 'text-red-600';
+    };
+    
+    const ScoreCircle = ({ score, label }) => (
+        <div className="flex flex-col items-center">
+            <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
+                score >= 8 ? 'border-emerald-400 bg-emerald-50' :
+                score >= 5 ? 'border-amber-400 bg-amber-50' :
+                'border-red-400 bg-red-50'
+            }`}>
+                <span className={`text-2xl font-black ${getScoreColor(score)}`}>{score}</span>
+            </div>
+            <span className="text-xs text-slate-500 mt-1 text-center">{label}</span>
+        </div>
+    );
+    
+    return (
+        <div className="space-y-4">
+            {/* Executive Recommendation Banner */}
+            <PrintCard>
+                <div className={`rounded-2xl p-6 border-2 ${getRecommendationColor(executive_recommendation)}`}>
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                            <div className="text-sm font-medium opacity-80">McKinsey Framework Verdict</div>
+                            <div className="text-3xl font-black">{executive_recommendation || 'ANALYZING'}</div>
+                        </div>
+                        <div className="flex-1 max-w-xl">
+                            <p className="text-sm">{recommendation_rationale}</p>
+                        </div>
+                    </div>
+                    {critical_assessment && (
+                        <div className="mt-4 p-3 bg-white/50 rounded-lg">
+                            <div className="text-xs font-bold uppercase tracking-wide mb-1">Critical Assessment</div>
+                            <p className="text-sm italic">{critical_assessment}</p>
+                        </div>
+                    )}
+                </div>
+            </PrintCard>
+            
+            {/* Module 1: Benefits & Experiences */}
+            {benefits_experiences && (
+                <PrintCard>
+                    <div className="bg-white rounded-2xl p-6 border border-violet-200">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                                <Sparkles className="w-4 h-4 text-violet-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-800">Module 1: Benefits & Experiences</h4>
+                                <p className="text-xs text-slate-500">Semantic Audit - What does the name promise?</p>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="p-3 bg-violet-50 rounded-lg">
+                                <div className="text-xs font-bold text-violet-600 uppercase mb-1">Linguistic Roots</div>
+                                <p className="text-sm text-slate-700">{benefits_experiences.linguistic_roots}</p>
+                            </div>
+                            <div className="p-3 bg-fuchsia-50 rounded-lg">
+                                <div className="text-xs font-bold text-fuchsia-600 uppercase mb-1">Phonetic Analysis</div>
+                                <p className="text-sm text-slate-700">{benefits_experiences.phonetic_analysis}</p>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            {benefits_experiences.emotional_promises?.length > 0 && (
+                                <div>
+                                    <div className="text-xs font-bold text-slate-500 uppercase mb-2">Emotional Promises</div>
+                                    <div className="flex flex-wrap gap-1">
+                                        {benefits_experiences.emotional_promises.map((promise, i) => (
+                                            <Badge key={i} className="bg-pink-100 text-pink-700">{promise}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {benefits_experiences.functional_benefits?.length > 0 && (
+                                <div>
+                                    <div className="text-xs font-bold text-slate-500 uppercase mb-2">Functional Benefits</div>
+                                    <div className="flex flex-wrap gap-1">
+                                        {benefits_experiences.functional_benefits.map((benefit, i) => (
+                                            <Badge key={i} className="bg-blue-100 text-blue-700">{benefit}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Benefit Map Table */}
+                        {benefits_experiences.benefit_map?.length > 0 && (
+                            <div className="mt-4">
+                                <div className="text-xs font-bold text-slate-500 uppercase mb-2">Benefit Map</div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="bg-slate-100">
+                                                <th className="text-left p-2 rounded-tl-lg">Name Trait</th>
+                                                <th className="text-left p-2">User Perception</th>
+                                                <th className="text-left p-2 rounded-tr-lg">Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {benefits_experiences.benefit_map.map((item, i) => (
+                                                <tr key={i} className="border-b border-slate-100">
+                                                    <td className="p-2 font-medium">{item.name_trait}</td>
+                                                    <td className="p-2">{item.user_perception}</td>
+                                                    <td className="p-2">
+                                                        <Badge className={item.benefit_type === 'Emotional' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'}>
+                                                            {item.benefit_type}
+                                                        </Badge>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {benefits_experiences.target_persona_fit && (
+                            <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                                <div className="text-xs font-bold text-slate-500 uppercase mb-1">Target Persona Fit</div>
+                                <p className="text-sm text-slate-700">{benefits_experiences.target_persona_fit}</p>
+                            </div>
+                        )}
+                    </div>
+                </PrintCard>
+            )}
+            
+            {/* Module 2: Distinctiveness */}
+            {distinctiveness && (
+                <PrintCard>
+                    <div className="bg-white rounded-2xl p-6 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                                <Target className="w-4 h-4 text-amber-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-800">Module 2: Distinctiveness</h4>
+                                <p className="text-xs text-slate-500">Market Comparison - How unique is this name?</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-6 mb-4">
+                            <ScoreCircle score={distinctiveness.distinctiveness_score || 0} label="Distinctiveness" />
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-medium text-slate-600">Category Noise Level:</span>
+                                    <Badge className={
+                                        distinctiveness.category_noise_level === 'HIGH' ? 'bg-red-100 text-red-700' :
+                                        distinctiveness.category_noise_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                                        'bg-emerald-100 text-emerald-700'
+                                    }>{distinctiveness.category_noise_level || 'N/A'}</Badge>
+                                </div>
+                                <p className="text-sm text-slate-600">{distinctiveness.industry_comparison}</p>
+                            </div>
+                        </div>
+                        
+                        {distinctiveness.naming_tropes_analysis && (
+                            <div className="p-3 bg-amber-50 rounded-lg mb-4">
+                                <div className="text-xs font-bold text-amber-600 uppercase mb-1">Naming Tropes Analysis</div>
+                                <p className="text-sm text-slate-700">{distinctiveness.naming_tropes_analysis}</p>
+                            </div>
+                        )}
+                        
+                        {/* Similar Competitors */}
+                        {distinctiveness.similar_competitors?.length > 0 && (
+                            <div className="mb-4">
+                                <div className="text-xs font-bold text-slate-500 uppercase mb-2">Similar Competitors</div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    {distinctiveness.similar_competitors.map((comp, i) => (
+                                        <div key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="font-medium text-slate-800">{comp.name}</span>
+                                                <Badge className={
+                                                    comp.risk_level === 'HIGH' ? 'bg-red-100 text-red-700' :
+                                                    comp.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-emerald-100 text-emerald-700'
+                                                }>{comp.risk_level}</Badge>
+                                            </div>
+                                            <p className="text-xs text-slate-500">{comp.similarity_aspect}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Differentiation Opportunities */}
+                        {distinctiveness.differentiation_opportunities?.length > 0 && (
+                            <div>
+                                <div className="text-xs font-bold text-slate-500 uppercase mb-2">Differentiation Opportunities</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {distinctiveness.differentiation_opportunities.map((opp, i) => (
+                                        <div key={i} className="flex items-center gap-1 px-3 py-1 bg-emerald-50 rounded-full text-sm text-emerald-700">
+                                            <Lightbulb className="w-3 h-3" />
+                                            {opp}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </PrintCard>
+            )}
+            
+            {/* Module 3: Brand Architecture */}
+            {brand_architecture && (
+                <PrintCard>
+                    <div className="bg-white rounded-2xl p-6 border border-blue-200">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <Building2 className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-800">Module 3: Brand Architecture</h4>
+                                <p className="text-xs text-slate-500">Strategic Fit - Can this name scale?</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-around mb-4">
+                            <ScoreCircle score={brand_architecture.elasticity_score || 0} label="Elasticity" />
+                            <ScoreCircle score={brand_architecture.memorability_index || 0} label="Memorability" />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                                <div className="text-xs font-bold text-blue-600 uppercase mb-1">Recommended Architecture</div>
+                                <p className="text-sm font-bold text-slate-800">{brand_architecture.recommended_architecture}</p>
+                                <p className="text-xs text-slate-600 mt-1">{brand_architecture.architecture_rationale}</p>
+                            </div>
+                            <div className="p-3 bg-indigo-50 rounded-lg">
+                                <div className="text-xs font-bold text-indigo-600 uppercase mb-1">Global Scalability</div>
+                                <p className="text-sm text-slate-700">{brand_architecture.global_scalability}</p>
+                            </div>
+                        </div>
+                        
+                        {brand_architecture.elasticity_analysis && (
+                            <div className="p-3 bg-slate-50 rounded-lg mb-4">
+                                <div className="text-xs font-bold text-slate-500 uppercase mb-1">Elasticity Analysis</div>
+                                <p className="text-sm text-slate-700">{brand_architecture.elasticity_analysis}</p>
+                            </div>
+                        )}
+                        
+                        {/* Memorability Factors */}
+                        {brand_architecture.memorability_factors?.length > 0 && (
+                            <div>
+                                <div className="text-xs font-bold text-slate-500 uppercase mb-2">Memorability Factors</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {brand_architecture.memorability_factors.map((factor, i) => (
+                                        <Badge key={i} className="bg-indigo-100 text-indigo-700">{factor}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </PrintCard>
+            )}
+            
+            {/* Alternative Directions (shown if REFINE or PIVOT) */}
+            {alternative_directions?.length > 0 && (executive_recommendation === 'REFINE' || executive_recommendation === 'PIVOT') && (
+                <PrintCard>
+                    <div className="bg-gradient-to-br from-slate-50 to-violet-50 rounded-2xl p-6 border border-violet-200">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                                <Rocket className="w-4 h-4 text-violet-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-800">Alternative Naming Directions</h4>
+                                <p className="text-xs text-slate-500">Based on McKinsey principles</p>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {alternative_directions.map((dir, i) => (
+                                <div key={i} className="bg-white p-4 rounded-xl border border-slate-200">
+                                    <div className="font-bold text-slate-800 mb-2">{dir.direction_name}</div>
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                        {dir.example_names?.map((name, j) => (
+                                            <Badge key={j} className="bg-violet-100 text-violet-700">{name}</Badge>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-slate-600 mb-2">{dir.rationale}</p>
+                                    <div className="text-xs text-violet-600 font-medium">
+                                        Principle: {dir.mckinsey_principle}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </PrintCard>
+            )}
+        </div>
+    );
+};
+
 // ============ MAIN DASHBOARD ============
 const Dashboard = () => {
     const location = useLocation();
