@@ -897,6 +897,57 @@ Return ONLY valid JSON.
               {"title": "Launch Tactics", "content": "Detailed GTM steps..."}
           ],
           "alternative_path": "A fully developed 'Plan B' strategy."
+      },
+      
+      "mckinsey_analysis": {
+          "_FRAMEWORK": "McKinsey Three-Question Brand Positioning Framework - BE CRITICAL, NO GENERIC PRAISE",
+          
+          "benefits_experiences": {
+              "_MODULE": "Module 1: Semantic Audit - What benefits/experiences does this name promise?",
+              "linguistic_roots": "Analyze the linguistic origins - Latin, Greek, Sanskrit, invented, compound word, etc. Be specific about etymology.",
+              "phonetic_analysis": "How does the name SOUND? Hard/soft consonants, vowel patterns, rhythm, pronunciation ease. Is it pleasing or harsh?",
+              "emotional_promises": ["List 3-5 emotional benefits the name implicitly communicates - e.g., 'trust', 'innovation', 'warmth'"],
+              "functional_benefits": ["List 2-4 functional benefits implied - e.g., 'speed', 'reliability', 'expertise'"],
+              "benefit_map": [
+                  {"name_trait": "Specific phonetic or linguistic trait", "user_perception": "What customers perceive", "benefit_type": "Functional or Emotional"}
+              ],
+              "target_persona_fit": "How well does this name resonate with the target customer persona? Be critical."
+          },
+          
+          "distinctiveness": {
+              "_MODULE": "Module 2: Market Comparison - How distinctive is this name?",
+              "distinctiveness_score": "1-10 score. Be harsh - most names score 4-7. Only truly unique names get 8+",
+              "category_noise_level": "HIGH/MEDIUM/LOW - How crowded is the naming space in this industry?",
+              "industry_comparison": "Compare against top 5 industry leaders' naming conventions. Is this name following or breaking patterns?",
+              "naming_tropes_analysis": "What are common naming tropes in this industry? Does this name fall into clichés?",
+              "similar_competitors": [
+                  {"name": "Competitor with similar naming style", "similarity_aspect": "What's similar - prefix, suffix, style?", "risk_level": "HIGH/MEDIUM/LOW"}
+              ],
+              "differentiation_opportunities": ["List 2-3 ways the name could stand out more"]
+          },
+          
+          "brand_architecture": {
+              "_MODULE": "Module 3: Strategic Fit - Can this name scale and fit brand architecture?",
+              "elasticity_score": "1-10. Can this name grow from a single product to a global portfolio? 'Apple' = 10, 'CarPhoneWarehouse' = 2",
+              "elasticity_analysis": "Detailed assessment of name's ability to stretch across products, services, geographies",
+              "recommended_architecture": "Standalone House Brand OR Sub-brand within larger architecture",
+              "architecture_rationale": "Why this architecture fits the name's character",
+              "memorability_index": "1-10. How easy is it to remember? Consider length, uniqueness, pronunciation",
+              "memorability_factors": ["List factors that help or hurt memorability"],
+              "global_scalability": "Can this name work in major markets? Any translation/pronunciation issues?"
+          },
+          
+          "executive_recommendation": "PROCEED, REFINE, or PIVOT - Be decisive",
+          "recommendation_rationale": "2-3 sentences explaining the recommendation with specific evidence",
+          "critical_assessment": "HONEST assessment. If the name is weak, generic, or cliché - SAY IT CLEARLY. No generic praise like 'interesting choice'.",
+          "alternative_directions": [
+              {
+                  "direction_name": "e.g., 'Abstract/Invented Approach'",
+                  "example_names": ["ExampleOne", "ExampleTwo", "ExampleThree"],
+                  "rationale": "Why this direction addresses current name's weaknesses",
+                  "mckinsey_principle": "Which McKinsey principle this follows - Benefits, Distinctiveness, or Architecture"
+              }
+          ]
       }
     }
   ],
