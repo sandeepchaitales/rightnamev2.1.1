@@ -1863,18 +1863,19 @@ async def get_evaluation_status(job_id: str):
         }
 
 async def run_evaluation_job(job_id: str, request: BrandEvaluationRequest):
-    """Background task to run evaluation"""
+    """Background task to run evaluation - uses MongoDB for persistence"""
     try:
-        evaluation_jobs[job_id]["status"] = JobStatus.PROCESSING
+        # Update status to processing
+        db.evaluation_jobs.update_one(
+            {"job_id": job_id},
+            {"$set": {"status": JobStatus.PROCESSING, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
         logging.info(f"Job {job_id}: Starting evaluation for {request.brand_names}")
         
         # Call the actual evaluation function with job_id for progress tracking
         result = await evaluate_brands_internal(request, job_id=job_id)
         
-        # Store result - use exclude_none to avoid null values in response
-        evaluation_jobs[job_id]["status"] = JobStatus.COMPLETED
-        evaluation_jobs[job_id]["progress"] = 100
-        # Serialize with exclude_defaults=False to keep all values, but ensure no None values leak
+        # Store result in MongoDB
         if hasattr(result, 'model_dump'):
             result_dict = result.model_dump()
             # Ensure trademark_research has all required fields with defaults
@@ -1887,15 +1888,31 @@ async def run_evaluation_job(job_id: str, request: BrandEvaluationRequest):
                     tr['overall_risk_score'] = tr.get('overall_risk_score') or 5
                     tr['registration_success_probability'] = tr.get('registration_success_probability') or 50
                     tr['opposition_probability'] = tr.get('opposition_probability') or 50
-            evaluation_jobs[job_id]["result"] = result_dict
         else:
-            evaluation_jobs[job_id]["result"] = result
+            result_dict = result
+        
+        # Save completed job to MongoDB
+        db.evaluation_jobs.update_one(
+            {"job_id": job_id},
+            {"$set": {
+                "status": JobStatus.COMPLETED,
+                "progress": 100,
+                "result": result_dict,
+                "completed_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
         logging.info(f"Job {job_id}: Completed successfully")
         
     except Exception as e:
         logging.error(f"Job {job_id}: Failed with error: {str(e)}")
-        evaluation_jobs[job_id]["status"] = JobStatus.FAILED
-        evaluation_jobs[job_id]["error"] = str(e)
+        db.evaluation_jobs.update_one(
+            {"job_id": job_id},
+            {"$set": {
+                "status": JobStatus.FAILED,
+                "error": str(e),
+                "failed_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
 
 # Original synchronous endpoint (kept for backward compatibility)
 @api_router.post("/evaluate", response_model=BrandEvaluationResponse)
