@@ -1845,7 +1845,7 @@ async def start_evaluation(request: BrandEvaluationRequest):
 @api_router.get("/evaluate/status/{job_id}")
 async def get_evaluation_status(job_id: str):
     """Check status of evaluation job with progress tracking"""
-    job = get_job(job_id)
+    job = await get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found. It may have expired or never existed.")
     
