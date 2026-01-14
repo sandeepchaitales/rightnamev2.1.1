@@ -2424,6 +2424,24 @@ const Dashboard = () => {
                     </section>
                 )}
 
+                {/* ==================== McKINSEY THREE-QUESTION FRAMEWORK ANALYSIS ==================== */}
+                {brand.mckinsey_analysis && (
+                    <section className="print-new-page">
+                        <SectionHeader 
+                            icon={Briefcase} 
+                            title="McKinsey Brand Framework" 
+                            subtitle="Three-Question strategic analysis" 
+                            color="violet" 
+                            badge={brand.mckinsey_analysis?.executive_recommendation}
+                        />
+                        {isAuthenticated ? (
+                            <McKinseyAnalysisSection mckinsey={brand.mckinsey_analysis} />
+                        ) : (
+                            <LockedSection title="McKinsey Brand Framework Analysis" onUnlock={handleRegister} />
+                        )}
+                    </section>
+                )}
+
                 {/* ==================== NEW PAGE: DIGITAL PRESENCE ==================== */}
                 {(brand.multi_domain_availability || brand.social_availability) && (
                     <section className="print-new-page">
