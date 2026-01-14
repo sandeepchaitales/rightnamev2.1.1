@@ -1806,8 +1806,8 @@ async def start_evaluation(request: BrandEvaluationRequest):
     """Start evaluation job and return job_id immediately (prevents 524 timeout)"""
     job_id = f"job_{uuid.uuid4().hex[:16]}"
     
-    # Store job in pending state with progress tracking
-    evaluation_jobs[job_id] = {
+    # Store job in MongoDB for persistence (survives server restarts)
+    job_data = {
         "status": JobStatus.PENDING,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "request": request.model_dump(),
@@ -1820,6 +1820,7 @@ async def start_evaluation(request: BrandEvaluationRequest):
         "completed_steps": [],
         "eta_seconds": 90
     }
+    save_job(job_id, job_data)
     
     # Start background task
     asyncio.create_task(run_evaluation_job(job_id, request))
@@ -1834,10 +1835,9 @@ async def start_evaluation(request: BrandEvaluationRequest):
 @api_router.get("/evaluate/status/{job_id}")
 async def get_evaluation_status(job_id: str):
     """Check status of evaluation job with progress tracking"""
-    if job_id not in evaluation_jobs:
-        raise HTTPException(status_code=404, detail="Job not found")
-    
-    job = evaluation_jobs[job_id]
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found. It may have expired or never existed.")
     
     if job["status"] == JobStatus.COMPLETED:
         return {
