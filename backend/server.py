@@ -2107,7 +2107,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     parallel_start = time_module.time()
     
     # Update progress - starting parallel checks
-    update_progress("domain", 70)
+    await update_progress("domain", 70)
     
     async def gather_domain_data(brand):
         """Check primary domain availability - wrapped for async"""
@@ -2239,7 +2239,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     # ==================== END PARALLEL PROCESSING ====================
     
     # Update progress - all data gathering done, starting analysis
-    update_progress("trademark", 45)
+    await update_progress("trademark", 45)
     
     # Format all gathered data for LLM prompt
     # 1. Domain data
@@ -2449,7 +2449,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     """
     
     # Update progress - starting LLM analysis (the longest step)
-    update_progress("analysis", 30)
+    await update_progress("analysis", 30)
     
     max_retries = 3  # Increased retries per model
     last_error = None
