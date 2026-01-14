@@ -135,8 +135,8 @@ async def save_job(job_id: str, job_data: dict):
     except Exception as e:
         logging.error(f"Error saving job {job_id}: {e}")
 
-def update_job_progress(job_id: str, step_id: str, eta_seconds: int = None):
-    """Update job progress in MongoDB"""
+async def update_job_progress(job_id: str, step_id: str, eta_seconds: int = None):
+    """Update job progress in MongoDB (async)"""
     step = next((s for s in EVALUATION_STEPS if s["id"] == step_id), None)
     if step:
         completed = []
@@ -146,7 +146,7 @@ def update_job_progress(job_id: str, step_id: str, eta_seconds: int = None):
             else:
                 break
         
-        db.evaluation_jobs.update_one(
+        await db.evaluation_jobs.update_one(
             {"job_id": job_id},
             {"$set": {
                 "current_step": step_id,
