@@ -2648,6 +2648,10 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     {"name": "Market Perception", "score": 7.0, "reasoning": "Consumer perception analysis."}
                 ],
                 "domain_analysis": {
+                    "exact_match_status": "TAKEN" if not domain_available else "AVAILABLE",
+                    "risk_level": "LOW",
+                    "has_active_business": "UNKNOWN",
+                    "has_trademark": "UNKNOWN",
                     "primary_domain": f"{brand_name.lower()}.com",
                     "available": domain_available,
                     "alternatives": [f"{brand_name.lower()}.co", f"{brand_name.lower()}.io"],
