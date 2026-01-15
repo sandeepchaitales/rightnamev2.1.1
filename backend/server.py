@@ -2915,49 +2915,6 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     
     # Return the evaluation
     return evaluation
-                
-            except Exception as e:
-                last_error = e
-                error_msg = str(e)
-                
-                if "Budget has been exceeded" in error_msg:
-                    logging.error(f"LLM Budget Exceeded: {error_msg}")
-                    raise HTTPException(status_code=402, detail="Emergent Key Budget Exceeded. Please add credits.")
-                
-                # Handle timeout separately - move to next model immediately
-                if isinstance(e, asyncio.TimeoutError):
-                    logging.warning(f"LLM Timeout ({model_provider}/{model_name}): Model took too long (>90s). Moving to next model...")
-                    break  # Don't retry same model on timeout, try next model
-                
-                # For 502/Gateway errors - only retry ONCE then move to next model
-                if any(x in error_msg for x in ["502", "BadGateway", "ServiceUnavailable", "upstream"]):
-                    if attempt == 0:
-                        # First attempt failed with gateway error - try once more quickly
-                        logging.warning(f"LLM Gateway Error ({model_provider}/{model_name}): {error_msg[:80]}. Quick retry...")
-                        await asyncio.sleep(1)
-                        continue
-                    else:
-                        # Already retried once - move to next model immediately
-                        logging.warning(f"LLM Gateway Error persists ({model_provider}/{model_name}). Moving to next model...")
-                        break
-                
-                # For JSON/validation errors - retry with backoff
-                if any(x in error_msg for x in ["Expecting", "JSON", "validation error", "control character"]):
-                    wait_time = (1.5 ** attempt) + random.uniform(0, 1)
-                    logging.warning(f"LLM Parse Error ({model_provider}/{model_name}, Attempt {attempt+1}/{max_retries}): {error_msg[:100]}. Retrying in {wait_time:.2f}s...")
-                    await asyncio.sleep(wait_time)
-                    continue
-                
-                # Non-retryable error - break inner loop to try next model
-                logging.error(f"LLM Non-retryable Error with {model_provider}/{model_name}: {error_msg[:200]}")
-                break
-        
-        # After all retries exhausted for this model, log and continue to next model
-        logging.warning(f"Moving to next model after {model_provider}/{model_name} failed...")
-        # Wait before trying next model
-        await asyncio.sleep(1)
-            
-    raise HTTPException(status_code=500, detail=f"Analysis failed: {str(last_error)}")
 
 # Status Routes
 @api_router.post("/status", response_model=StatusCheck)
