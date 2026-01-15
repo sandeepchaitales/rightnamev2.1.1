@@ -2693,59 +2693,58 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                         tr_data = None
                 elif isinstance(tr_stored, dict):
                     tr_data = tr_stored
-                            else:
-                                tr_data = None
-                            
-                            if tr_data:
-                                # Convert trademark_conflicts from dataclass to dict if needed
-                                tm_conflicts = []
-                                for c in tr_data.get('trademark_conflicts', []):
-                                    if hasattr(c, '__dataclass_fields__'):
-                                        tm_conflicts.append(asdict(c))
-                                    elif isinstance(c, dict):
-                                        tm_conflicts.append(c)
-                                
-                                co_conflicts = []
-                                for c in tr_data.get('company_conflicts', []):
-                                    if hasattr(c, '__dataclass_fields__'):
-                                        co_conflicts.append(asdict(c))
-                                    elif isinstance(c, dict):
-                                        co_conflicts.append(c)
-                                
-                                brand_score.trademark_research = TrademarkResearchData(
-                                    nice_classification=get_nice_classification(request.category),  # ALWAYS use correct NICE class
-                                    overall_risk_score=tr_data.get('overall_risk_score', 5),
-                                    registration_success_probability=tr_data.get('registration_success_probability', 70),
-                                    opposition_probability=tr_data.get('opposition_probability', 30),
-                                    trademark_conflicts=[TrademarkConflictInfo(**c) for c in tm_conflicts[:10]],
-                                    company_conflicts=[CompanyConflictInfo(**c) for c in co_conflicts[:10]],
-                                    common_law_conflicts=tr_data.get('common_law_conflicts', [])[:5],
-                                    critical_conflicts_count=tr_data.get('critical_conflicts_count', 0),
-                                    high_risk_conflicts_count=tr_data.get('high_risk_conflicts_count', 0),
-                                    total_conflicts_found=tr_data.get('total_conflicts_found', 0)
-                                )
-                                logging.info(f"✅ Added trademark_research for '{brand_name}' - Risk: {tr_data.get('overall_risk_score')}/10")
-                            else:
-                                logging.warning(f"Could not extract trademark data for '{brand_name}'")
-                        else:
-                            logging.warning(f"No stored trademark data for '{brand_name}'")
+                else:
+                    tr_data = None
+                
+                if tr_data:
+                    # Convert trademark_conflicts from dataclass to dict if needed
+                    tm_conflicts = []
+                    for c in tr_data.get('trademark_conflicts', []):
+                        if hasattr(c, '__dataclass_fields__'):
+                            tm_conflicts.append(asdict(c))
+                        elif isinstance(c, dict):
+                            tm_conflicts.append(c)
                     
-                    # Add dimensions if missing
-                    if not brand_score.dimensions or len(brand_score.dimensions) == 0:
-                        logging.warning(f"DIMENSIONS MISSING for '{brand_score.brand_name}' - Adding calculated dimensions")
-                        # Create dimensions based on the overall score
-                        base_score = brand_score.namescore / 10 if brand_score.namescore else 7.0
-                        brand_score.dimensions = [
-                            DimensionScore(
-                                name=dim["name"],
-                                score=round(max(1, min(10, base_score + (dim_idx * 0.15) - 0.3)), 1),
-                                reasoning=dim["reasoning"]
-                            )
-                            for dim_idx, dim in enumerate(DEFAULT_DIMENSIONS)
-                        ]
-                        logging.info(f"Added {len(brand_score.dimensions)} dimensions for '{brand_score.brand_name}'")
-                    else:
-                        logging.info(f"Dimensions OK for '{brand_score.brand_name}': {len(brand_score.dimensions)} dimensions")
+                    co_conflicts = []
+                    for c in tr_data.get('company_conflicts', []):
+                        if hasattr(c, '__dataclass_fields__'):
+                            co_conflicts.append(asdict(c))
+                        elif isinstance(c, dict):
+                            co_conflicts.append(c)
+                    
+                    brand_score.trademark_research = TrademarkResearchData(
+                        nice_classification=get_nice_classification(request.category),
+                        overall_risk_score=tr_data.get('overall_risk_score', 5),
+                        registration_success_probability=tr_data.get('registration_success_probability', 70),
+                        opposition_probability=tr_data.get('opposition_probability', 30),
+                        trademark_conflicts=[TrademarkConflictInfo(**c) for c in tm_conflicts[:10]],
+                        company_conflicts=[CompanyConflictInfo(**c) for c in co_conflicts[:10]],
+                        common_law_conflicts=tr_data.get('common_law_conflicts', [])[:5],
+                        critical_conflicts_count=tr_data.get('critical_conflicts_count', 0),
+                        high_risk_conflicts_count=tr_data.get('high_risk_conflicts_count', 0),
+                        total_conflicts_found=tr_data.get('total_conflicts_found', 0)
+                    )
+                    logging.info(f"✅ Added trademark_research for '{brand_name}' - Risk: {tr_data.get('overall_risk_score')}/10")
+                else:
+                    logging.warning(f"Could not extract trademark data for '{brand_name}'")
+            else:
+                logging.warning(f"No stored trademark data for '{brand_name}'")
+        
+        # Add dimensions if missing
+        if not brand_score.dimensions or len(brand_score.dimensions) == 0:
+            logging.warning(f"DIMENSIONS MISSING for '{brand_score.brand_name}' - Adding calculated dimensions")
+            base_score = brand_score.namescore / 10 if brand_score.namescore else 7.0
+            brand_score.dimensions = [
+                DimensionScore(
+                    name=dim["name"],
+                    score=round(max(1, min(10, base_score + (dim_idx * 0.15) - 0.3)), 1),
+                    reasoning=dim["reasoning"]
+                )
+                for dim_idx, dim in enumerate(DEFAULT_DIMENSIONS)
+            ]
+            logging.info(f"Added {len(brand_score.dimensions)} dimensions for '{brand_score.brand_name}'")
+        else:
+            logging.info(f"Dimensions OK for '{brand_score.brand_name}': {len(brand_score.dimensions)} dimensions")
                 
                 # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
                 if all_rejections:
