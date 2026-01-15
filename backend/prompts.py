@@ -885,11 +885,13 @@ Return ONLY valid JSON.
       ],
       
       "final_assessment": {
-          "_CRITICAL_RULE": "MUST BE CONSISTENT WITH MAIN VERDICT - If verdict is GO, suitability_score MUST be 70+. If verdict is REJECT, suitability_score MUST be below 30.",
-          "_CONFLICT_FILTER_RULE": "IGNORE any conflicts marked as 'Different Intent', 'NAME TWIN', 'Different Class', or 'False Positive' in trademark_research. Only cite conflicts that are SAME CLASS + SAME INTENT as risks.",
-          "_NICE_CLASS_RULE": "A conflict is ONLY relevant if it's in the SAME NICE Class as the user's category. Class 9 (Software) conflicts are IRRELEVANT to Class 3 (Cosmetics). Do NOT cite cross-class conflicts as risks.",
-          "verdict_statement": "MUST MATCH the main verdict. If main verdict is GO, this must be positive. If REJECT, this must explain why.",
-          "suitability_score": "1-10 scale. GO verdict = 7-10. CAUTION = 4-6. REJECT = 1-3. NEVER contradict main verdict.",
+          "_CRITICAL_CONSISTENCY_RULE": "YOUR VERDICT MUST EXACTLY MATCH THE MAIN 'verdict' FIELD ABOVE. If verdict='GO', your assessment MUST be positive. DO NOT CONTRADICT.",
+          "_FALSE_POSITIVE_RULE": "CRITICAL: If a brand/trademark appears in 'name_twins' or has 'intent_match'='DIFFERENT' or is in a DIFFERENT NICE CLASS, it is a FALSE POSITIVE. DO NOT cite it as a risk or conflict. IGNORE IT COMPLETELY.",
+          "_CLASS_MISMATCH_RULE": "NICE Class determines relevance. User's Class 3 (Cosmetics) is UNRELATED to Class 9 (Software/Apps). A 'Deepstory' social app (Class 9) is ZERO threat to 'Deep Story' skincare (Class 3). Different class = NO CONFLICT.",
+          "_BOTTOM_LINE_RULE": "If verdict is GO: bottom_line must be POSITIVE and encouraging. Do NOT mention false positive conflicts. If verdict is REJECT: explain the REAL same-class conflicts only.",
+          "verdict_statement": "MUST MATCH the main verdict exactly. GO verdict = positive statement. REJECT verdict = explain real conflicts only.",
+          "suitability_score": "MUST be 70-100 for GO verdict. 40-69 for CAUTION. 1-39 for REJECT. Scale is 1-100.",
+          "bottom_line": "One sentence summary. For GO: encouraging and positive. For REJECT: explain same-class conflicts. NEVER mention cross-class or false positive conflicts.",
           "dimension_breakdown": [
               {"Linguistic Foundation": 9.0},
               {"Market Viability": 8.0}
