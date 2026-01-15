@@ -2506,20 +2506,43 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     # ============ PARALLEL LLM RACE - First successful response wins ============
     async def try_single_model(model_provider: str, model_name: str) -> dict:
         """Try a single model and return result or raise exception"""
-        unique_session = f"rn_{uuid.uuid4().hex[:12]}_{model_name.replace('-', '_')}"
+        import concurrent.futures
         
-        llm_chat = LlmChat(
-            api_key=EMERGENT_KEY,
-            session_id=unique_session,
-            system_message=SYSTEM_PROMPT
-        ).with_model(model_provider, model_name)
+        def sync_llm_call():
+            """Synchronous wrapper for LLM call - runs in thread pool"""
+            unique_session = f"rn_{uuid.uuid4().hex[:12]}_{model_name.replace('-', '_')}"
+            
+            llm_chat = LlmChat(
+                api_key=EMERGENT_KEY,
+                session_id=unique_session,
+                system_message=SYSTEM_PROMPT
+            ).with_model(model_provider, model_name)
+            
+            user_message = UserMessage(text=user_prompt)
+            # This is synchronous - we'll run it in a thread
+            import asyncio
+            loop = asyncio.new_event_loop()
+            try:
+                response = loop.run_until_complete(llm_chat.send_message(user_message))
+            finally:
+                loop.close()
+            return response
         
-        user_message = UserMessage(text=user_prompt)
-        # HARD 30 second timeout per model - no internal retries will save it
-        response = await asyncio.wait_for(
-            llm_chat.send_message(user_message),
-            timeout=30.0  # 30 second timeout - HARD LIMIT
-        )
+        # Run LLM call in thread pool with TRUE timeout
+        loop = asyncio.get_event_loop()
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        
+        try:
+            # This WILL timeout because we're running in a separate thread
+            response = await asyncio.wait_for(
+                loop.run_in_executor(executor, sync_llm_call),
+                timeout=25.0  # 25 second hard timeout
+            )
+        except asyncio.TimeoutError:
+            executor.shutdown(wait=False, cancel_futures=True)
+            raise asyncio.TimeoutError(f"{model_provider}/{model_name} timed out after 25s")
+        finally:
+            executor.shutdown(wait=False)
         
         content = ""
         if hasattr(response, 'text'):
