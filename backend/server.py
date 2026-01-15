@@ -2618,86 +2618,81 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     data = fix_llm_response_types(data)
     
     evaluation = BrandEvaluationResponse(**data)
+    
+    # ============ ENSURE DIMENSIONS ARE ALWAYS POPULATED ============
+    DEFAULT_DIMENSIONS = [
+        {
+            "name": "Brand Distinctiveness & Memorability", 
+            "score": 8.0, 
+            "reasoning": "**PHONETIC ARCHITECTURE:**\nThe brand name demonstrates strong phonetic qualities with clear pronunciation and memorable sound patterns that facilitate recall.\n\n**COMPETITIVE ISOLATION:**\nName analysis indicates adequate differentiation from existing brands in the market space.\n\n**STRATEGIC IMPLICATION:**\nThe distinctive qualities support effective brand positioning and consumer recognition strategies."
+        },
+        {
+            "name": "Cultural & Linguistic Resonance", 
+            "score": 7.8, 
+            "reasoning": "**GLOBAL LINGUISTIC AUDIT:**\nNo significant negative connotations detected in major target market languages. The name structure supports international adaptation.\n\n**CULTURAL SEMIOTICS:**\nThe brand name carries neutral to positive cultural associations, suitable for cross-cultural brand building."
+        },
+        {
+            "name": "Premiumisation & Trust Curve", 
+            "score": 7.5, 
+            "reasoning": "**PRICING POWER ANALYSIS:**\nThe brand name supports positioning across multiple price tiers with potential for premium positioning.\n\n**TRUST GAP:**\nName structure conveys professionalism and reliability, supporting trust-building with target consumers."
+        },
+        {
+            "name": "Scalability & Brand Architecture", 
+            "score": 7.6, 
+            "reasoning": "**CATEGORY STRETCH:**\nThe brand name demonstrates flexibility for potential expansion into adjacent categories and product lines.\n\n**EXTENSION TEST:**\nName structure allows for sub-brand development and product family extensions without semantic conflicts."
+        },
+        {
+            "name": "Trademark & Legal Sensitivity", 
+            "score": 7.2, 
+            "reasoning": "**DESCRIPTIVENESS AUDIT:**\nThe name shows adequate distinctiveness for trademark registration with non-generic qualities.\n\n**CROWDING ASSESSMENT:**\nInitial search indicates moderate trademark landscape in relevant classes."
+        },
+        {
+            "name": "Consumer Perception Mapping", 
+            "score": 7.8, 
+            "reasoning": "**PERCEPTUAL GRID:**\nBrand name aligns with target audience expectations and desired brand attributes.\n\n**EMOTIONAL RESPONSE:**\nName structure likely to evoke positive associations aligned with brand objectives."
+        },
+    ]
+    
+    for brand_idx, brand_score in enumerate(evaluation.brand_scores):
+        # ALWAYS fix NICE classification to match the category
+        correct_nice = get_nice_classification(request.category)
+        logging.info(f"🔧 NICE CLASS FIX: Brand '{brand_score.brand_name}', Category: '{request.category}', Correct class: {correct_nice}")
+        
+        # Handle both dict and Pydantic model cases
+        tr = brand_score.trademark_research
+        if tr:
+            if isinstance(tr, dict):
+                tr['nice_classification'] = correct_nice
+                logging.info(f"✅ NICE class fixed (dict) for '{brand_score.brand_name}': Class {correct_nice['class_number']}")
+            elif hasattr(tr, 'nice_classification'):
+                tr.nice_classification = correct_nice
+                logging.info(f"✅ NICE class fixed (model) for '{brand_score.brand_name}': Class {correct_nice['class_number']}")
+        
+        # Add trademark_research if missing
+        if not brand_score.trademark_research:
+            brand_name = brand_score.brand_name
+            logging.warning(f"TRADEMARK RESEARCH MISSING for '{brand_name}' - Adding from collected data")
+            
+            # Get stored trademark data
+            tr_stored = trademark_research_data.get(brand_name)
+            
+            if tr_stored:
+                from schemas import TrademarkResearchData, TrademarkConflictInfo, CompanyConflictInfo
+                from dataclasses import asdict
                 
-                # ============ ENSURE DIMENSIONS ARE ALWAYS POPULATED ============
-                DEFAULT_DIMENSIONS = [
-                    {
-                        "name": "Brand Distinctiveness & Memorability", 
-                        "score": 8.0, 
-                        "reasoning": "**PHONETIC ARCHITECTURE:**\nThe brand name demonstrates strong phonetic qualities with clear pronunciation and memorable sound patterns that facilitate recall.\n\n**COMPETITIVE ISOLATION:**\nName analysis indicates adequate differentiation from existing brands in the market space.\n\n**STRATEGIC IMPLICATION:**\nThe distinctive qualities support effective brand positioning and consumer recognition strategies."
-                    },
-                    {
-                        "name": "Cultural & Linguistic Resonance", 
-                        "score": 7.8, 
-                        "reasoning": "**GLOBAL LINGUISTIC AUDIT:**\nNo significant negative connotations detected in major target market languages. The name structure supports international adaptation.\n\n**CULTURAL SEMIOTICS:**\nThe brand name carries neutral to positive cultural associations, suitable for cross-cultural brand building."
-                    },
-                    {
-                        "name": "Premiumisation & Trust Curve", 
-                        "score": 7.5, 
-                        "reasoning": "**PRICING POWER ANALYSIS:**\nThe brand name supports positioning across multiple price tiers with potential for premium positioning.\n\n**TRUST GAP:**\nName structure conveys professionalism and reliability, supporting trust-building with target consumers."
-                    },
-                    {
-                        "name": "Scalability & Brand Architecture", 
-                        "score": 7.6, 
-                        "reasoning": "**CATEGORY STRETCH:**\nThe brand name demonstrates flexibility for potential expansion into adjacent categories and product lines.\n\n**EXTENSION TEST:**\nName structure allows for sub-brand development and product family extensions without semantic conflicts."
-                    },
-                    {
-                        "name": "Trademark & Legal Sensitivity", 
-                        "score": 7.2, 
-                        "reasoning": "**DESCRIPTIVENESS AUDIT:**\nThe name shows adequate distinctiveness for trademark registration with non-generic qualities.\n\n**CROWDING ASSESSMENT:**\nInitial search indicates moderate trademark landscape in relevant classes."
-                    },
-                    {
-                        "name": "Consumer Perception Mapping", 
-                        "score": 7.8, 
-                        "reasoning": "**PERCEPTUAL GRID:**\nBrand name aligns with target audience expectations and desired brand attributes.\n\n**EMOTIONAL RESPONSE:**\nName structure likely to evoke positive associations aligned with brand objectives."
-                    },
-                ]
-                
-                for brand_idx, brand_score in enumerate(evaluation.brand_scores):
-                    # ALWAYS fix NICE classification to match the category
-                    # The LLM often returns Class 25 (Fashion) as default
-                    correct_nice = get_nice_classification(request.category)
-                    logging.info(f"🔧 NICE CLASS FIX: Brand '{brand_score.brand_name}', Category: '{request.category}', Correct class: {correct_nice}")
-                    
-                    # Handle both dict and Pydantic model cases
-                    tr = brand_score.trademark_research
-                    if tr:
-                        if isinstance(tr, dict):
-                            # It's a dict - update directly
-                            tr['nice_classification'] = correct_nice
-                            logging.info(f"✅ NICE class fixed (dict) for '{brand_score.brand_name}': Class {correct_nice['class_number']}")
-                        elif hasattr(tr, 'nice_classification'):
-                            # It's a Pydantic model - update attribute
-                            tr.nice_classification = correct_nice
-                            logging.info(f"✅ NICE class fixed (model) for '{brand_score.brand_name}': Class {correct_nice['class_number']}")
-                    
-                    # Add trademark_research if missing
-                    if not brand_score.trademark_research:
-                        brand_name = brand_score.brand_name
-                        logging.warning(f"TRADEMARK RESEARCH MISSING for '{brand_name}' - Adding from collected data")
-                        
-                        # Get stored trademark data
-                        tr_stored = trademark_research_data.get(brand_name)
-                        
-                        if tr_stored:
-                            from schemas import TrademarkResearchData, TrademarkConflictInfo, CompanyConflictInfo
-                            from dataclasses import asdict
-                            
-                            # Check if it's a TrademarkResearchResult dataclass
-                            if hasattr(tr_stored, 'overall_risk_score'):
-                                # It's the dataclass - convert to dict
-                                tr_data = asdict(tr_stored) if hasattr(tr_stored, '__dataclass_fields__') else tr_stored
-                            elif isinstance(tr_stored, dict) and 'result' in tr_stored:
-                                # It's the wrapper dict with 'result' key
-                                result_obj = tr_stored['result']
-                                if result_obj and hasattr(result_obj, '__dataclass_fields__'):
-                                    tr_data = asdict(result_obj)
-                                elif isinstance(result_obj, dict):
-                                    tr_data = result_obj
-                                else:
-                                    tr_data = None
-                            elif isinstance(tr_stored, dict):
-                                tr_data = tr_stored
+                # Check if it's a TrademarkResearchResult dataclass
+                if hasattr(tr_stored, 'overall_risk_score'):
+                    tr_data = asdict(tr_stored) if hasattr(tr_stored, '__dataclass_fields__') else tr_stored
+                elif isinstance(tr_stored, dict) and 'result' in tr_stored:
+                    result_obj = tr_stored['result']
+                    if result_obj and hasattr(result_obj, '__dataclass_fields__'):
+                        tr_data = asdict(result_obj)
+                    elif isinstance(result_obj, dict):
+                        tr_data = result_obj
+                    else:
+                        tr_data = None
+                elif isinstance(tr_stored, dict):
+                    tr_data = tr_stored
                             else:
                                 tr_data = None
                             
