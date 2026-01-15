@@ -2778,14 +2778,16 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         logging.warning(f"⏰ HARD TIMEOUT: 35s limit reached. Generating fallback report.")
         brand_name = request.brand_names[0] if request.brand_names else "Brand"
         
-        # Get collected data
-        domain_data = domain_results.get(brand_name)
-        social_data = social_results.get(brand_name)
+        # Get collected data from all_brand_data
+        brand_data = all_brand_data.get(brand_name, {})
+        domain_data = brand_data.get("domain")
+        social_data = brand_data.get("social")
+        visibility_data = brand_data.get("visibility")
         trademark_data_dict = None
         
         if brand_name in trademark_research_data:
             tr = trademark_research_data[brand_name]
-            if hasattr(tr, '__dataclass_fields__'):
+            if tr and hasattr(tr, '__dataclass_fields__'):
                 from dataclasses import asdict
                 trademark_data_dict = asdict(tr)
             elif isinstance(tr, dict):
@@ -2799,7 +2801,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 domain_data=domain_data,
                 social_data=social_data,
                 trademark_data=trademark_data_dict,
-                visibility_data=visibility_results.get(brand_name)
+                visibility_data=visibility_data
             )
         }
     
