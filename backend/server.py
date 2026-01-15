@@ -2661,7 +2661,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         
         logging.info(f"🏁 RACING {len(tasks)} models in parallel: {[t.model_info for t in tasks]}")
         
-        # Set a HARD timeout of 45 seconds for the entire race
+        # Set a HARD timeout of 30 seconds for the entire race
         try:
             # Wait for first successful completion with timeout
             pending = set(tasks)
@@ -2670,10 +2670,10 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             start_time = asyncio.get_event_loop().time()
             
             while pending:
-                # Check if we've exceeded 45 seconds
+                # Check if we've exceeded 30 seconds - FALLBACK immediately
                 elapsed = asyncio.get_event_loop().time() - start_time
-                if elapsed > 45:
-                    logging.warning(f"⏰ TIMEOUT: 45s exceeded, switching to fallback mode")
+                if elapsed > 30:
+                    logging.warning(f"⏰ TIMEOUT: 30s exceeded ({elapsed:.1f}s), switching to fallback mode")
                     for p in pending:
                         p.cancel()
                     raise asyncio.TimeoutError("Race timeout exceeded")
