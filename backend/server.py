@@ -2515,9 +2515,10 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         ).with_model(model_provider, model_name)
         
         user_message = UserMessage(text=user_prompt)
+        # HARD 30 second timeout per model - no internal retries will save it
         response = await asyncio.wait_for(
             llm_chat.send_message(user_message),
-            timeout=60.0  # 60 second timeout
+            timeout=30.0  # 30 second timeout - HARD LIMIT
         )
         
         content = ""
