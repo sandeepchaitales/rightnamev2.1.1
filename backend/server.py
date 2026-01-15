@@ -2518,7 +2518,11 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         for attempt in range(max_retries):
             try:
                 user_message = UserMessage(text=user_prompt)
-                response = await llm_chat.send_message(user_message)
+                # Add timeout to prevent hanging on Claude or slow responses
+                response = await asyncio.wait_for(
+                    llm_chat.send_message(user_message),
+                    timeout=90.0  # 90 second timeout per attempt
+                )
                 
                 content = ""
                 if hasattr(response, 'text'):
