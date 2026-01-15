@@ -2685,8 +2685,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "suitability_score": overall_score,
                     "bottom_line": f"Based on domain, social, and trademark analysis, '{brand_name}' {'shows strong potential' if verdict == 'GO' else 'has moderate risk factors' if verdict == 'CAUTION' else 'has significant conflicts'}.",
                     "dimension_breakdown": [
-                        {"name": "Brand Distinctiveness", "score": 7.5},
-                        {"name": "Market Viability", "score": 7.0}
+                        {"Brand Distinctiveness": 7.5},
+                        {"Market Viability": 7.0}
                     ],
                     "recommendations": [
                         {"title": "Domain Strategy", "content": "Secure primary domain and key TLDs."},
