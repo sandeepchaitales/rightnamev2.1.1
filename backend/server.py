@@ -2902,15 +2902,27 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 
                 # Handle timeout separately - move to next model immediately
                 if isinstance(e, asyncio.TimeoutError):
-                    logging.warning(f"LLM Timeout ({model_provider}/{model_name}, Attempt {attempt+1}/{max_retries}): Model took too long (>90s). Moving to next model...")
+                    logging.warning(f"LLM Timeout ({model_provider}/{model_name}): Model took too long (>90s). Moving to next model...")
                     break  # Don't retry same model on timeout, try next model
                 
-                # Retry on 502/Gateway/Service errors AND JSON/Validation errors
-                if any(x in error_msg for x in ["502", "BadGateway", "ServiceUnavailable", "Expecting", "JSON", "validation error", "control character"]):
-                    wait_time = (1.5 ** attempt) + random.uniform(0, 1)  # Exponential backoff: 1.5s, 2.25s, 3.4s
-                    logging.warning(f"LLM Error ({model_provider}/{model_name}, Attempt {attempt+1}/{max_retries}): {error_msg[:100]}. Retrying in {wait_time:.2f}s...")
+                # For 502/Gateway errors - only retry ONCE then move to next model
+                if any(x in error_msg for x in ["502", "BadGateway", "ServiceUnavailable", "upstream"]):
+                    if attempt == 0:
+                        # First attempt failed with gateway error - try once more quickly
+                        logging.warning(f"LLM Gateway Error ({model_provider}/{model_name}): {error_msg[:80]}. Quick retry...")
+                        await asyncio.sleep(1)
+                        continue
+                    else:
+                        # Already retried once - move to next model immediately
+                        logging.warning(f"LLM Gateway Error persists ({model_provider}/{model_name}). Moving to next model...")
+                        break
+                
+                # For JSON/validation errors - retry with backoff
+                if any(x in error_msg for x in ["Expecting", "JSON", "validation error", "control character"]):
+                    wait_time = (1.5 ** attempt) + random.uniform(0, 1)
+                    logging.warning(f"LLM Parse Error ({model_provider}/{model_name}, Attempt {attempt+1}/{max_retries}): {error_msg[:100]}. Retrying in {wait_time:.2f}s...")
                     await asyncio.sleep(wait_time)
-                    continue  # Continue to next retry attempt
+                    continue
                 
                 # Non-retryable error - break inner loop to try next model
                 logging.error(f"LLM Non-retryable Error with {model_provider}/{model_name}: {error_msg[:200]}")
