@@ -2729,11 +2729,23 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     }
                 ],
                 "competitor_analysis": {
-                    "direct_competitors": [],
-                    "naming_patterns": f"Analysis of {category} sector naming conventions",
-                    "differentiation": f"'{brand_name}' offers differentiation through its unique coined structure",
-                    "suggested_pricing": f"{'Premium' if overall_score >= 75 else 'Mid-range'} positioning recommended",
-                    "market_gap": f"Opportunity in {category} for distinctive branded offerings"
+                    "x_axis_label": f"Price: Budget → Premium",
+                    "y_axis_label": f"Innovation: Traditional → Modern",
+                    "competitors": [
+                        {"name": f"{category} Leader 1", "x_coordinate": 75, "y_coordinate": 65, "quadrant": "Premium Modern"},
+                        {"name": f"{category} Leader 2", "x_coordinate": 45, "y_coordinate": 70, "quadrant": "Mid-range Modern"},
+                        {"name": f"{category} Leader 3", "x_coordinate": 80, "y_coordinate": 40, "quadrant": "Premium Traditional"},
+                        {"name": f"{category} Challenger", "x_coordinate": 35, "y_coordinate": 55, "quadrant": "Value Player"}
+                    ],
+                    "user_brand_position": {
+                        "x_coordinate": 65,
+                        "y_coordinate": 75,
+                        "quadrant": "Accessible Premium",
+                        "rationale": f"'{brand_name}' positioned for premium-accessible market segment"
+                    },
+                    "white_space_analysis": f"Opportunity exists in the {category} market for brands combining accessibility with innovation. The '{brand_name}' positioning targets this underserved segment.",
+                    "strategic_advantage": f"As a distinctive coined term, '{brand_name}' can establish unique market positioning without direct name conflicts.",
+                    "suggested_pricing": f"{'Premium' if overall_score >= 75 else 'Mid-range'} positioning recommended"
                 },
                 "visibility_analysis": {
                     "web_presence_score": 7,
@@ -2742,10 +2754,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "seo_potential": "HIGH" if len(brand_name) <= 12 else "MEDIUM",
                     "recommendation": f"Strong potential for building digital presence with '{brand_name}'"
                 },
-                "country_competitor_analysis": [
-                    {"country": "India", "competitors": [], "market_status": "Open", "recommendation": "Favorable for entry"},
-                    {"country": "USA", "competitors": [], "market_status": "Open", "recommendation": "Favorable for entry"}
-                ],
+                "country_competitor_analysis": generate_country_competitor_analysis(request.countries, category, brand_name),
                 "alternative_names": {
                     "poison_words": [],
                     "reasoning": "Alternative names generated based on brand analysis",
