@@ -977,19 +977,25 @@ def get_nice_classification(category: str) -> dict:
     """
     Get NICE classification based on category/industry keywords.
     Returns a dict with class_number, class_description, and matched_term.
+    Prioritizes longer matches first to avoid partial matching issues.
     """
     if not category:
         return {"class_number": 35, "class_description": "Advertising, business management, retail services", "matched_term": "general business"}
     
-    category_lower = category.lower()
+    category_lower = category.lower().strip()
     
-    # Check each keyword in the NICE_CLASS_MAP
-    for keyword, classification in NICE_CLASS_MAP.items():
+    # Sort keywords by length (longest first) to prioritize more specific matches
+    # This ensures "hotel chain" matches before "chain" or "hotel" alone
+    sorted_keywords = sorted(NICE_CLASS_MAP.keys(), key=len, reverse=True)
+    
+    # Check each keyword in the NICE_CLASS_MAP (longest first)
+    for keyword in sorted_keywords:
         if keyword in category_lower:
+            classification = NICE_CLASS_MAP[keyword]
             return {
                 "class_number": classification["class_number"],
                 "class_description": classification["class_description"],
-                "matched_term": category
+                "matched_term": keyword
             }
     
     # Default to Class 35 for unknown categories
