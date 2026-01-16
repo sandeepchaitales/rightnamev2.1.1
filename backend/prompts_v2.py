@@ -355,15 +355,15 @@ Return ONLY valid JSON. No markdown, no explanation.
       
       "country_competitor_analysis": [
         {
-          "_INSTRUCTION": "Generate ONE entry for EACH country selected. Use REAL local competitors.",
-          "country": "Country Name",
-          "country_flag": "🇺🇸",
+          "_INSTRUCTION": "⚠️ CRITICAL: Generate ONE entry for EVERY country in the user's target_countries list. Do NOT skip any country. If user selected India, USA, Thailand - you MUST have 3 entries. Each entry MUST have competitors array with at least 3 REAL local brands and valid x_coordinate/y_coordinate values (0-100).",
+          "country": "Country Name (MUST match user's selected country exactly)",
+          "country_flag": "Use flag from Section 12 (🇺🇸, 🇮🇳, 🇹🇭, etc.)",
           "x_axis_label": "Category-appropriate axis",
           "y_axis_label": "Category-appropriate axis",
           "competitors": [
-            {"name": "Local Leader 1", "x_coordinate": 70, "y_coordinate": 65, "quadrant": "Position"},
-            {"name": "Local Leader 2", "x_coordinate": 40, "y_coordinate": 50, "quadrant": "Position"},
-            {"name": "Local Leader 3", "x_coordinate": 85, "y_coordinate": 30, "quadrant": "Position"}
+            {"name": "REAL Local Brand 1", "x_coordinate": 70, "y_coordinate": 65, "quadrant": "e.g., Premium Modern"},
+            {"name": "REAL Local Brand 2", "x_coordinate": 40, "y_coordinate": 50, "quadrant": "e.g., Budget Traditional"},
+            {"name": "REAL Local Brand 3", "x_coordinate": 85, "y_coordinate": 30, "quadrant": "e.g., Premium Classic"}
           ],
           "user_brand_position": {
             "x_coordinate": 65,
