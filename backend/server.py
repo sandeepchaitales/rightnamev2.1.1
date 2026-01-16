@@ -3272,6 +3272,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "trademark_conflicts": (trademark_data or {}).get("trademark_conflicts", []) if isinstance(trademark_data, dict) else [],
                     "company_conflicts": (trademark_data or {}).get("company_conflicts", []) if isinstance(trademark_data, dict) else [],
                     "common_law_conflicts": [],
+                    "legal_precedents": generate_legal_precedents("LOW" if trademark_risk <= 3 else "MEDIUM"),
                     "critical_conflicts_count": (trademark_data or {}).get("critical_conflicts_count", 0) if isinstance(trademark_data, dict) else 0,
                     "high_risk_conflicts_count": (trademark_data or {}).get("high_risk_conflicts_count", 0) if isinstance(trademark_data, dict) else 0,
                     "total_conflicts_found": (trademark_data or {}).get("total_conflicts_found", 0) if isinstance(trademark_data, dict) else 0,
