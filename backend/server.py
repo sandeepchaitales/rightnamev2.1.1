@@ -2743,12 +2743,12 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "primary_domain": f"{brand_name.lower()}.com",
                     "primary_available": domain_available,
                     "category_domains": [
-                        {"domain": f"{brand_name.lower()}.beauty", "available": True, "relevance": "HIGH"},
-                        {"domain": f"{brand_name.lower()}.shop", "available": True, "relevance": "HIGH"}
+                        {"domain": f"{brand_name.lower()}.beauty", "available": True, "status": "Available", "relevance": "HIGH"},
+                        {"domain": f"{brand_name.lower()}.shop", "available": True, "status": "Available", "relevance": "HIGH"}
                     ],
                     "country_domains": [
-                        {"domain": f"{brand_name.lower()}.in", "available": True, "country": "India"},
-                        {"domain": f"{brand_name.lower()}.us", "available": True, "country": "USA"}
+                        {"domain": f"{brand_name.lower()}.in", "available": True, "status": "Available", "country": "India"},
+                        {"domain": f"{brand_name.lower()}.us", "available": True, "status": "Available", "country": "USA"}
                     ],
                     "recommended_domain": f"{brand_name.lower()}.com" if domain_available else f"{brand_name.lower()}.co",
                     "acquisition_strategy": "Secure primary and category-specific TLDs"
