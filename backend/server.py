@@ -944,14 +944,16 @@ async def llm_first_country_analysis(
     logging.info(f"🔬 LLM-FIRST RESEARCH: Starting {positioning} research for {len(countries)} countries...")
     
     try:
-        # Prepare fallback data
+        # Prepare fallback data with case-insensitive lookup
         fallback_market = {}
         fallback_cultural = {}
+        cultural_data_lower = {k.lower(): v for k, v in COUNTRY_CULTURAL_DATA.items()}
         
         for country in countries[:4]:
             country_name = country.get('name') if isinstance(country, dict) else str(country)
+            country_lower = country_name.lower().strip() if country_name else ""
             fallback_market[country_name] = get_market_data_for_category_country(category, country_name)
-            fallback_cultural[country_name] = COUNTRY_CULTURAL_DATA.get(country_name, COUNTRY_CULTURAL_DATA["default"])
+            fallback_cultural[country_name] = cultural_data_lower.get(country_lower, COUNTRY_CULTURAL_DATA["default"])
         
         # Execute LLM-first research WITH POSITIONING
         market_intelligence, cultural_intelligence = await research_all_countries(
