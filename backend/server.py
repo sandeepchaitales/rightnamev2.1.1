@@ -35,6 +35,15 @@ from availability import check_full_availability, check_multi_domain_availabilit
 from similarity import check_brand_similarity, format_similarity_report
 from trademark_research import conduct_trademark_research, format_research_for_prompt
 
+# Import LLM-First Market Intelligence Research Module
+from market_intelligence import (
+    research_all_countries,
+    research_country_market,
+    research_cultural_sensitivity,
+    format_market_intelligence_for_response,
+    format_cultural_intelligence_for_response
+)
+
 # Import Emergent Integration
 try:
     from emergentintegrations.llm.chat import LlmChat, UserMessage
