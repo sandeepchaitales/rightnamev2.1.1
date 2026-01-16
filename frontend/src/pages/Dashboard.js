@@ -580,7 +580,7 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                                         <MessageSquare className="w-4 h-4 text-fuchsia-600" />
                                         <h5 className="font-bold text-fuchsia-800 text-sm">Brand Narrative</h5>
                                     </div>
-                                    <p className="text-xs text-slate-600">{assessment.brand_narrative}</p>
+                                    <p className="text-xs text-slate-600"><MarkdownText text={assessment.brand_narrative} /></p>
                                 </div>
                             )}
                             {!assessment.recommendations && assessment.launch_tactics && (
