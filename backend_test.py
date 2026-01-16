@@ -5412,7 +5412,7 @@ class BrandEvaluationTester:
             "category": "Hotel Chain",
             "positioning": "Premium",
             "market_scope": "Multi-Country",
-            "countries": [{"name": "India"}, {"name": "Thailand"}]
+            "countries": ["India", "Thailand"]
         }
         
         try:
