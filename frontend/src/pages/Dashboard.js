@@ -1434,7 +1434,7 @@ const CompetitiveLandscapeSection = ({ competitorAnalysis, countryCompetitorAnal
                                         <Lightbulb className="w-5 h-5 text-emerald-600" />
                                         <h4 className="font-bold text-emerald-700">White Space Analysis</h4>
                                     </div>
-                                    <p className="text-sm text-slate-700">{competitorAnalysis.white_space_analysis}</p>
+                                    <p className="text-sm text-slate-700"><MarkdownText text={competitorAnalysis.white_space_analysis} /></p>
                                 </div>
                             )}
                             {competitorAnalysis.strategic_advantage && (
@@ -1443,7 +1443,7 @@ const CompetitiveLandscapeSection = ({ competitorAnalysis, countryCompetitorAnal
                                         <Target className="w-5 h-5 text-violet-600" />
                                         <h4 className="font-bold text-violet-700">Strategic Advantage</h4>
                                     </div>
-                                    <p className="text-sm text-slate-700">{competitorAnalysis.strategic_advantage}</p>
+                                    <p className="text-sm text-slate-700"><MarkdownText text={competitorAnalysis.strategic_advantage} /></p>
                                 </div>
                             )}
                         </div>
