@@ -6106,6 +6106,10 @@ class BrandEvaluationTester:
         print("\n📊 PRIORITY TEST: Testing dimensions population...")
         self.test_dimensions_population_nexaflow()
         
+        # PRIORITY: Test POSITIONING-AWARE competitor search fix (as per review request)
+        print("\n🎯 PRIORITY TEST: Testing POSITIONING-AWARE competitor search fix...")
+        self.test_positioning_aware_competitor_search()
+        
         # Test main evaluate endpoint
         self.test_evaluate_endpoint_structure()
         
