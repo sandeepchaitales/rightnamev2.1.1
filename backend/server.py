@@ -856,6 +856,10 @@ def generate_cultural_analysis(countries: list, brand_name: str) -> list:
     """
     result = []
     
+    # Create case-insensitive lookup for cultural data
+    cultural_data_lower = {k.lower(): v for k, v in COUNTRY_CULTURAL_DATA.items()}
+    flags_lower = {k.lower(): v for k, v in COUNTRY_FLAGS.items()}
+    
     # First, check for sacred/royal name conflicts
     sacred_check = check_sacred_royal_names(brand_name, countries)
     
