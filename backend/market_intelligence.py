@@ -119,7 +119,7 @@ class CulturalIntelligence:
 async def web_search(query: str, num_results: int = 5) -> List[Dict[str, str]]:
     """Perform web search using DuckDuckGo (free, no API key needed)"""
     try:
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
         
         results = []
         with DDGS() as ddgs:
@@ -132,6 +132,25 @@ async def web_search(query: str, num_results: int = 5) -> List[Dict[str, str]]:
         
         logger.info(f"🔍 Web search for '{query[:50]}...' returned {len(results)} results")
         return results
+    except ImportError:
+        # Try older package name
+        try:
+            from duckduckgo_search import DDGS
+            
+            results = []
+            with DDGS() as ddgs:
+                for r in ddgs.text(query, max_results=num_results):
+                    results.append({
+                        "title": r.get("title", ""),
+                        "body": r.get("body", ""),
+                        "href": r.get("href", "")
+                    })
+            
+            logger.info(f"🔍 Web search for '{query[:50]}...' returned {len(results)} results")
+            return results
+        except Exception as e:
+            logger.error(f"Web search failed: {e}")
+            return []
     except Exception as e:
         logger.error(f"Web search failed: {e}")
         return []
