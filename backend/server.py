@@ -2535,12 +2535,12 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     Target Countries Selected: {request.countries}
     Number of Countries: {len(request.countries)}
     
-    CRITICAL INSTRUCTION: You MUST generate 'country_competitor_analysis' array with EXACTLY {min(len(request.countries), 4)} entries - one for EACH of these countries: {', '.join(request.countries[:4])}.
+    CRITICAL INSTRUCTION: You MUST generate 'country_competitor_analysis' array with EXACTLY {len(request.countries)} entries - one for EACH of these countries: {', '.join(request.countries)}.
     DO NOT skip any country. Each country entry MUST contain:
-    - country: exact country name
-    - country_flag: emoji flag (🇺🇸, 🇮🇳, 🇬🇧, 🇩🇪, etc.)
-    - competitors: 3 REAL local brands that operate in that specific country's market
-    - user_brand_position: recommended position in that market
+    - country: exact country name (e.g., "India", "USA", "Thailand")
+    - country_flag: emoji flag (🇺🇸, 🇮🇳, 🇹🇭, 🇬🇧, 🇩🇪, etc.)
+    - competitors: array with 3-4 REAL local brands that operate in that specific country's market
+    - user_brand_position: object with x_coordinate, y_coordinate, quadrant, rationale
     - white_space_analysis: market gap in that specific country
     - strategic_advantage: competitive advantage in that market
     - market_entry_recommendation: specific advice for entering that country
