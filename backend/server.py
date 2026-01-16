@@ -1692,6 +1692,162 @@ def generate_legal_precedents(trademark_risk_level: str) -> list:
     
     return precedents
 
+
+def generate_rich_executive_summary(
+    brand_name: str,
+    category: str,
+    verdict: str,
+    overall_score: int,
+    countries: list,
+    linguistic_analysis: dict = None,
+    trademark_risk: int = 3,
+    nice_class: dict = None,
+    domain_available: bool = True,
+    cultural_analysis: list = None
+) -> str:
+    """
+    Generate a rich, detailed executive summary (minimum 100 words) that provides
+    substantive analysis like a professional brand consultant would.
+    
+    Example output:
+    "Deepstorika" offers a highly distinctive and legally defensible foundation for a 
+    global DTC skincare brand. As a coined neologism, it bypasses the trademark saturation...
+    """
+    
+    # Get linguistic decomposition if not provided
+    if not linguistic_analysis:
+        linguistic_analysis = generate_linguistic_decomposition(brand_name, countries, category)
+    
+    decomposition = linguistic_analysis.get("decomposition", {})
+    morphemes = decomposition.get("morphemes", [])
+    brand_type = linguistic_analysis.get("brand_type", "Modern/Coined")
+    industry_fit = linguistic_analysis.get("industry_fit", {})
+    country_analysis = linguistic_analysis.get("country_analysis", {})
+    
+    # Determine brand name characteristics
+    is_coined = brand_type in ["Modern/Coined", "Coined"]
+    is_heritage = brand_type == "Heritage"
+    has_morphemes = len(morphemes) > 0
+    
+    # Get NICE class info
+    class_number = nice_class.get("class_number", 35) if nice_class else 35
+    class_description = nice_class.get("class_description", category) if nice_class else category
+    
+    # Format target markets
+    market_list = []
+    for country in countries[:4]:
+        country_name = country.get('name') if isinstance(country, dict) else str(country)
+        market_list.append(country_name.title())
+    markets_str = ", ".join(market_list[:-1]) + f" and {market_list[-1]}" if len(market_list) > 1 else market_list[0] if market_list else "target markets"
+    
+    # Analyze morpheme structure for summary
+    morpheme_insights = []
+    risk_countries = []
+    positive_countries = []
+    
+    for morpheme in morphemes:
+        origin = morpheme.get("origin", "")
+        meaning = morpheme.get("meaning", "")
+        morpheme_insights.append(f'"{morpheme["text"].capitalize()}" ({origin}: {meaning.split("/")[0] if "/" in meaning else meaning})')
+    
+    for country_name, data in country_analysis.items():
+        if data.get("overall_resonance") == "CRITICAL":
+            risk_countries.append(country_name)
+        elif data.get("overall_resonance") == "HIGH" and data.get("risk_count", 0) == 0:
+            positive_countries.append(country_name)
+    
+    # Build the executive summary
+    summary_parts = []
+    
+    # Opening statement with verdict context
+    if verdict == "GO":
+        if is_coined:
+            summary_parts.append(
+                f'**"{brand_name}"** presents a highly distinctive and legally defensible foundation for a {category} brand. '
+                f'As a coined neologism, it effectively bypasses the trademark saturation common in the {category.lower()} sector, '
+                f'ensuring a clear path to registration in Class {class_number} ({class_description}) across {markets_str}.'
+            )
+        elif is_heritage:
+            summary_parts.append(
+                f'**"{brand_name}"** leverages heritage linguistics to create a culturally resonant brand identity for the {category} market. '
+                f'The name draws from established etymological roots, positioning the brand with authenticity while maintaining distinctiveness '
+                f'for trademark registration in Class {class_number} across {markets_str}.'
+            )
+        else:
+            summary_parts.append(
+                f'**"{brand_name}"** demonstrates strong potential as a trademark for a {category} brand. '
+                f'The name balances memorability with distinctiveness, supporting registration in Class {class_number} ({class_description}) '
+                f'across {markets_str}.'
+            )
+    elif verdict == "CAUTION":
+        summary_parts.append(
+            f'**"{brand_name}"** shows promise for the {category} market but requires strategic attention to identified concerns. '
+            f'While the name has potential for Class {class_number} registration, certain factors in {markets_str} warrant careful evaluation before brand investment.'
+        )
+    else:  # NO-GO
+        summary_parts.append(
+            f'**"{brand_name}"** faces significant challenges for the {category} market. '
+            f'Critical issues identified in trademark clearance or cultural fit across {markets_str} suggest alternative naming approaches may better serve the brand strategy.'
+        )
+    
+    # Morpheme analysis (if available)
+    if morpheme_insights:
+        summary_parts.append(
+            f'\n\n**Linguistic Structure:** The name strategically {'fuses' if len(morphemes) > 1 else 'employs'} '
+            f'{" with ".join(morpheme_insights)}. '
+            f'This {"combination" if len(morphemes) > 1 else "structure"} creates a {"unique" if is_coined else "culturally grounded"} '
+            f'positioning that {"differentiates from generic category descriptors" if verdict == "GO" else "requires cultural navigation in certain markets"}.'
+        )
+    
+    # Industry fit insight
+    fit_level = industry_fit.get("fit_level", "NEUTRAL")
+    if fit_level == "HIGH":
+        summary_parts.append(
+            f'The phonetic structure aligns strongly with {category.lower()} industry conventions, enhancing brand recall and category association.'
+        )
+    elif fit_level == "LOW":
+        summary_parts.append(
+            f'Note: The name\'s suffix structure is atypical for the {category.lower()} sector, which may require stronger visual branding to establish category relevance.'
+        )
+    
+    # Cultural/market analysis
+    if risk_countries:
+        summary_parts.append(
+            f'\n\n**⚠️ Critical Considerations:** Market entry in {", ".join(risk_countries)} requires legal consultation due to cultural/regulatory sensitivities identified in linguistic analysis.'
+        )
+    if positive_countries:
+        summary_parts.append(
+            f'**Market Advantage:** Strong cultural resonance detected in {", ".join(positive_countries)}, presenting opportunities for heritage-based positioning.'
+        )
+    
+    # Trademark and digital assets
+    summary_parts.append(
+        f'\n\n**IP Strategy:** '
+        f'{"Recommended for immediate trademark capture with filing priority in primary markets. " if verdict == "GO" else "Proceed with comprehensive clearance search before commitment. "}'
+        f'{"Primary .com domain available for acquisition. " if domain_available else "Alternative domain strategy required (.co, .io, or category TLDs). "}'
+        f'{"Social handle @" + brand_name.lower() + " should be secured across major platforms." if verdict != "NO-GO" else ""}'
+    )
+    
+    # Closing recommendation
+    if verdict == "GO":
+        summary_parts.append(
+            f'\n\n**Recommendation:** Proceed with brand development, supported by a visual identity that emphasizes '
+            f'{"the coined uniqueness" if is_coined else "the heritage narrative" if is_heritage else "brand distinctiveness"}. '
+            f'Estimated trademark registration timeline: 12-18 months in primary jurisdictions. Score: **{overall_score}/100**.'
+        )
+    elif verdict == "CAUTION":
+        summary_parts.append(
+            f'\n\n**Recommendation:** Address identified concerns before significant brand investment. Consider legal opinion on trademark conflicts '
+            f'and cultural consultation for sensitive markets. Score: **{overall_score}/100**.'
+        )
+    else:
+        summary_parts.append(
+            f'\n\n**Recommendation:** Explore alternative naming directions that better navigate the identified challenges. '
+            f'Consider coined neologisms or category-adjacent terminology to reduce conflict risk. Score: **{overall_score}/100**.'
+        )
+    
+    return "".join(summary_parts)
+
 REGISTRATION_TIMELINE_STAGES = {
     "India": [
         {"stage": "Filing & Formalities Examination", "duration": "1-2 months", "risk": "Minor objections possible on formalities"},
