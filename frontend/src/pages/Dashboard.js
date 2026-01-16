@@ -1167,9 +1167,33 @@ const CompetitiveLandscapeSection = ({ competitorAnalysis, countryCompetitorAnal
         { bg: 'from-fuchsia-500 to-pink-500', light: 'bg-fuchsia-50 border-fuchsia-200', text: 'text-fuchsia-700' },
     ];
     
+    // Parse axis labels into left/right and bottom/top
+    const parseAxisLabels = (axisLabel) => {
+        if (!axisLabel) return { low: 'Low', high: 'High' };
+        const parts = axisLabel.split(':');
+        if (parts.length < 2) return { low: 'Low', high: 'High' };
+        const rangePart = parts[1].trim();
+        const rangeMatch = rangePart.match(/(.+?)\s*[→→-]\s*(.+)/);
+        if (rangeMatch) {
+            return { low: rangeMatch[1].trim(), high: rangeMatch[2].trim() };
+        }
+        return { low: 'Low', high: 'High' };
+    };
+    
     // Render a single positioning matrix
     const renderMatrix = (analysis, title, colorScheme, showFlag = false) => {
         const comps = analysis.competitors || [];
+        const xAxis = parseAxisLabels(analysis.x_axis_label);
+        const yAxis = parseAxisLabels(analysis.y_axis_label);
+        
+        // Generate quadrant labels based on axes
+        const quadrants = {
+            topLeft: `${xAxis.low} + ${yAxis.high}`,
+            topRight: `${xAxis.high} + ${yAxis.high}`,
+            bottomLeft: `${xAxis.low} + ${yAxis.low}`,
+            bottomRight: `${xAxis.high} + ${yAxis.low}`
+        };
+        
         return (
             <PrintCard key={title}>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200">
@@ -1180,22 +1204,43 @@ const CompetitiveLandscapeSection = ({ competitorAnalysis, countryCompetitorAnal
                         )}
                     </div>
                     
-                    {/* Axis Labels */}
+                    {/* Axis Labels Header */}
                     <div className="text-center mb-4">
                         <p className="text-xs text-slate-500">
-                            X: {analysis.x_axis_label || 'Price: Budget → Luxury'} | Y: {analysis.y_axis_label || 'Style: Classic → Avant-Garde'}
+                            <span className="font-semibold">X-Axis:</span> {analysis.x_axis_label || 'Price: Budget → Luxury'} | 
+                            <span className="font-semibold ml-2">Y-Axis:</span> {analysis.y_axis_label || 'Style: Classic → Modern'}
                         </p>
                     </div>
                     
-                    {/* Visual Matrix */}
-                    <div className="relative bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4 h-64">
-                        {/* Grid lines */}
-                        <div className="absolute inset-4 border-l border-b border-slate-300"></div>
-                        <div className="absolute left-1/2 top-4 bottom-4 border-l border-dashed border-slate-200"></div>
-                        <div className="absolute left-4 right-4 top-1/2 border-t border-dashed border-slate-200"></div>
+                    {/* Visual Matrix - Strategic Positioning Map */}
+                    <div className="relative bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4 h-72">
+                        {/* Grid lines - Axes */}
+                        <div className="absolute inset-4 border-l-2 border-b-2 border-slate-300"></div>
+                        {/* Center cross lines */}
+                        <div className="absolute left-1/2 top-4 bottom-4 border-l border-dashed border-slate-300"></div>
+                        <div className="absolute left-4 right-4 top-1/2 border-t border-dashed border-slate-300"></div>
                         
-                        {/* Plot competitors */}
-                        {comps.slice(0, 5).map((comp, i) => {
+                        {/* Quadrant Labels */}
+                        <div className="absolute top-5 left-5 text-[10px] text-slate-400 max-w-[80px] leading-tight">{quadrants.topLeft}</div>
+                        <div className="absolute top-5 right-5 text-[10px] text-slate-400 text-right max-w-[80px] leading-tight font-semibold text-emerald-600">{quadrants.topRight}</div>
+                        <div className="absolute bottom-5 left-5 text-[10px] text-slate-400 max-w-[80px] leading-tight">{quadrants.bottomLeft}</div>
+                        <div className="absolute bottom-5 right-5 text-[10px] text-slate-400 text-right max-w-[80px] leading-tight">{quadrants.bottomRight}</div>
+                        
+                        {/* Axis End Labels */}
+                        <div className="absolute bottom-0 left-4 text-[9px] text-slate-500">{xAxis.low}</div>
+                        <div className="absolute bottom-0 right-4 text-[9px] text-slate-500">{xAxis.high}</div>
+                        <div className="absolute top-4 left-0 text-[9px] text-slate-500 -rotate-90 origin-left translate-y-4">{yAxis.high}</div>
+                        <div className="absolute bottom-4 left-0 text-[9px] text-slate-500 -rotate-90 origin-left translate-y-4">{yAxis.low}</div>
+                        
+                        {/* Empty state message */}
+                        {comps.length === 0 && !analysis.user_brand_position && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <p className="text-slate-400 text-sm">Competitor data not available</p>
+                            </div>
+                        )}
+                        
+                        {/* Plot competitors as grey/colored dots */}
+                        {comps.slice(0, 6).map((comp, i) => {
                             const x = (comp.x_coordinate || 50) / 100 * 80 + 10;
                             const y = 100 - ((comp.y_coordinate || 50) / 100 * 80 + 10);
                             return (
