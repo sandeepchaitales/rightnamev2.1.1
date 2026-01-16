@@ -5815,6 +5815,213 @@ class BrandEvaluationTester:
         
         return self.print_summary()
 
+    def test_llm_first_market_intelligence_ramaraya_hotel(self):
+        """Test LLM-First Market Intelligence Research system with RamaRaya Hotel Chain in India + Thailand"""
+        payload = {
+            "brand_names": ["RamaRaya"],
+            "category": "Hotel Chain",
+            "positioning": "Premium boutique hotel chain",
+            "market_scope": "Multi-Country",
+            "countries": [{"name": "India"}, {"name": "Thailand"}]
+        }
+        
+        try:
+            print(f"\n🏨 Testing LLM-First Market Intelligence Research System...")
+            print(f"Test Case: RamaRaya Hotel Chain in India + Thailand")
+            print(f"Expected: REAL hotel competitors, cultural warnings for 'Rama'")
+            print(f"Payload: {json.dumps(payload, indent=2)}")
+            
+            # Start timing
+            start_time = time.time()
+            
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=300  # Extended timeout for LLM research
+            )
+            
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("LLM-First Market Intelligence - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                # Test 1: Check basic response structure
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("LLM-First Market Intelligence - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # Test 2: Check country_competitor_analysis field exists
+                if "country_competitor_analysis" not in brand:
+                    self.log_test("LLM-First Market Intelligence - Country Analysis Field", False, "country_competitor_analysis field missing")
+                    return False
+                
+                country_analysis = brand["country_competitor_analysis"]
+                if not isinstance(country_analysis, list) or len(country_analysis) == 0:
+                    self.log_test("LLM-First Market Intelligence - Country Analysis Data", False, f"Expected country analysis array, got: {type(country_analysis)}")
+                    return False
+                
+                # Test 3: Verify we have analysis for both India and Thailand
+                countries_found = [analysis.get("country") for analysis in country_analysis]
+                expected_countries = ["India", "Thailand"]
+                missing_countries = [c for c in expected_countries if c not in countries_found]
+                
+                if missing_countries:
+                    self.log_test("LLM-First Market Intelligence - Countries Coverage", False, f"Missing countries: {missing_countries}. Found: {countries_found}")
+                    return False
+                
+                # Test 4: Check for REAL hotel competitor names (not placeholders)
+                real_competitors_found = []
+                placeholder_competitors_found = []
+                
+                for analysis in country_analysis:
+                    country = analysis.get("country")
+                    competitors = analysis.get("competitors", [])
+                    
+                    print(f"\n🔍 Checking {country} competitors:")
+                    for comp in competitors:
+                        comp_name = comp.get("name", "")
+                        print(f"   - {comp_name}")
+                        
+                        # Check for real hotel brands
+                        real_hotel_brands = [
+                            "taj hotels", "taj", "oyo", "itc hotels", "lemon tree", "oberoi",
+                            "dusit", "centara", "minor hotels", "anantara", "onyx", "amari",
+                            "marriott", "hilton", "hyatt", "accor", "intercontinental"
+                        ]
+                        
+                        # Check for placeholder patterns
+                        placeholder_patterns = [
+                            "leader 1", "leader 2", "market leader", "competitor 1", "competitor 2",
+                            "brand a", "brand b", "company x", "company y", "player 1", "player 2"
+                        ]
+                        
+                        if any(brand in comp_name.lower() for brand in real_hotel_brands):
+                            real_competitors_found.append(f"{country}: {comp_name}")
+                        
+                        if any(pattern in comp_name.lower() for pattern in placeholder_patterns):
+                            placeholder_competitors_found.append(f"{country}: {comp_name}")
+                
+                # Test 5: Verify research_quality is HIGH (not FALLBACK)
+                research_quality_issues = []
+                for analysis in country_analysis:
+                    country = analysis.get("country")
+                    quality = analysis.get("research_quality", "UNKNOWN")
+                    if quality == "FALLBACK":
+                        research_quality_issues.append(f"{country}: {quality}")
+                
+                # Test 6: Check cultural_analysis for sacred name detection
+                if "cultural_analysis" not in brand:
+                    self.log_test("LLM-First Market Intelligence - Cultural Analysis Field", False, "cultural_analysis field missing")
+                    return False
+                
+                cultural_analysis = brand["cultural_analysis"]
+                if not isinstance(cultural_analysis, list):
+                    self.log_test("LLM-First Market Intelligence - Cultural Analysis Data", False, f"Expected cultural analysis array, got: {type(cultural_analysis)}")
+                    return False
+                
+                # Test 7: Check for "Rama" sensitivity detection
+                rama_warnings_found = []
+                cultural_issues_found = []
+                
+                for analysis in cultural_analysis:
+                    country = analysis.get("country")
+                    notes = analysis.get("cultural_notes", "").lower()
+                    
+                    print(f"\n🔍 Checking {country} cultural analysis:")
+                    print(f"   Cultural notes length: {len(analysis.get('cultural_notes', ''))}")
+                    
+                    # Check for Rama-related warnings
+                    rama_indicators = ["rama", "royal", "king", "deity", "hindu", "thai", "lèse-majesté", "sacred"]
+                    found_indicators = [indicator for indicator in rama_indicators if indicator in notes]
+                    
+                    if found_indicators:
+                        rama_warnings_found.append(f"{country}: {', '.join(found_indicators)}")
+                    
+                    # Check cultural resonance score (should be reduced for sensitive names)
+                    resonance_score = analysis.get("cultural_resonance_score", 10)
+                    if resonance_score < 7.0:  # Reduced score indicates detected issues
+                        cultural_issues_found.append(f"{country}: score={resonance_score}")
+                
+                # Test 8: Check white space analysis is hotel-specific (not generic beauty industry)
+                hotel_specific_terms = ["hotel", "hospitality", "accommodation", "resort", "boutique", "premium", "luxury"]
+                beauty_generic_terms = ["beauty", "cosmetics", "skincare", "makeup", "nykaa", "glossier"]
+                
+                white_space_analysis_issues = []
+                for analysis in country_analysis:
+                    country = analysis.get("country")
+                    white_space = analysis.get("white_space_analysis", "").lower()
+                    
+                    hotel_terms_found = sum(1 for term in hotel_specific_terms if term in white_space)
+                    beauty_terms_found = sum(1 for term in beauty_generic_terms if term in white_space)
+                    
+                    if beauty_terms_found > 0:
+                        white_space_analysis_issues.append(f"{country}: Contains beauty terms instead of hotel terms")
+                    elif hotel_terms_found == 0:
+                        white_space_analysis_issues.append(f"{country}: No hotel-specific terms found")
+                
+                # Compile results
+                issues = []
+                
+                if len(real_competitors_found) < 2:
+                    issues.append(f"Insufficient real hotel competitors found ({len(real_competitors_found)}). Found: {real_competitors_found}")
+                
+                if placeholder_competitors_found:
+                    issues.append(f"Placeholder competitors detected: {placeholder_competitors_found}")
+                
+                if research_quality_issues:
+                    issues.append(f"Research quality is FALLBACK (should be HIGH): {research_quality_issues}")
+                
+                if len(rama_warnings_found) == 0:
+                    issues.append("No 'Rama' cultural sensitivity warnings found for RamaRaya brand")
+                
+                if white_space_analysis_issues:
+                    issues.append(f"White space analysis issues: {white_space_analysis_issues}")
+                
+                # Print detailed results
+                print(f"\n📊 LLM-First Market Intelligence Test Results:")
+                print(f"   ✅ Real hotel competitors found: {len(real_competitors_found)}")
+                for comp in real_competitors_found:
+                    print(f"      - {comp}")
+                
+                print(f"   ✅ Rama cultural warnings: {len(rama_warnings_found)}")
+                for warning in rama_warnings_found:
+                    print(f"      - {warning}")
+                
+                print(f"   ✅ Cultural issues detected: {len(cultural_issues_found)}")
+                for issue in cultural_issues_found:
+                    print(f"      - {issue}")
+                
+                if issues:
+                    self.log_test("LLM-First Market Intelligence - RamaRaya Hotel", False, "; ".join(issues))
+                    return False
+                
+                self.log_test("LLM-First Market Intelligence - RamaRaya Hotel", True, 
+                            f"All checks passed. Real competitors: {len(real_competitors_found)}, Rama warnings: {len(rama_warnings_found)}, Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("LLM-First Market Intelligence - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("LLM-First Market Intelligence - Timeout", False, "Request timed out after 300 seconds")
+            return False
+        except Exception as e:
+            self.log_test("LLM-First Market Intelligence - Exception", False, str(e))
+            return False
+
 def main():
     """Main function to run Admin Panel API tests as requested in review"""
     tester = BrandEvaluationTester()
