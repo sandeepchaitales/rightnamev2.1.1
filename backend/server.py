@@ -1853,6 +1853,61 @@ def generate_rich_executive_summary(
     
     return "".join(summary_parts)
 
+
+def generate_risk_cons(brand_name: str, countries: list, category: str, domain_available: bool, verdict: str) -> list:
+    """
+    Generate KEY RISKS section that aligns with the Executive Summary.
+    Uses linguistic decomposition to identify real risks, not generic placeholders.
+    """
+    cons = []
+    
+    # Get linguistic analysis for real risk identification
+    linguistic_analysis = generate_linguistic_decomposition(brand_name, countries, category)
+    country_analysis = linguistic_analysis.get("country_analysis", {})
+    phonetic_risks = linguistic_analysis.get("phonetic_risks", [])
+    industry_fit = linguistic_analysis.get("industry_fit", {})
+    
+    # Check for CRITICAL cultural risks
+    critical_countries = []
+    high_risk_countries = []
+    for country_name, data in country_analysis.items():
+        if data.get("overall_resonance") == "CRITICAL":
+            critical_countries.append(country_name)
+            for flag in data.get("risk_flags", []):
+                cons.append(f"**⚠️ CRITICAL - {country_name}:** {flag}")
+        elif data.get("risk_count", 0) > 0:
+            high_risk_countries.append(country_name)
+            for flag in data.get("risk_flags", []):
+                cons.append(f"**⚠️ {country_name}:** {flag}")
+    
+    # Check for phonetic risks
+    for pr in phonetic_risks:
+        cons.append(f"**Phonetic Risk ({pr['country']}):** '{pr['sound']}' - {pr['reason']}")
+    
+    # Check for industry-suffix mismatch
+    if industry_fit.get("fit_level") == "LOW":
+        cons.append(f"**Category Mismatch:** {industry_fit.get('reasoning', 'Name suffix may not align with industry conventions')}")
+    
+    # Add domain risk if applicable
+    if not domain_available:
+        cons.append(f"**Domain Status:** Primary .com domain taken - alternative acquisition strategy required")
+    
+    # Add name length consideration if long
+    if len(brand_name) > 12:
+        cons.append(f"**Name Length:** At {len(brand_name)} characters, may be challenging for quick recall and word-of-mouth")
+    
+    # If no risks identified, but verdict is not GO, add generic cons
+    if not cons and verdict != "GO":
+        cons.append(f"**Market Education:** As a coined term, will require brand awareness investment")
+        cons.append(f"**Competitive Landscape:** Thorough trademark search recommended before proceeding")
+    
+    # If GO verdict and no major risks, indicate clean status with specific confirmation
+    if not cons and verdict == "GO":
+        cons.append("**No significant risks identified.** Linguistic analysis confirms name is culturally neutral across target markets. Proceed with standard trademark registration precautions.")
+    
+    return cons
+
+
 REGISTRATION_TIMELINE_STAGES = {
     "India": [
         {"stage": "Filing & Formalities Examination", "duration": "1-2 months", "risk": "Minor objections possible on formalities"},
