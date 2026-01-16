@@ -885,6 +885,103 @@ def generate_cultural_analysis(countries: list, brand_name: str) -> list:
     return result
 
 
+# ============ LLM-FIRST RESEARCH INTEGRATION ============
+
+async def llm_first_country_analysis(
+    countries: list, 
+    category: str, 
+    brand_name: str,
+    use_llm_research: bool = True
+) -> tuple:
+    """
+    LLM-First approach to country analysis.
+    Uses real-time web search + LLM for accuracy, with hardcoded fallback if research fails.
+    
+    Returns: (country_competitor_analysis, cultural_analysis)
+    """
+    if not use_llm_research:
+        # Use hardcoded fallback directly
+        logging.info(f"⚡ Using hardcoded data (LLM research disabled)")
+        return (
+            generate_country_competitor_analysis(countries, category, brand_name),
+            generate_cultural_analysis(countries, brand_name)
+        )
+    
+    logging.info(f"🔬 LLM-FIRST RESEARCH: Starting real-time research for {len(countries)} countries...")
+    
+    try:
+        # Prepare fallback data
+        fallback_market = {}
+        fallback_cultural = {}
+        
+        for country in countries[:4]:
+            country_name = country.get('name') if isinstance(country, dict) else str(country)
+            fallback_market[country_name] = get_market_data_for_category_country(category, country_name)
+            fallback_cultural[country_name] = COUNTRY_CULTURAL_DATA.get(country_name, COUNTRY_CULTURAL_DATA["default"])
+        
+        # Execute LLM-first research
+        market_intelligence, cultural_intelligence = await research_all_countries(
+            category=category,
+            countries=countries,
+            brand_name=brand_name,
+            fallback_market_data=fallback_market,
+            fallback_cultural_data=fallback_cultural
+        )
+        
+        # Format results for API response
+        country_competitor_analysis = []
+        cultural_analysis = []
+        
+        # Format market intelligence
+        for intel in market_intelligence:
+            country_competitor_analysis.append({
+                "country": intel.country,
+                "country_flag": intel.country_flag,
+                "x_axis_label": intel.x_axis_label,
+                "y_axis_label": intel.y_axis_label,
+                "competitors": intel.competitors,
+                "user_brand_position": intel.user_brand_position,
+                "white_space_analysis": intel.white_space_analysis,
+                "strategic_advantage": intel.strategic_advantage,
+                "market_entry_recommendation": intel.market_entry_recommendation,
+                "research_quality": intel.research_quality  # NEW: Indicates if data is from LLM or fallback
+            })
+            logging.info(f"✅ Market research for {intel.country}: {intel.research_quality} quality, {len(intel.competitors)} competitors")
+        
+        # Format cultural intelligence
+        for cultural in cultural_intelligence:
+            notes = cultural.cultural_notes
+            
+            # Prepend warning if sacred name detected
+            if cultural.sacred_name_detected and cultural.cultural_risk_warning:
+                detected_str = ", ".join(cultural.detected_terms)
+                notes = f"{cultural.cultural_risk_warning}\n\n**Detected terms:** {detected_str}\n\n**Original Analysis:** {notes}"
+                if cultural.legal_implications:
+                    notes += f"\n\n**Legal Implications:** {cultural.legal_implications}"
+            
+            cultural_analysis.append({
+                "country": cultural.country,
+                "country_flag": cultural.country_flag,
+                "cultural_resonance_score": cultural.cultural_resonance_score,
+                "cultural_notes": notes,
+                "linguistic_check": cultural.linguistic_check,
+                "research_quality": cultural.research_quality
+            })
+            
+            if cultural.sacred_name_detected:
+                logging.warning(f"⚠️ Sacred name detected for {cultural.country}: {cultural.detected_terms}")
+        
+        logging.info(f"✅ LLM-FIRST RESEARCH COMPLETE: {len(country_competitor_analysis)} markets, {len(cultural_analysis)} cultural analyses")
+        return (country_competitor_analysis, cultural_analysis)
+        
+    except Exception as e:
+        logging.error(f"❌ LLM-first research failed: {e}, using hardcoded fallback")
+        return (
+            generate_country_competitor_analysis(countries, category, brand_name),
+            generate_cultural_analysis(countries, brand_name)
+        )
+
+
 # ============ LEGAL PRECEDENTS & TRADEMARK INTELLIGENCE ============
 TRADEMARK_LEGAL_PRECEDENTS = {
     "polaroid_test": {
