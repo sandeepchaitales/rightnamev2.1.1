@@ -5218,6 +5218,64 @@ class BrandEvaluationTester:
             print(f"❌ Exception occurred: {str(e)}")
             return False
 
+    def run_admin_tests_only(self):
+        """Run only the Admin Panel API tests as requested in review"""
+        print("🔐 ADMIN PANEL API TESTING")
+        print("=" * 80)
+        print(f"Testing Admin Panel endpoints against: {self.base_url}")
+        print("Testing the following endpoints:")
+        print("1. POST /api/admin/login - Admin authentication")
+        print("2. GET /api/admin/verify - Token verification")
+        print("3. GET /api/admin/prompts/system - Get system prompt")
+        print("4. GET /api/admin/prompts/early_stopping - Get early stopping prompt")
+        print("5. GET /api/admin/settings/model - Get model settings")
+        print("6. GET /api/admin/analytics/usage - Get usage analytics")
+        print()
+        
+        # Test API health first
+        if not self.test_api_health():
+            print("❌ API health check failed, stopping tests")
+            return False
+        
+        # Test admin login with valid credentials (this gets the JWT token)
+        print("🔑 Step 1: Testing admin login with correct credentials...")
+        if not self.test_admin_login_valid_credentials():
+            print("❌ Admin login failed, cannot proceed with other tests")
+            return False
+        
+        print(f"✅ Admin login successful, JWT token obtained")
+        
+        # Test admin login with invalid credentials
+        print("\n🔑 Step 2: Testing admin login with incorrect credentials...")
+        self.test_admin_login_invalid_credentials()
+        
+        # Test token verification with valid token
+        print("\n🔐 Step 3: Testing token verification with valid token...")
+        self.test_admin_verify_token()
+        
+        # Test token verification without token
+        print("\n🔐 Step 4: Testing token verification without token...")
+        self.test_admin_verify_no_token()
+        
+        # Test getting system prompt
+        print("\n📝 Step 5: Testing get system prompt...")
+        self.test_admin_get_system_prompt()
+        
+        # Test getting early stopping prompt
+        print("\n📝 Step 6: Testing get early stopping prompt...")
+        self.test_admin_get_early_stopping_prompt()
+        
+        # Test getting model settings
+        print("\n⚙️ Step 7: Testing get model settings...")
+        self.test_admin_get_model_settings()
+        
+        # Test getting usage analytics
+        print("\n📊 Step 8: Testing get usage analytics...")
+        self.test_admin_get_usage_analytics()
+        
+        # Print final summary
+        return self.print_summary()
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
