@@ -406,52 +406,99 @@ def calculate_phonetic_similarity(name1: str, name2: str) -> Tuple[bool, str]:
 
 def check_suffix_conflict(input_name: str, industry: str, category: str) -> Dict:
     """
-    Check if the brand name shares a suffix with a major brand in the same industry.
+    TWO-TIER SUFFIX CONFLICT DETECTION
     
-    Examples:
-    - "AuraKind" in pharma → matches "Mankind" due to "-kind" suffix
-    - "HeadBook" in social media → matches "Facebook" due to "-book" suffix
+    TIER 1: MEGA-BRAND SUFFIXES - ALWAYS REJECT (Any Industry)
+            HeadBook → REJECT (even for Hotels) because Facebook will sue
+            
+    TIER 2: INDUSTRY-SPECIFIC SUFFIXES - Reject in SAME industry, WARNING in different
+            AuraKind in Pharma → REJECT (same industry as Mankind)
+            AuraKind in Beauty → WARNING (different industry)
     """
     input_lower = input_name.lower()
-    conflicts = []
-    
-    # Determine which industry to check
-    industry_key = None
     category_lower = category.lower() if category else ""
+    industry_lower = industry.lower() if industry else ""
     
-    # Map category to suffix industry
-    if "pharma" in category_lower or "health" in industry.lower():
-        industry_key = "Healthcare & Pharma"
-    elif "social" in category_lower or "media" in category_lower or "platform" in category_lower:
-        industry_key = "Social Media & Platforms"
-    elif "finance" in industry.lower() or "bank" in category_lower:
-        industry_key = "Finance & Banking"
-    elif "tech" in industry.lower() or "software" in category_lower:
-        industry_key = "Technology & Software"
-    
-    # Check against suffix-brand map (most important)
-    for suffix, brands in SUFFIX_BRAND_MAP.items():
-        if input_lower.endswith(suffix):
-            for brand in brands:
-                # Check if this brand is relevant to the industry
-                is_relevant = True
-                if suffix == "kind" and "pharma" not in category_lower and "health" not in industry.lower():
-                    is_relevant = False
-                if suffix in ["book", "gram", "tube", "tok", "chat"] and "social" not in category_lower and "media" not in category_lower:
-                    is_relevant = False
-                    
-                if is_relevant:
-                    conflicts.append({
-                        "brand": brand,
-                        "suffix": suffix,
-                        "match_type": "SUFFIX_CONFLICT",
-                        "explanation": f"'{input_name}' shares the '-{suffix}' suffix with '{brand}'. In the {category} space, this creates high confusion risk."
-                    })
-    
-    return {
-        "has_suffix_conflict": len(conflicts) > 0,
-        "conflicts": conflicts
+    result = {
+        "has_suffix_conflict": False,
+        "tier1_conflicts": [],  # ALWAYS FATAL
+        "tier2_conflicts": [],  # FATAL if same industry
+        "tier2_warnings": [],   # WARNING if different industry
+        "conflicts": [],        # Combined for backward compatibility
+        "should_reject": False,
+        "rejection_reason": None
     }
+    
+    # ============ TIER 1: MEGA-BRAND SUFFIXES (ALWAYS REJECT) ============
+    for suffix, data in TIER1_MEGA_BRAND_SUFFIXES.items():
+        if input_lower.endswith(suffix) or suffix in input_lower:
+            conflict = {
+                "brand": data["brand"],
+                "suffix": suffix,
+                "match_type": "TIER1_MEGA_BRAND",
+                "tier": 1,
+                "severity": "FATAL",
+                "explanation": f"⛔ TIER 1 CONFLICT: '{input_name}' contains '-{suffix}' which infringes on {data['brand']}. {data['reason']}",
+                "examples": data.get("examples", [])
+            }
+            result["tier1_conflicts"].append(conflict)
+            result["conflicts"].append(conflict)
+            result["has_suffix_conflict"] = True
+            result["should_reject"] = True
+            result["rejection_reason"] = f"FATAL: '{input_name}' infringes on {data['brand']} (-{suffix} suffix). This is a TIER 1 mega-brand that will sue regardless of your industry."
+    
+    # If TIER 1 conflict found, return immediately (no need to check TIER 2)
+    if result["tier1_conflicts"]:
+        return result
+    
+    # ============ TIER 2: INDUSTRY-SPECIFIC SUFFIXES ============
+    # Map user's category to our industry keys
+    user_industry_keys = []
+    
+    # Determine which industries the user's category falls into
+    category_industry_map = {
+        "Healthcare & Pharma": ["pharma", "health", "medical", "drug", "medicine", "hospital", "clinic", "biotech"],
+        "Finance & Banking": ["finance", "bank", "payment", "fintech", "insurance", "invest", "loan", "credit"],
+        "Food Delivery": ["food", "delivery", "restaurant", "eat", "meal", "kitchen", "catering"],
+        "E-commerce & Retail": ["ecommerce", "e-commerce", "retail", "shop", "store", "market", "mall", "grocery"],
+        "Travel & Hospitality": ["travel", "hotel", "hospitality", "tourism", "flight", "booking", "vacation", "stay"],
+        "Social Media & Platforms": ["social", "media", "platform", "network", "community", "chat", "message"],
+    }
+    
+    for industry_key, keywords in category_industry_map.items():
+        if any(kw in category_lower or kw in industry_lower for kw in keywords):
+            user_industry_keys.append(industry_key)
+    
+    # Check TIER 2 suffixes
+    for industry_key, suffixes in TIER2_INDUSTRY_SUFFIXES.items():
+        for suffix, data in suffixes.items():
+            if input_lower.endswith(suffix) or (len(suffix) >= 4 and suffix in input_lower):
+                is_same_industry = industry_key in user_industry_keys
+                
+                conflict = {
+                    "brand": data["brand"],
+                    "suffix": suffix,
+                    "match_type": "TIER2_INDUSTRY_SPECIFIC",
+                    "tier": 2,
+                    "industry": industry_key,
+                    "same_industry": is_same_industry,
+                    "severity": "FATAL" if is_same_industry else "WARNING",
+                    "explanation": f"{'⛔ TIER 2 CONFLICT' if is_same_industry else '⚠️ TIER 2 WARNING'}: '{input_name}' contains '-{suffix}' ({data['brand']}). {data['reason']}",
+                }
+                
+                if is_same_industry:
+                    # SAME INDUSTRY = FATAL
+                    result["tier2_conflicts"].append(conflict)
+                    result["conflicts"].append(conflict)
+                    result["has_suffix_conflict"] = True
+                    result["should_reject"] = True
+                    result["rejection_reason"] = f"FATAL: '{input_name}' uses '-{suffix}' suffix in {industry_key} industry, directly conflicting with {data['brand']}."
+                else:
+                    # DIFFERENT INDUSTRY = WARNING ONLY
+                    result["tier2_warnings"].append(conflict)
+                    # Don't add to conflicts or set should_reject for warnings
+    
+    return result
 
 
 def check_brand_similarity(
