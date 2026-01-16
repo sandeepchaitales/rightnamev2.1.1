@@ -983,7 +983,9 @@ async def llm_first_country_analysis(
                 "market_entry_recommendation": intel.market_entry_recommendation,
                 "research_quality": intel.research_quality  # NEW: Indicates if data is from LLM or fallback
             })
-            logging.info(f"✅ Market research for {intel.country}: {intel.research_quality} quality, {len(intel.competitors)} competitors")
+            # DEBUG: Log actual competitor names
+            competitor_names = [c.get('name', 'Unknown') for c in intel.competitors[:4]] if intel.competitors else []
+            logging.info(f"✅ Market research for {intel.country} {intel.country_flag}: {intel.research_quality} quality, {len(intel.competitors)} competitors: {competitor_names}")
         
         # Format cultural intelligence
         for cultural in cultural_intelligence:
