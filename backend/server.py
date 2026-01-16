@@ -4219,6 +4219,7 @@ async def logout(request: Request, response: Response):
     return {"message": "Logged out successfully"}
 
 app.include_router(api_router)
+app.include_router(admin_router)  # Admin panel routes
 
 # Root-level health check endpoint for Kubernetes (no /api prefix)
 @app.get("/health")
