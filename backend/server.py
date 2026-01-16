@@ -615,37 +615,33 @@ RISK_MITIGATION_STRATEGIES = [
     }
 ]
 
-def generate_legal_precedents(trademark_risk_level: str) -> list:
-    """Generate relevant legal precedents based on risk level"""
-    precedents = []
-    
-    # Always include these fundamental cases
-    precedents.append({
-        "case_name": TRADEMARK_LEGAL_PRECEDENTS["likelihood_of_confusion"]["case_name"],
-        "court": "Court of Customs and Patent Appeals",
-        "year": "1973",
-        "relevance": TRADEMARK_LEGAL_PRECEDENTS["likelihood_of_confusion"]["relevance"],
-        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["likelihood_of_confusion"]["principle"]
-    })
-    
-    precedents.append({
-        "case_name": TRADEMARK_LEGAL_PRECEDENTS["phonetic_similarity"]["case_name"],
-        "court": "2nd Circuit Court of Appeals",
-        "year": "1979",
-        "relevance": TRADEMARK_LEGAL_PRECEDENTS["phonetic_similarity"]["relevance"],
-        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["phonetic_similarity"]["principle"]
-    })
-    
-    if trademark_risk_level in ["LOW", "MEDIUM"]:
-        precedents.append({
-            "case_name": TRADEMARK_LEGAL_PRECEDENTS["descriptive_rejection"]["case_name"],
-            "court": "Federal Circuit",
-            "year": "2005",
-            "relevance": TRADEMARK_LEGAL_PRECEDENTS["descriptive_rejection"]["relevance"],
-            "key_principle": TRADEMARK_LEGAL_PRECEDENTS["descriptive_rejection"]["principle"]
-        })
-    
-    return precedents
+REGISTRATION_TIMELINE_STAGES = {
+    "India": [
+        {"stage": "Filing & Formalities Examination", "duration": "1-2 months", "risk": "Minor objections possible on formalities"},
+        {"stage": "Substantive Examination", "duration": "3-6 months", "risk": "Examiner objections on descriptiveness/similarity"},
+        {"stage": "Publication in Trademark Journal", "duration": "1 month", "risk": "Public visibility, opposition window begins"},
+        {"stage": "Opposition Period", "duration": "4 months", "risk": "HIGH - Competitors can file opposition"},
+        {"stage": "Registration & Certificate", "duration": "1-2 months", "risk": "Final approval pending"}
+    ],
+    "USA": [
+        {"stage": "Filing & Examination Assignment", "duration": "3-4 months", "risk": "Application assigned to examining attorney"},
+        {"stage": "Substantive Examination", "duration": "3-6 months", "risk": "Office actions on descriptiveness, likelihood of confusion"},
+        {"stage": "Publication for Opposition", "duration": "30 days", "risk": "MEDIUM - Opposition window"},
+        {"stage": "Notice of Allowance (ITU) or Registration", "duration": "2-3 months", "risk": "Statement of Use required for ITU"},
+        {"stage": "Final Registration", "duration": "1-2 months", "risk": "Certificate issued"}
+    ],
+    "Thailand": [
+        {"stage": "Filing & Formalities Check", "duration": "1 month", "risk": "Basic compliance check"},
+        {"stage": "Substantive Examination", "duration": "6-12 months", "risk": "Thai DIP examination backlog"},
+        {"stage": "Publication Period", "duration": "60 days", "risk": "Opposition window"},
+        {"stage": "Registration", "duration": "1-2 months", "risk": "Final certificate issuance"}
+    ],
+    "default": [
+        {"stage": "Filing & Examination", "duration": "3-6 months", "risk": "Initial review"},
+        {"stage": "Publication", "duration": "1-2 months", "risk": "Opposition window"},
+        {"stage": "Registration", "duration": "1-3 months", "risk": "Final approval"}
+    ]
+}
 
 def generate_registration_timeline(countries: list) -> dict:
     """Generate registration timeline for primary target country"""
