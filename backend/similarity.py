@@ -319,6 +319,230 @@ GLOBAL_FAMOUS_BRANDS = [
 JARO_WINKLER_DANGER_THRESHOLD = 85.0  # 85%+ similarity = DANGER
 
 
+# ============ LLM-FIRST SUFFIX DETECTION ============
+
+LLM_SUFFIX_DETECTION_PROMPT = """You are a trademark attorney expert analyzing brand name conflicts.
+
+TASK: Analyze if "{brand_name}" infringes on any famous brand's suffix/naming pattern.
+
+USER'S INDUSTRY: {category}
+
+ANALYSIS REQUIRED:
+1. Identify any suffix or naming pattern in "{brand_name}" that matches a famous brand
+2. Determine if this is a MEGA-BRAND (globally famous, will sue anyone) or INDUSTRY-SPECIFIC conflict
+3. Assess the risk level
+
+MEGA-BRANDS (Always dangerous regardless of industry):
+- Facebook (-book), Instagram (-gram), YouTube (-tube), TikTok (-tok)
+- Netflix (-flix), Spotify (-fy/-ify), Microsoft (-soft), Google (-oogle/-ogle)
+- Amazon (-zon/-azon), Apple (-pod, -pad, -phone), eBay (-bay)
+- WhatsApp (-app), Snapchat/WeChat (-chat), PayPal (-pal)
+- Disney, Nike, Coca-Cola, McDonald's, Starbucks
+- Any brand with 100M+ users or $10B+ valuation
+
+INDUSTRY-SPECIFIC PATTERNS:
+- Pharma: -kind (Mankind), -plex, -zol, -mab, -nib
+- Fintech: -pay, -cash, -wallet, -coin, -fi
+- Food Delivery: -eats, -dash, -grub, -bites
+- E-commerce: -kart, -mart, -basket, -fresh, -store
+- Travel: -bnb, -trip, -booking, -stay, -inn
+- Social: -pin, -snap, -link, -gram, -feed
+
+RESPOND IN THIS EXACT JSON FORMAT:
+{{
+    "has_conflict": true/false,
+    "conflicts": [
+        {{
+            "detected_pattern": "the suffix/pattern found (e.g., '-book')",
+            "conflicting_brand": "Famous brand name (e.g., 'Facebook')",
+            "brand_owner": "Parent company if different (e.g., 'Meta')",
+            "tier": 1 or 2,
+            "tier_reason": "MEGA-BRAND" or "INDUSTRY-SPECIFIC",
+            "same_industry": true/false,
+            "risk_level": "CRITICAL" or "HIGH" or "MEDIUM" or "LOW",
+            "explanation": "Clear explanation of why this is a conflict",
+            "lawsuit_probability": "CERTAIN" or "HIGH" or "MEDIUM" or "LOW"
+        }}
+    ],
+    "recommendation": "REJECT" or "WARNING" or "PROCEED",
+    "summary": "One-line summary of the analysis"
+}}
+
+If no conflicts found, return:
+{{
+    "has_conflict": false,
+    "conflicts": [],
+    "recommendation": "PROCEED",
+    "summary": "No suffix conflicts detected with major brands"
+}}
+
+IMPORTANT RULES:
+1. Be AGGRESSIVE in detecting conflicts - when in doubt, flag it
+2. MEGA-BRANDS (Tier 1) should ALWAYS result in "REJECT" regardless of industry
+3. Industry-specific (Tier 2) conflicts in SAME industry = "REJECT"
+4. Industry-specific (Tier 2) conflicts in DIFFERENT industry = "WARNING"
+5. Consider phonetic similarities too (e.g., "Fazebook" sounds like "Facebook")
+
+Return ONLY valid JSON, no explanations outside the JSON."""
+
+
+async def llm_detect_suffix_conflicts(brand_name: str, category: str) -> Dict:
+    """
+    Use LLM to dynamically detect suffix conflicts with famous brands.
+    This catches patterns that static lists might miss.
+    
+    Returns structured conflict analysis.
+    """
+    if not LLM_AVAILABLE or not LlmChat:
+        logger.warning("LLM not available for suffix detection, using static fallback only")
+        return None
+    
+    try:
+        prompt = LLM_SUFFIX_DETECTION_PROMPT.format(
+            brand_name=brand_name,
+            category=category
+        )
+        
+        chat = LlmChat(
+            api_key=EMERGENT_KEY,
+            model="openai/gpt-4o-mini"
+        )
+        
+        response = await asyncio.wait_for(
+            chat.send_message_async(prompt),
+            timeout=15  # Quick timeout for responsiveness
+        )
+        
+        # Parse JSON response
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = re.sub(r'^```json?\s*', '', response_text)
+            response_text = re.sub(r'\s*```$', '', response_text)
+        
+        result = json.loads(response_text)
+        logger.info(f"🤖 LLM Suffix Detection for '{brand_name}': {result.get('recommendation', 'UNKNOWN')} - {result.get('summary', 'No summary')}")
+        
+        return result
+        
+    except asyncio.TimeoutError:
+        logger.warning(f"LLM suffix detection timed out for '{brand_name}'")
+        return None
+    except json.JSONDecodeError as e:
+        logger.warning(f"Failed to parse LLM suffix response: {e}")
+        return None
+    except Exception as e:
+        logger.warning(f"LLM suffix detection failed: {e}")
+        return None
+
+
+def llm_detect_suffix_conflicts_sync(brand_name: str, category: str) -> Dict:
+    """Synchronous wrapper for LLM suffix detection"""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If we're already in an async context, create a new task
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    asyncio.run,
+                    llm_detect_suffix_conflicts(brand_name, category)
+                )
+                return future.result(timeout=20)
+        else:
+            return loop.run_until_complete(llm_detect_suffix_conflicts(brand_name, category))
+    except Exception as e:
+        logger.warning(f"Sync LLM suffix detection failed: {e}")
+        return None
+
+
+def check_suffix_conflict_with_llm(input_name: str, industry: str, category: str, use_llm: bool = True) -> Dict:
+    """
+    HYBRID SUFFIX CONFLICT DETECTION
+    
+    Combines:
+    1. LLM-first detection (dynamic, catches new patterns)
+    2. Static list fallback (reliable safety net)
+    
+    Returns the MORE CONSERVATIVE result (if either says REJECT, reject)
+    """
+    result = {
+        "has_suffix_conflict": False,
+        "tier1_conflicts": [],
+        "tier2_conflicts": [],
+        "tier2_warnings": [],
+        "conflicts": [],
+        "should_reject": False,
+        "rejection_reason": None,
+        "llm_analysis": None,
+        "detection_method": "STATIC_ONLY"
+    }
+    
+    # Step 1: Run static check first (fast, reliable)
+    static_result = check_suffix_conflict(input_name, industry, category)
+    
+    # Copy static results
+    result["tier1_conflicts"] = static_result.get("tier1_conflicts", [])
+    result["tier2_conflicts"] = static_result.get("tier2_conflicts", [])
+    result["tier2_warnings"] = static_result.get("tier2_warnings", [])
+    result["conflicts"] = static_result.get("conflicts", [])
+    result["has_suffix_conflict"] = static_result.get("has_suffix_conflict", False)
+    result["should_reject"] = static_result.get("should_reject", False)
+    result["rejection_reason"] = static_result.get("rejection_reason")
+    
+    # Step 2: Run LLM detection (if enabled and static didn't already reject)
+    if use_llm and LLM_AVAILABLE:
+        try:
+            llm_result = llm_detect_suffix_conflicts_sync(input_name, category)
+            
+            if llm_result:
+                result["llm_analysis"] = llm_result
+                result["detection_method"] = "LLM_ENHANCED"
+                
+                # If LLM found conflicts that static missed
+                if llm_result.get("has_conflict") and llm_result.get("conflicts"):
+                    for conflict in llm_result["conflicts"]:
+                        # Check if this conflict is already in our static results
+                        pattern = conflict.get("detected_pattern", "").lower().replace("-", "")
+                        already_found = any(
+                            c.get("suffix", "").lower() == pattern 
+                            for c in result["conflicts"]
+                        )
+                        
+                        if not already_found:
+                            # New conflict found by LLM!
+                            new_conflict = {
+                                "brand": conflict.get("conflicting_brand", "Unknown"),
+                                "suffix": conflict.get("detected_pattern", ""),
+                                "match_type": f"LLM_DETECTED_TIER{conflict.get('tier', 1)}",
+                                "tier": conflict.get("tier", 1),
+                                "severity": "FATAL" if conflict.get("risk_level") in ["CRITICAL", "HIGH"] else "WARNING",
+                                "explanation": f"🤖 LLM Detection: {conflict.get('explanation', 'Potential conflict detected')}",
+                                "lawsuit_probability": conflict.get("lawsuit_probability", "UNKNOWN")
+                            }
+                            
+                            if conflict.get("tier") == 1 or (conflict.get("tier") == 2 and conflict.get("same_industry")):
+                                result["conflicts"].append(new_conflict)
+                                result["has_suffix_conflict"] = True
+                                
+                                if conflict.get("tier") == 1:
+                                    result["tier1_conflicts"].append(new_conflict)
+                                else:
+                                    result["tier2_conflicts"].append(new_conflict)
+                            else:
+                                result["tier2_warnings"].append(new_conflict)
+                    
+                    # Update rejection status based on LLM recommendation
+                    if llm_result.get("recommendation") == "REJECT" and not result["should_reject"]:
+                        result["should_reject"] = True
+                        result["rejection_reason"] = f"🤖 LLM DETECTED: {llm_result.get('summary', 'Suffix conflict with major brand')}"
+                        
+        except Exception as e:
+            logger.warning(f"LLM suffix detection failed, using static only: {e}")
+            result["detection_method"] = "STATIC_ONLY_LLM_FAILED"
+    
+    return result
+
+
 def normalize_name(name: str) -> str:
     """Normalize brand name for comparison"""
     # Convert to lowercase
