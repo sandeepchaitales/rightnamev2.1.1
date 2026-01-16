@@ -156,13 +156,43 @@ async def web_search(query: str, num_results: int = 5) -> List[Dict[str, str]]:
         return []
 
 
-async def search_competitors(category: str, country: str) -> str:
-    """Search for real competitors in a category + country"""
+async def search_competitors(category: str, country: str, positioning: str = "Mid-Range") -> str:
+    """
+    Search for real competitors in a category + country + positioning segment.
+    
+    The MAGIC: Including positioning in search queries returns RELEVANT competitors
+    for the user's target segment, not a mix of all price tiers.
+    
+    Example:
+    - "Budget Hotel Chain India" → OYO, Treebo, FabHotels
+    - "Mid-Range Hotel Chain India" → Lemon Tree, Ginger, Keys Hotels  
+    - "Premium Hotel Chain India" → Taj, ITC, Oberoi
+    """
+    # Normalize positioning for search
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    
+    # Map positioning to search-friendly terms
+    positioning_terms = {
+        "budget": "budget affordable low-cost",
+        "mid-range": "mid-range mid-tier moderate",
+        "premium": "premium upscale high-end",
+        "luxury": "luxury ultra-luxury five-star",
+        "mass": "mass market popular mainstream",
+        "ultra-premium": "ultra-luxury exclusive elite"
+    }
+    
+    search_positioning = positioning_terms.get(positioning_lower, positioning_lower)
+    primary_positioning = search_positioning.split()[0]  # Get first term
+    
+    # IMPROVED QUERIES: [Positioning] [Category] [Country]
     queries = [
-        f"top {category} companies in {country} 2024 market share",
-        f"leading {category} brands {country} competitors",
-        f"{category} industry {country} major players market leaders"
+        f"{primary_positioning} {category} in {country} top brands 2024",
+        f"best {primary_positioning} {category} {country} market leaders",
+        f"{category} {country} {primary_positioning} segment competitors",
+        f"top local {category} brands {country} {primary_positioning}"  # Emphasize LOCAL
     ]
+    
+    logger.info(f"🎯 POSITIONING-AWARE SEARCH: '{primary_positioning} {category}' in {country}")
     
     all_results = []
     for query in queries:
@@ -170,7 +200,10 @@ async def search_competitors(category: str, country: str) -> str:
         all_results.extend(results)
     
     # Format results for LLM
-    formatted = f"WEB SEARCH RESULTS FOR {category.upper()} COMPETITORS IN {country.upper()}:\n\n"
+    formatted = f"WEB SEARCH RESULTS FOR {positioning.upper()} {category.upper()} COMPETITORS IN {country.upper()}:\n\n"
+    formatted += f"USER'S TARGET SEGMENT: {positioning} positioning\n"
+    formatted += f"SEARCH FOCUS: Find LOCAL {country} brands in the {positioning} segment, NOT global chains\n\n"
+    
     for i, r in enumerate(all_results[:15], 1):
         formatted += f"{i}. {r['title']}\n   {r['body'][:300]}...\n   Source: {r['href']}\n\n"
     
