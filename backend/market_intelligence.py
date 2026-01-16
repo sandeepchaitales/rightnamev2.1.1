@@ -662,10 +662,12 @@ def _apply_fallback_data(
 ):
     """Apply full fallback data when research fails completely"""
     if fallback_data:
-        intelligence.competitors = fallback_data.get("competitors", [])
+        competitors = fallback_data.get("competitors", [])
+        intelligence.competitors = competitors
         intelligence.x_axis_label = fallback_data.get("axis_x", intelligence.x_axis_label)
         intelligence.y_axis_label = fallback_data.get("axis_y", intelligence.y_axis_label)
         _apply_fallback_strategy(intelligence, fallback_data, brand_name)
+        logger.info(f"✅ FALLBACK APPLIED for {intelligence.country}: {len(competitors)} competitors ({[c.get('name') for c in competitors[:2]]}...)")
     else:
         # Ultimate fallback - generic data
         intelligence.competitors = [
