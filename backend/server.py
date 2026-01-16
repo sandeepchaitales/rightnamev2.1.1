@@ -689,19 +689,31 @@ def get_category_key(category: str) -> str:
     return "default"
 
 def get_market_data_for_category_country(category: str, country: str) -> dict:
-    """Get market data for specific category and country combination"""
+    """Get market data for specific category and country combination.
+    
+    CRITICAL FIX: Case-insensitive country matching to handle "INDIA" vs "India"
+    """
     category_key = get_category_key(category)
     
     # Get category-specific data
     category_data = CATEGORY_COUNTRY_MARKET_DATA.get(category_key, {})
     
-    # Get country-specific data within category
-    if country in category_data:
-        return category_data[country]
+    # CASE-INSENSITIVE country matching
+    # Create a lowercase lookup map for country names
+    country_lower = country.lower().strip() if country else ""
+    country_lookup = {k.lower(): k for k in category_data.keys()}
+    
+    # Try to find the country (case-insensitive)
+    if country_lower in country_lookup:
+        actual_key = country_lookup[country_lower]
+        logging.info(f"✅ Country matched: '{country}' → '{actual_key}' (category: {category_key})")
+        return category_data[actual_key]
     elif "default" in category_data:
+        logging.warning(f"⚠️ Country '{country}' not found in {category_key} data, using default")
         return category_data["default"]
     
     # Fallback to beauty default (original behavior) if category not found
+    logging.warning(f"⚠️ Category '{category_key}' not found, using beauty default")
     return CATEGORY_COUNTRY_MARKET_DATA.get("beauty", {}).get("default", {
         "competitors": [
             {"name": "Market Leader 1", "x_coordinate": 75, "y_coordinate": 70, "quadrant": "Premium Established"},
