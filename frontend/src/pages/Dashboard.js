@@ -611,7 +611,7 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                             {assessment.recommended_next_steps.map((step, i) => (
                                 <div key={i} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                                     <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
-                                    <p className="text-sm text-slate-700">{step}</p>
+                                    <p className="text-sm text-slate-700"><MarkdownText text={step} /></p>
                                 </div>
                             ))}
                         </div>
