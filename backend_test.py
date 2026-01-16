@@ -5810,6 +5810,269 @@ class BrandEvaluationTester:
             self.log_test("Legal Risk Matrix Fix - Exception", False, str(e))
             return False
 
+    def test_positioning_aware_competitor_search(self):
+        """Test POSITIONING-AWARE competitor search fix for RIGHTNAME brand evaluation API"""
+        
+        # Test Case 1: Mid-Range Hotel Chain positioning
+        payload_mid_range = {
+            "brand_names": ["RamaRaya"],
+            "category": "Hotel Chain",
+            "positioning": "Mid-Range",
+            "market_scope": "Multi-Country",
+            "countries": ["India", "Thailand"]
+        }
+        
+        try:
+            print(f"\n🎯 Testing POSITIONING-AWARE Competitor Search Fix...")
+            print(f"Test Case 1: Mid-Range Hotel Chain in India + Thailand")
+            print(f"Expected: Segment-specific competitors (NOT mixed segments)")
+            print(f"Expected India Mid-Range: Lemon Tree, Ginger, Keys, Treebo")
+            print(f"Expected Thailand Mid-Range: Centara, Amari, Dusit (mid-range properties)")
+            
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload_mid_range, 
+                headers={'Content-Type': 'application/json'},
+                timeout=240  # Extended timeout for comprehensive analysis
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Positioning-Aware Search - Mid-Range HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                # Check if we have brand_scores
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Positioning-Aware Search - Mid-Range Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # Test 1: Check country_competitor_analysis field exists
+                if "country_competitor_analysis" not in brand:
+                    self.log_test("Positioning-Aware Search - Mid-Range Field", False, "country_competitor_analysis field missing")
+                    return False
+                
+                country_analysis = brand["country_competitor_analysis"]
+                if not country_analysis or len(country_analysis) == 0:
+                    self.log_test("Positioning-Aware Search - Mid-Range Data", False, "country_competitor_analysis is empty")
+                    return False
+                
+                # Test 2: Verify we have analysis for both countries
+                countries_found = [analysis.get("country") for analysis in country_analysis]
+                expected_countries = ["India", "Thailand"]
+                missing_countries = [country for country in expected_countries if country not in countries_found]
+                
+                if missing_countries:
+                    self.log_test("Positioning-Aware Search - Mid-Range Countries", False, f"Missing countries: {missing_countries}")
+                    return False
+                
+                # Test 3: Check India competitors for Mid-Range positioning
+                india_analysis = next((analysis for analysis in country_analysis if analysis.get("country") == "India"), None)
+                if not india_analysis:
+                    self.log_test("Positioning-Aware Search - India Analysis", False, "India analysis not found")
+                    return False
+                
+                india_competitors = india_analysis.get("competitors", [])
+                if len(india_competitors) < 3:
+                    self.log_test("Positioning-Aware Search - India Competitors Count", False, f"Expected at least 3 India competitors, got {len(india_competitors)}")
+                    return False
+                
+                # Check for expected Mid-Range India competitors
+                india_competitor_names = [comp.get("name", "").lower() for comp in india_competitors]
+                expected_india_midrange = ["lemon tree", "ginger", "keys", "treebo"]
+                found_india_midrange = [name for name in expected_india_midrange if any(name in comp_name for comp_name in india_competitor_names)]
+                
+                # Check for luxury competitors that should NOT be there for Mid-Range
+                luxury_competitors = ["marriott", "hilton", "taj", "oberoi", "leela"]
+                found_luxury_india = [name for name in luxury_competitors if any(name in comp_name for comp_name in india_competitor_names)]
+                
+                print(f"India competitors found: {[comp.get('name') for comp in india_competitors]}")
+                print(f"Mid-range matches: {found_india_midrange}")
+                print(f"Luxury matches (should be empty): {found_luxury_india}")
+                
+                # Test 4: Check Thailand competitors for Mid-Range positioning
+                thailand_analysis = next((analysis for analysis in country_analysis if analysis.get("country") == "Thailand"), None)
+                if not thailand_analysis:
+                    self.log_test("Positioning-Aware Search - Thailand Analysis", False, "Thailand analysis not found")
+                    return False
+                
+                thailand_competitors = thailand_analysis.get("competitors", [])
+                if len(thailand_competitors) < 3:
+                    self.log_test("Positioning-Aware Search - Thailand Competitors Count", False, f"Expected at least 3 Thailand competitors, got {len(thailand_competitors)}")
+                    return False
+                
+                # Check for expected Mid-Range Thailand competitors
+                thailand_competitor_names = [comp.get("name", "").lower() for comp in thailand_competitors]
+                expected_thailand_midrange = ["centara", "amari", "dusit"]
+                found_thailand_midrange = [name for name in expected_thailand_midrange if any(name in comp_name for comp_name in thailand_competitor_names)]
+                
+                # Check for global luxury chains that should NOT dominate for Mid-Range
+                global_luxury = ["marriott", "hilton", "four seasons", "shangri-la"]
+                found_global_luxury_thailand = [name for name in global_luxury if any(name in comp_name for comp_name in thailand_competitor_names)]
+                
+                print(f"Thailand competitors found: {[comp.get('name') for comp in thailand_competitors]}")
+                print(f"Mid-range matches: {found_thailand_midrange}")
+                print(f"Global luxury matches (should be minimal): {found_global_luxury_thailand}")
+                
+                # Test 5: Verify competitors are LOCAL brands (different for each country)
+                # India and Thailand should NOT have identical competitor lists
+                india_names_set = set(india_competitor_names)
+                thailand_names_set = set(thailand_competitor_names)
+                identical_competitors = india_names_set.intersection(thailand_names_set)
+                
+                if len(identical_competitors) > 2:  # Allow some overlap but not complete duplication
+                    self.log_test("Positioning-Aware Search - Local Differentiation", False, f"Too many identical competitors across countries: {identical_competitors}")
+                    return False
+                
+                # Test 6: Check positioning segment alignment
+                positioning_issues = []
+                
+                # India should have LOCAL mid-range brands, not all luxury
+                if len(found_india_midrange) == 0 and len(found_luxury_india) > 2:
+                    positioning_issues.append("India shows luxury competitors instead of mid-range")
+                
+                # Thailand should have LOCAL brands, not all global chains
+                if len(found_thailand_midrange) == 0 and len(found_global_luxury_thailand) > 2:
+                    positioning_issues.append("Thailand shows global luxury chains instead of local mid-range")
+                
+                if positioning_issues:
+                    self.log_test("Positioning-Aware Search - Mid-Range Positioning", False, "; ".join(positioning_issues))
+                    return False
+                
+                self.log_test("Positioning-Aware Search - Mid-Range Complete", True, 
+                            f"Mid-Range positioning working correctly. India mid-range: {len(found_india_midrange)}, Thailand mid-range: {len(found_thailand_midrange)}, Local differentiation: {len(identical_competitors)} overlaps")
+                
+                # Now test Premium positioning
+                return self.test_positioning_aware_premium()
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Positioning-Aware Search - Mid-Range JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Positioning-Aware Search - Mid-Range Timeout", False, "Request timed out after 240 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Positioning-Aware Search - Mid-Range Exception", False, str(e))
+            return False
+
+    def test_positioning_aware_premium(self):
+        """Test Premium positioning for POSITIONING-AWARE competitor search"""
+        
+        # Test Case 2: Premium Hotel Chain positioning
+        payload_premium = {
+            "brand_names": ["RamaRaya"],
+            "category": "Hotel Chain", 
+            "positioning": "Premium",
+            "market_scope": "Multi-Country",
+            "countries": ["India", "Thailand"]
+        }
+        
+        try:
+            print(f"\n🎯 Testing POSITIONING-AWARE Competitor Search - Premium Positioning...")
+            print(f"Test Case 2: Premium Hotel Chain in India + Thailand")
+            print(f"Expected India Premium: Taj Hotels, ITC Hotels, Oberoi, Leela")
+            print(f"Expected Thailand Premium: Dusit, Anantara, Minor Hotels")
+            
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload_premium, 
+                headers={'Content-Type': 'application/json'},
+                timeout=240  # Extended timeout for comprehensive analysis
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Positioning-Aware Search - Premium HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                # Check if we have brand_scores
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Positioning-Aware Search - Premium Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # Check country_competitor_analysis field exists
+                if "country_competitor_analysis" not in brand:
+                    self.log_test("Positioning-Aware Search - Premium Field", False, "country_competitor_analysis field missing")
+                    return False
+                
+                country_analysis = brand["country_competitor_analysis"]
+                if not country_analysis or len(country_analysis) == 0:
+                    self.log_test("Positioning-Aware Search - Premium Data", False, "country_competitor_analysis is empty")
+                    return False
+                
+                # Check India competitors for Premium positioning
+                india_analysis = next((analysis for analysis in country_analysis if analysis.get("country") == "India"), None)
+                if not india_analysis:
+                    self.log_test("Positioning-Aware Search - Premium India Analysis", False, "India analysis not found")
+                    return False
+                
+                india_competitors = india_analysis.get("competitors", [])
+                india_competitor_names = [comp.get("name", "").lower() for comp in india_competitors]
+                
+                # Check for expected Premium India competitors
+                expected_india_premium = ["taj", "itc", "oberoi", "leela"]
+                found_india_premium = [name for name in expected_india_premium if any(name in comp_name for comp_name in india_competitor_names)]
+                
+                # Check Thailand competitors for Premium positioning
+                thailand_analysis = next((analysis for analysis in country_analysis if analysis.get("country") == "Thailand"), None)
+                if not thailand_analysis:
+                    self.log_test("Positioning-Aware Search - Premium Thailand Analysis", False, "Thailand analysis not found")
+                    return False
+                
+                thailand_competitors = thailand_analysis.get("competitors", [])
+                thailand_competitor_names = [comp.get("name", "").lower() for comp in thailand_competitors]
+                
+                # Check for expected Premium Thailand competitors
+                expected_thailand_premium = ["dusit", "anantara", "minor"]
+                found_thailand_premium = [name for name in expected_thailand_premium if any(name in comp_name for comp_name in thailand_competitor_names)]
+                
+                print(f"India Premium competitors found: {[comp.get('name') for comp in india_competitors]}")
+                print(f"Premium matches: {found_india_premium}")
+                print(f"Thailand Premium competitors found: {[comp.get('name') for comp in thailand_competitors]}")
+                print(f"Premium matches: {found_thailand_premium}")
+                
+                # Validate Premium positioning
+                premium_issues = []
+                
+                if len(found_india_premium) == 0:
+                    premium_issues.append("India missing expected premium competitors (Taj, ITC, Oberoi, Leela)")
+                
+                if len(found_thailand_premium) == 0:
+                    premium_issues.append("Thailand missing expected premium competitors (Dusit, Anantara, Minor Hotels)")
+                
+                if premium_issues:
+                    self.log_test("Positioning-Aware Search - Premium Positioning", False, "; ".join(premium_issues))
+                    return False
+                
+                self.log_test("Positioning-Aware Search - Premium Complete", True, 
+                            f"Premium positioning working correctly. India premium: {len(found_india_premium)}, Thailand premium: {len(found_thailand_premium)}")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Positioning-Aware Search - Premium JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Positioning-Aware Search - Premium Timeout", False, "Request timed out after 240 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Positioning-Aware Search - Premium Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
