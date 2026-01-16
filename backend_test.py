@@ -1173,6 +1173,372 @@ class BrandEvaluationTester:
             self.log_test("ACTUAL USPTO Costs - Exception", False, str(e))
             return False
 
+    def test_admin_login_valid_credentials(self):
+        """Test POST /api/admin/login with correct credentials"""
+        payload = {
+            "email": "chaibunkcafe@gmail.com",
+            "password": "Sandy@2614"
+        }
+        
+        try:
+            print(f"\n🔐 Testing Admin Login with valid credentials...")
+            response = requests.post(
+                f"{self.api_url}/admin/login",
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check required fields
+                required_fields = ["success", "token", "message", "admin_email"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Login - Valid Credentials Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                if not data["success"]:
+                    self.log_test("Admin Login - Valid Credentials Success", False, f"success field is False: {data.get('message')}")
+                    return False
+                
+                if not data["token"]:
+                    self.log_test("Admin Login - Valid Credentials Token", False, "JWT token is empty")
+                    return False
+                
+                if data["admin_email"] != "chaibunkcafe@gmail.com":
+                    self.log_test("Admin Login - Valid Credentials Email", False, f"Email mismatch: {data['admin_email']}")
+                    return False
+                
+                # Store token for subsequent tests
+                self.admin_token = data["token"]
+                
+                self.log_test("Admin Login - Valid Credentials", True, f"Login successful, token received")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Login - Valid Credentials", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Login - Valid Credentials", False, str(e))
+            return False
+
+    def test_admin_login_invalid_credentials(self):
+        """Test POST /api/admin/login with incorrect credentials"""
+        payload = {
+            "email": "chaibunkcafe@gmail.com",
+            "password": "WrongPassword123"
+        }
+        
+        try:
+            print(f"\n🔐 Testing Admin Login with invalid credentials...")
+            response = requests.post(
+                f"{self.api_url}/admin/login",
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 401:
+                self.log_test("Admin Login - Invalid Credentials", True, "Correctly rejected invalid credentials with 401")
+                return True
+            else:
+                error_msg = f"Expected 401 Unauthorized, got {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Login - Invalid Credentials", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Login - Invalid Credentials", False, str(e))
+            return False
+
+    def test_admin_verify_token(self):
+        """Test GET /api/admin/verify with valid token"""
+        if not hasattr(self, 'admin_token') or not self.admin_token:
+            self.log_test("Admin Verify Token", False, "No admin token available (login test must run first)")
+            return False
+            
+        try:
+            print(f"\n🔐 Testing Admin Token Verification...")
+            response = requests.get(
+                f"{self.api_url}/admin/verify",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data.get("valid"):
+                    self.log_test("Admin Verify Token - Valid Flag", False, "valid field is False")
+                    return False
+                
+                if data.get("email") != "chaibunkcafe@gmail.com":
+                    self.log_test("Admin Verify Token - Email", False, f"Email mismatch: {data.get('email')}")
+                    return False
+                
+                self.log_test("Admin Verify Token", True, "Token verification successful")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Verify Token", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Verify Token", False, str(e))
+            return False
+
+    def test_admin_verify_no_token(self):
+        """Test GET /api/admin/verify without token (should fail with 401)"""
+        try:
+            print(f"\n🔐 Testing Admin Token Verification without token...")
+            response = requests.get(
+                f"{self.api_url}/admin/verify",
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 401:
+                self.log_test("Admin Verify No Token", True, "Correctly rejected request without token with 401")
+                return True
+            else:
+                error_msg = f"Expected 401 Unauthorized, got {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Verify No Token", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Verify No Token", False, str(e))
+            return False
+
+    def test_admin_get_system_prompt(self):
+        """Test GET /api/admin/prompts/system"""
+        if not hasattr(self, 'admin_token') or not self.admin_token:
+            self.log_test("Admin Get System Prompt", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n📝 Testing Get System Prompt...")
+            response = requests.get(
+                f"{self.api_url}/admin/prompts/system",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                required_fields = ["type", "content"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Get System Prompt - Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                if data["type"] != "system":
+                    self.log_test("Admin Get System Prompt - Type", False, f"Expected type 'system', got '{data['type']}'")
+                    return False
+                
+                if not data["content"] or len(data["content"]) < 100:
+                    self.log_test("Admin Get System Prompt - Content", False, f"Content too short: {len(data.get('content', ''))} chars")
+                    return False
+                
+                self.log_test("Admin Get System Prompt", True, f"System prompt retrieved, {len(data['content'])} characters")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Get System Prompt", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Get System Prompt", False, str(e))
+            return False
+
+    def test_admin_get_early_stopping_prompt(self):
+        """Test GET /api/admin/prompts/early_stopping"""
+        if not hasattr(self, 'admin_token') or not self.admin_token:
+            self.log_test("Admin Get Early Stopping Prompt", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n📝 Testing Get Early Stopping Prompt...")
+            response = requests.get(
+                f"{self.api_url}/admin/prompts/early_stopping",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                required_fields = ["type", "content"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Get Early Stopping Prompt - Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                if data["type"] != "early_stopping":
+                    self.log_test("Admin Get Early Stopping Prompt - Type", False, f"Expected type 'early_stopping', got '{data['type']}'")
+                    return False
+                
+                if not data["content"] or len(data["content"]) < 50:
+                    self.log_test("Admin Get Early Stopping Prompt - Content", False, f"Content too short: {len(data.get('content', ''))} chars")
+                    return False
+                
+                self.log_test("Admin Get Early Stopping Prompt", True, f"Early stopping prompt retrieved, {len(data['content'])} characters")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Get Early Stopping Prompt", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Get Early Stopping Prompt", False, str(e))
+            return False
+
+    def test_admin_get_model_settings(self):
+        """Test GET /api/admin/settings/model"""
+        if not hasattr(self, 'admin_token') or not self.admin_token:
+            self.log_test("Admin Get Model Settings", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n⚙️ Testing Get Model Settings...")
+            response = requests.get(
+                f"{self.api_url}/admin/settings/model",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                expected_fields = ["primary_model", "fallback_models", "timeout_seconds", "temperature", "max_tokens", "retry_count"]
+                missing_fields = [field for field in expected_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Get Model Settings - Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Validate field types and ranges
+                if not isinstance(data["primary_model"], str) or not data["primary_model"]:
+                    self.log_test("Admin Get Model Settings - Primary Model", False, f"Invalid primary_model: {data['primary_model']}")
+                    return False
+                
+                if not isinstance(data["fallback_models"], list) or len(data["fallback_models"]) == 0:
+                    self.log_test("Admin Get Model Settings - Fallback Models", False, f"Invalid fallback_models: {data['fallback_models']}")
+                    return False
+                
+                if not isinstance(data["timeout_seconds"], int) or not (10 <= data["timeout_seconds"] <= 120):
+                    self.log_test("Admin Get Model Settings - Timeout", False, f"Invalid timeout_seconds: {data['timeout_seconds']}")
+                    return False
+                
+                if not isinstance(data["temperature"], (int, float)) or not (0.0 <= data["temperature"] <= 2.0):
+                    self.log_test("Admin Get Model Settings - Temperature", False, f"Invalid temperature: {data['temperature']}")
+                    return False
+                
+                print(f"✅ Model Settings:")
+                print(f"   - Primary Model: {data['primary_model']}")
+                print(f"   - Fallback Models: {data['fallback_models']}")
+                print(f"   - Timeout: {data['timeout_seconds']}s")
+                print(f"   - Temperature: {data['temperature']}")
+                
+                self.log_test("Admin Get Model Settings", True, f"Model settings retrieved successfully")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Get Model Settings", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Get Model Settings", False, str(e))
+            return False
+
+    def test_admin_get_usage_analytics(self):
+        """Test GET /api/admin/analytics/usage"""
+        if not hasattr(self, 'admin_token') or not self.admin_token:
+            self.log_test("Admin Get Usage Analytics", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n📊 Testing Get Usage Analytics...")
+            response = requests.get(
+                f"{self.api_url}/admin/analytics/usage",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                expected_fields = ["total_evaluations", "successful_evaluations", "failed_evaluations", "average_response_time", "model_usage", "daily_stats"]
+                missing_fields = [field for field in expected_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Get Usage Analytics - Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Validate field types
+                if not isinstance(data["total_evaluations"], int) or data["total_evaluations"] < 0:
+                    self.log_test("Admin Get Usage Analytics - Total Evaluations", False, f"Invalid total_evaluations: {data['total_evaluations']}")
+                    return False
+                
+                if not isinstance(data["successful_evaluations"], int) or data["successful_evaluations"] < 0:
+                    self.log_test("Admin Get Usage Analytics - Successful Evaluations", False, f"Invalid successful_evaluations: {data['successful_evaluations']}")
+                    return False
+                
+                if not isinstance(data["failed_evaluations"], int) or data["failed_evaluations"] < 0:
+                    self.log_test("Admin Get Usage Analytics - Failed Evaluations", False, f"Invalid failed_evaluations: {data['failed_evaluations']}")
+                    return False
+                
+                if not isinstance(data["average_response_time"], (int, float)) or data["average_response_time"] < 0:
+                    self.log_test("Admin Get Usage Analytics - Average Response Time", False, f"Invalid average_response_time: {data['average_response_time']}")
+                    return False
+                
+                if not isinstance(data["model_usage"], dict):
+                    self.log_test("Admin Get Usage Analytics - Model Usage", False, f"Invalid model_usage: {type(data['model_usage'])}")
+                    return False
+                
+                if not isinstance(data["daily_stats"], list):
+                    self.log_test("Admin Get Usage Analytics - Daily Stats", False, f"Invalid daily_stats: {type(data['daily_stats'])}")
+                    return False
+                
+                print(f"✅ Usage Analytics:")
+                print(f"   - Total Evaluations: {data['total_evaluations']}")
+                print(f"   - Successful: {data['successful_evaluations']}")
+                print(f"   - Failed: {data['failed_evaluations']}")
+                print(f"   - Avg Response Time: {data['average_response_time']}s")
+                print(f"   - Model Usage: {data['model_usage']}")
+                print(f"   - Daily Stats: {len(data['daily_stats'])} days")
+                
+                self.log_test("Admin Get Usage Analytics", True, f"Usage analytics retrieved successfully")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Get Usage Analytics", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Get Usage Analytics", False, str(e))
+            return False
+
     def test_dimensions_population_nexaflow(self):
         """Test /api/evaluate endpoint to verify dimensions are populated as requested in review"""
         payload = {
