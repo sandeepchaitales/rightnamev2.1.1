@@ -2693,9 +2693,9 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "poison_words": [],
                     "reasoning": "Alternative names generated based on brand analysis",
                     "suggestions": [
-                        {"name": f"{brand_name[:4]}ora", "score": 75, "reason": "Softer feminine ending for beauty sector"},
-                        {"name": f"{brand_name[:5]}ix", "score": 72, "reason": "Modern tech-inspired suffix"},
-                        {"name": f"Neo{brand_name[:4]}", "score": 70, "reason": "Innovation-focused prefix"}
+                        {"name": f"{brand_name[:4]}ora", "score": 75, "rationale": "Softer feminine ending for beauty sector"},
+                        {"name": f"{brand_name[:5]}ix", "score": 72, "rationale": "Modern tech-inspired suffix"},
+                        {"name": f"Neo{brand_name[:4]}", "score": 70, "rationale": "Innovation-focused prefix"}
                     ]
                 },
                 "mitigation_strategies": [
