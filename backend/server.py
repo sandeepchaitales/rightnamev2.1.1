@@ -2682,16 +2682,19 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "seo_potential": "HIGH" if len(brand_name) <= 12 else "MEDIUM",
                     "recommendation": f"Strong potential for building digital presence with '{brand_name}'"
                 },
-                "country_competitor_analysis": {
-                    "India": {"competitors": [], "market_status": "Open", "recommendation": "Favorable for entry"},
-                    "USA": {"competitors": [], "market_status": "Open", "recommendation": "Favorable for entry"},
-                    "Global": {"competitors": [], "market_status": "Open", "recommendation": "Strong international potential"}
-                },
-                "alternative_names": [
-                    {"name": f"{brand_name[:4]}ora", "score": 75, "reason": "Softer feminine ending for beauty sector"},
-                    {"name": f"{brand_name[:5]}ix", "score": 72, "reason": "Modern tech-inspired suffix"},
-                    {"name": f"Neo{brand_name[:4]}", "score": 70, "reason": "Innovation-focused prefix"}
+                "country_competitor_analysis": [
+                    {"country": "India", "competitors": [], "market_status": "Open", "recommendation": "Favorable for entry"},
+                    {"country": "USA", "competitors": [], "market_status": "Open", "recommendation": "Favorable for entry"}
                 ],
+                "alternative_names": {
+                    "poison_words": [],
+                    "reasoning": "Alternative names generated based on brand analysis",
+                    "suggestions": [
+                        {"name": f"{brand_name[:4]}ora", "score": 75, "reason": "Softer feminine ending for beauty sector"},
+                        {"name": f"{brand_name[:5]}ix", "score": 72, "reason": "Modern tech-inspired suffix"},
+                        {"name": f"Neo{brand_name[:4]}", "score": 70, "reason": "Innovation-focused prefix"}
+                    ]
+                },
                 "mitigation_strategies": [
                     {"risk": "Domain availability", "strategy": "Secure alternative TLDs (.co, .io, .beauty) immediately"},
                     {"risk": "Trademark conflicts", "strategy": "Conduct comprehensive trademark search before filing"},
