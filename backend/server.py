@@ -4342,6 +4342,54 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             logging.info(f"Added {len(brand_score.dimensions)} dimensions for '{brand_score.brand_name}'")
         else:
             logging.info(f"Dimensions OK for '{brand_score.brand_name}': {len(brand_score.dimensions)} dimensions")
+        
+        # ============ GENERATE INTELLIGENT TRADEMARK MATRIX ============
+        # Always generate intelligent trademark_matrix based on actual research data
+        # This replaces generic "No specific risk identified" with actionable insights
+        brand_name_for_matrix = brand_score.brand_name
+        tr_data_for_matrix = None
+        
+        # Get trademark research data
+        if brand_score.trademark_research:
+            if isinstance(brand_score.trademark_research, dict):
+                tr_data_for_matrix = brand_score.trademark_research
+            elif hasattr(brand_score.trademark_research, 'model_dump'):
+                tr_data_for_matrix = brand_score.trademark_research.model_dump()
+            elif hasattr(brand_score.trademark_research, '__dict__'):
+                tr_data_for_matrix = brand_score.trademark_research.__dict__
+        
+        # Also check stored trademark research
+        if not tr_data_for_matrix and brand_name_for_matrix in trademark_research_data:
+            stored_tr = trademark_research_data[brand_name_for_matrix]
+            if isinstance(stored_tr, dict):
+                tr_data_for_matrix = stored_tr.get('result', stored_tr)
+                if hasattr(tr_data_for_matrix, '__dataclass_fields__'):
+                    from dataclasses import asdict
+                    tr_data_for_matrix = asdict(tr_data_for_matrix)
+        
+        # Check if brand name appears to be invented (no dictionary words)
+        brand_is_invented = not any(word.lower() in brand_name_for_matrix.lower() for word in 
+            ['shop', 'store', 'tech', 'soft', 'cloud', 'pay', 'money', 'quick', 'fast', 'best', 'top', 'pro', 'smart', 'easy'])
+        
+        # Generate intelligent matrix
+        intelligent_matrix = generate_intelligent_trademark_matrix(
+            brand_name=brand_name_for_matrix,
+            category=request.category,
+            trademark_data=tr_data_for_matrix,
+            brand_is_invented=brand_is_invented
+        )
+        
+        # Convert to TrademarkRiskMatrix schema
+        from schemas import TrademarkRiskMatrix, TrademarkRiskRow
+        brand_score.trademark_matrix = TrademarkRiskMatrix(
+            genericness=TrademarkRiskRow(**intelligent_matrix['genericness']),
+            existing_conflicts=TrademarkRiskRow(**intelligent_matrix['existing_conflicts']),
+            phonetic_similarity=TrademarkRiskRow(**intelligent_matrix['phonetic_similarity']),
+            relevant_classes=TrademarkRiskRow(**intelligent_matrix['relevant_classes']),
+            rebranding_probability=TrademarkRiskRow(**intelligent_matrix['rebranding_probability']),
+            overall_assessment=intelligent_matrix['overall_assessment']
+        )
+        logging.info(f"✅ Generated intelligent trademark_matrix for '{brand_name_for_matrix}'")
     
     # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
     if all_rejections:
