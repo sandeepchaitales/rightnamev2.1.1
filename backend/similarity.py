@@ -865,23 +865,39 @@ def check_brand_similarity(
     results["high_risk_matches"].sort(key=lambda x: x["average_similarity"], reverse=True)
     results["medium_risk_matches"].sort(key=lambda x: x["average_similarity"], reverse=True)
     
-    # NEW: Check for suffix conflicts (e.g., AuraKind vs Mankind, HeadBook vs Facebook)
-    suffix_result = check_suffix_conflict(input_name, industry, category)
-    if suffix_result["has_suffix_conflict"]:
-        for conflict in suffix_result["conflicts"]:
+    # ============ HYBRID SUFFIX CONFLICT CHECK (LLM + Static) ============
+    # Uses LLM-first detection enhanced with static fallback
+    suffix_result = check_suffix_conflict_with_llm(input_name, industry, category, use_llm=LLM_AVAILABLE)
+    results["suffix_detection_method"] = suffix_result.get("detection_method", "STATIC_ONLY")
+    results["llm_suffix_analysis"] = suffix_result.get("llm_analysis")
+    
+    if suffix_result["has_suffix_conflict"] or suffix_result.get("should_reject"):
+        for conflict in suffix_result.get("conflicts", []):
+            # Determine match type based on tier
+            tier = conflict.get("tier", 1)
+            match_type = f"TIER{tier}_SUFFIX_CONFLICT"
+            if "LLM_DETECTED" in conflict.get("match_type", ""):
+                match_type = conflict["match_type"]
+            
             # Add to fatal conflicts
             results["fatal_conflicts"].append({
                 "brand": conflict["brand"],
-                "match_type": "SUFFIX_CONFLICT",
-                "suffix": conflict["suffix"],
+                "match_type": match_type,
+                "suffix": conflict.get("suffix", ""),
+                "tier": tier,
                 "levenshtein": 0,  # Not applicable for suffix match
                 "jaro_winkler": 0,
                 "fuzzy_ratio": 0,
                 "average_similarity": 0,
-                "explanation": conflict["explanation"]
+                "explanation": conflict.get("explanation", f"Suffix conflict with {conflict['brand']}"),
+                "lawsuit_probability": conflict.get("lawsuit_probability", "HIGH")
             })
-            results["should_reject"] = True
-            results["rejection_reason"] = f"FATAL: Suffix conflict - '{input_name}' shares '-{conflict['suffix']}' suffix with '{conflict['brand']}' in the same industry"
+        
+        results["should_reject"] = True
+        results["rejection_reason"] = suffix_result.get("rejection_reason") or f"FATAL: Suffix conflict detected"
+        
+        # Add warnings to results (different industry Tier 2 conflicts)
+        results["suffix_warnings"] = suffix_result.get("tier2_warnings", [])
     
     # Generate summary
     if results["fatal_conflicts"]:
