@@ -440,7 +440,7 @@ def llm_detect_suffix_conflicts_sync(brand_name: str, category: str) -> Dict:
     """
     Synchronous LLM suffix detection - directly calls LLM without async complexity.
     """
-    if not LLM_AVAILABLE or not LlmChat:
+    if not LLM_AVAILABLE or not LlmChat or not UserMessage:
         logger.warning("LLM not available for suffix detection")
         return None
     
@@ -453,12 +453,14 @@ def llm_detect_suffix_conflicts_sync(brand_name: str, category: str) -> Dict:
         # Correct LlmChat initialization: (api_key, provider, model)
         chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
         
+        # Create UserMessage object
+        user_msg = UserMessage(prompt)
+        
         # Helper function to run async send_message
         async def _send_message():
-            return await chat.send_message(prompt)
+            return await chat.send_message(user_msg)
         
         # Run the coroutine synchronously
-        import asyncio
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
