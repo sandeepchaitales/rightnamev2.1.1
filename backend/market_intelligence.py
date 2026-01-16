@@ -784,8 +784,15 @@ async def research_all_countries(
         country_name = country.get('name') if isinstance(country, dict) else str(country)
         
         # Get fallback data for this country
+        # Note: Keys in fallback_market_data match the country_name from request
         market_fallback = fallback_market_data.get(country_name) if fallback_market_data else None
         cultural_fallback = fallback_cultural_data.get(country_name) if fallback_cultural_data else None
+        
+        # Log fallback data status
+        if market_fallback:
+            logger.info(f"📦 Fallback data available for '{country_name}': {len(market_fallback.get('competitors', []))} competitors ({[c.get('name') for c in market_fallback.get('competitors', [])[:2]]}...)")
+        else:
+            logger.warning(f"⚠️ NO fallback data for '{country_name}'")
         
         # Pass positioning to market research
         market_tasks.append(
