@@ -560,7 +560,7 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                                             <Icon className={`w-4 h-4 ${color.icon}`} />
                                             <h5 className={`font-bold ${color.text} text-sm`}>{rec.title}</h5>
                                         </div>
-                                        <p className="text-xs text-slate-600 leading-relaxed">{rec.content}</p>
+                                        <p className="text-xs text-slate-600 leading-relaxed"><MarkdownText text={rec.content} /></p>
                                     </div>
                                 );
                             })}
