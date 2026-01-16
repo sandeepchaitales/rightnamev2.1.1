@@ -15,11 +15,12 @@ import logging
 
 # Try to import LLM capabilities
 try:
-    from emergentintegrations.llm.chat import LlmChat
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
     EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
     LLM_AVAILABLE = bool(EMERGENT_KEY)
 except ImportError:
     LlmChat = None
+    UserMessage = None
     EMERGENT_KEY = None
     LLM_AVAILABLE = False
 
