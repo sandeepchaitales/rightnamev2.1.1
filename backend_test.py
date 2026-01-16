@@ -5766,6 +5766,16 @@ class BrandEvaluationTester:
         self.test_llm_brand_detection_moneycontrols()  # Test Case 4: MoneyControls vs Moneycontrol
         self.test_llm_backend_logs_verification()      # Verify LLM logs
         
+        # NEW: Category-Specific Market Data and Sacred/Royal Name Detection Fixes
+        print("\n🔧 CATEGORY-SPECIFIC MARKET DATA & SACRED NAME DETECTION FIXES")
+        print("=" * 80)
+        print("Testing the two newly implemented fixes for RIGHTNAME brand evaluation API:")
+        print("FIX 1: Category-Specific Market Data - Each category shows its own competitors")
+        print("FIX 2: Sacred/Royal Name Detection - Warns about culturally sensitive names")
+        self.test_category_specific_market_data_hotel_chain()  # Test Case 1: Hotel Chain + RamaRaya
+        self.test_sacred_royal_name_detection_ramaraya()       # Test Case 1: RamaRaya sacred/royal warnings
+        self.test_technology_category_comparison()             # Test Case 2: Technology category comparison
+        
         # Print summary
         print(f"\n📊 Test Summary:")
         print(f"Tests Run: {self.tests_run}")
