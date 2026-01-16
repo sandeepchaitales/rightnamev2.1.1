@@ -709,8 +709,14 @@ def get_market_data_for_category_country(category: str, country: str) -> dict:
     })
 
 def generate_country_competitor_analysis(countries: list, category: str, brand_name: str) -> list:
-    """Generate RESEARCHED competitor analysis for ALL user-selected countries (max 4)"""
+    """Generate RESEARCHED competitor analysis for ALL user-selected countries (max 4)
+    Now category-aware - uses different competitor data based on industry category
+    """
     result = []
+    
+    # Log the category being used
+    category_key = get_category_key(category)
+    logging.info(f"📊 CATEGORY-AWARE MARKET DATA: Category '{category}' mapped to '{category_key}'")
     
     # Ensure we process up to 4 countries
     countries_to_process = countries[:4] if len(countries) > 4 else countries
@@ -722,8 +728,9 @@ def generate_country_competitor_analysis(countries: list, category: str, brand_n
         # Get flag
         flag = COUNTRY_FLAGS.get(country_name, "🌍")
         
-        # Get researched market data for this country
-        market_data = COUNTRY_MARKET_DATA.get(country_name, COUNTRY_MARKET_DATA["default"])
+        # Get CATEGORY-SPECIFIC market data for this country
+        market_data = get_market_data_for_category_country(category, country_name)
+        logging.info(f"📊 Market data for {country_name} ({category_key}): {len(market_data.get('competitors', []))} competitors")
         
         # Build the analysis
         result.append({
