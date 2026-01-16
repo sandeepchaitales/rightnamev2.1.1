@@ -4524,7 +4524,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     f"**Market Education:** As a coined term, will require brand awareness investment",
                     f"**Domain Status:** Primary .com domain {'available' if domain_available else 'taken - alternatives needed'}"
                 ] if verdict != "GO" else [],
-                "cultural_analysis": fallback_cultural if fallback_cultural else generate_cultural_analysis(request.countries, brand_name),
+                "cultural_analysis": fallback_cultural if fallback_cultural else generate_cultural_analysis(request.countries, brand_name, category),
                 "competitor_analysis": global_competitor_analysis if global_competitor_analysis else {
                     "x_axis_label": f"Price: Budget → Premium",
                     "y_axis_label": f"Innovation: Traditional → Modern",
