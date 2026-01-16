@@ -120,6 +120,7 @@ GLOBAL_FAMOUS_BRANDS = [
     "Coca Cola", "Pepsi", "McDonalds", "Burger King", "Wendys", "Starbucks", "Dunkin",
     "Subway", "Dominos", "Pizza Hut", "KFC", "Taco Bell", "Chipotle", "Panera",
     "Nestle", "Kraft", "General Mills", "Kelloggs", "PepsiCo", "Mondelez",
+    "Kinley", "Bisleri", "Aquafina", "Dasani", "Evian", "Perrier", "Fiji", "Voss",  # Water brands
     # Fashion & Luxury
     "Nike", "Adidas", "Puma", "Reebok", "Under Armour", "Lululemon", "Gap", "Old Navy",
     "Zara", "H&M", "Uniqlo", "Forever 21", "ASOS", "Shein", "Louis Vuitton", "Gucci",
