@@ -532,7 +532,7 @@ const FinalAssessmentFull = ({ assessment, verdict, score }) => {
                     </div>
                     {(assessment.bottom_line || assessment.verdict_statement) && (
                         <p className="mt-4 text-white/90 border-t border-white/20 pt-4 text-sm">
-                            "{assessment.bottom_line || assessment.verdict_statement}"
+                            "<MarkdownText text={assessment.bottom_line || assessment.verdict_statement} />"
                         </p>
                     )}
                 </div>
