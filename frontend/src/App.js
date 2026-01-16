@@ -31,6 +31,7 @@ function AppRouter() {
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/brand-audit" element={<BrandAuditLanding />} />
       <Route path="/brand-audit/results" element={<BrandAuditDashboard />} />
+      <Route path="/admin" element={<AdminPanel />} />
     </Routes>
   );
 }
