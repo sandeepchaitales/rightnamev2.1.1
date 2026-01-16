@@ -1617,7 +1617,7 @@ async def llm_first_country_analysis(
         logging.error(f"❌ LLM-first research failed: {e}, using hardcoded fallback")
         return (
             generate_country_competitor_analysis(countries, category, brand_name),
-            generate_cultural_analysis(countries, brand_name)
+            generate_cultural_analysis(countries, brand_name, category)
         )
 
 
