@@ -333,16 +333,38 @@ def check_brand_similarity(
     # Get brands to check against
     brands_to_check = set()
     
-    # Add industry-specific brands
+    # Normalize inputs for matching
+    industry_lower = industry.lower() if industry else ""
+    category_lower = category.lower() if category else ""
+    
+    # Add industry-specific brands - FIX: Check if category keywords appear in the key OR key keywords appear in category
     for key, brands in KNOWN_BRANDS.items():
-        if key.lower() in industry.lower() or key.lower() in category.lower():
+        key_lower = key.lower()
+        # Match if: "food" in "food & beverage" OR "beverage" in "food & beverage" OR "food & beverage" in "food"
+        key_words = key_lower.replace("&", " ").split()
+        category_words = category_lower.replace("&", " ").split()
+        industry_words = industry_lower.replace("&", " ").split()
+        
+        # Check for any word overlap
+        if any(word in key_lower for word in category_words) or \
+           any(word in key_lower for word in industry_words) or \
+           any(word in category_lower for word in key_words) or \
+           any(word in industry_lower for word in key_words):
             brands_to_check.update(brands)
     
+    # Special handling for food/beverage/water
+    if any(word in category_lower for word in ["food", "beverage", "water", "drink", "juice"]):
+        brands_to_check.update(KNOWN_BRANDS.get("Food & Beverage", []))
+    
     # Special handling for social media
-    if "social" in category.lower() or "media" in category.lower() or "platform" in category.lower():
+    if "social" in category_lower or "media" in category_lower or "platform" in category_lower:
         brands_to_check.update(KNOWN_BRANDS.get("Social Media & Platforms", []))
     
-    # Add general/famous brands
+    # Special handling for tech
+    if any(word in category_lower for word in ["tech", "software", "app", "saas", "digital"]):
+        brands_to_check.update(KNOWN_BRANDS.get("Technology & Software", []))
+    
+    # Add general/famous brands - ALWAYS CHECK THESE
     brands_to_check.update(KNOWN_BRANDS.get("General", []))
     brands_to_check.update(GLOBAL_FAMOUS_BRANDS)
     
