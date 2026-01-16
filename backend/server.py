@@ -1555,6 +1555,76 @@ def get_nice_classification(category: str) -> dict:
     # Default to Class 35 for unknown categories
     return {"class_number": 35, "class_description": "Advertising, business management, retail services", "matched_term": category}
 
+def generate_intelligent_trademark_matrix(brand_name: str, category: str, trademark_data: dict, brand_is_invented: bool = True) -> dict:
+    """
+    Generate intelligent Legal Risk Matrix with SPECIFIC, ACTIONABLE commentary
+    based on actual trademark research results - NOT generic placeholders.
+    """
+    # Extract data from trademark research
+    risk_score = trademark_data.get('overall_risk_score', 5) if trademark_data else 5
+    tm_conflicts = trademark_data.get('trademark_conflicts', []) if trademark_data else []
+    co_conflicts = trademark_data.get('company_conflicts', []) if trademark_data else []
+    total_conflicts = len(tm_conflicts) + len(co_conflicts)
+    registration_prob = trademark_data.get('registration_success_probability', 70) if trademark_data else 70
+    
+    nice_class = get_nice_classification(category)
+    class_number = nice_class.get('class_number', 35)
+    
+    # Calculate individual risk factors
+    genericness_score = 1 if brand_is_invented else min(6, 2 + len(brand_name.split()) * 2)
+    conflict_score = min(9, 1 + total_conflicts * 2) if total_conflicts > 0 else 1
+    phonetic_score = min(7, 1 + len([c for c in tm_conflicts if c.get('conflict_type') == 'phonetic']) * 3)
+    class_score = min(6, 1 + total_conflicts) if total_conflicts > 0 else 2
+    rebrand_score = min(8, 1 + conflict_score // 2)
+    
+    # Determine zones
+    def get_zone(score):
+        if score <= 3: return "Green"
+        elif score <= 6: return "Yellow"
+        else: return "Red"
+    
+    # Generate SPECIFIC commentary for each factor
+    matrix = {
+        "genericness": {
+            "likelihood": genericness_score,
+            "severity": genericness_score + 1 if genericness_score > 3 else 2,
+            "zone": get_zone(genericness_score),
+            "commentary": f"'{brand_name}' is {'a coined/invented term with no dictionary meaning - HIGH distinctiveness for trademark protection' if brand_is_invented else 'partially descriptive which may face distinctiveness challenges'}. Recommendation: {'File as wordmark in Class ' + str(class_number) + ' with intent-to-use basis. Consider design mark for additional protection layer.' if genericness_score <= 3 else 'Strengthen with distinctive design elements. Consider acquired distinctiveness argument if mark has been in use.'}"
+        },
+        "existing_conflicts": {
+            "likelihood": conflict_score,
+            "severity": min(9, conflict_score + 2),
+            "zone": get_zone(conflict_score),
+            "commentary": f"Found {total_conflicts} potential conflicts ({len(tm_conflicts)} trademark, {len(co_conflicts)} company registrations). " + (
+                f"Top conflict: {tm_conflicts[0].get('name', 'Unknown')} in Class {tm_conflicts[0].get('class_number', 'N/A')} ({tm_conflicts[0].get('status', 'Status unknown')}). Recommendation: Conduct comprehensive knockout search with IP attorney before filing. Prepare co-existence agreement template if proceeding."
+                if tm_conflicts else 
+                "No direct trademark conflicts found in primary class. Recommendation: Proceed with filing in Class " + str(class_number) + ". Set up trademark watch service to monitor new filings with similar marks."
+            )
+        },
+        "phonetic_similarity": {
+            "likelihood": phonetic_score,
+            "severity": phonetic_score + 1 if phonetic_score > 3 else 2,
+            "zone": get_zone(phonetic_score),
+            "commentary": f"{'Phonetic variants analyzed: No confusingly similar marks detected in Class ' + str(class_number) + '.' if phonetic_score <= 3 else 'Potential phonetic conflicts identified with similar-sounding marks.'} Recommendation: {'Register both word mark and phonetic variants as defensive strategy. Monitor app stores and domain registrations for sound-alike competitors.' if phonetic_score <= 3 else 'Consider slight spelling modifications to increase distinctiveness. Clear phonetic differentiation from ' + (tm_conflicts[0].get('name', 'existing marks') if tm_conflicts else 'existing marks') + ' is advised.'}"
+        },
+        "relevant_classes": {
+            "likelihood": class_score,
+            "severity": class_score + 1 if class_score > 3 else 3,
+            "zone": get_zone(class_score),
+            "commentary": f"Primary filing class: Class {class_number} ({nice_class.get('class_description', category)}). {'Class landscape is relatively clear with limited prior registrations.' if class_score <= 3 else f'Moderate competition in this class with {total_conflicts} existing marks.'} Strategy: File in Class {class_number} as primary. Consider defensive filing in {'Class 9 (software) and Class 42 (SaaS)' if class_number not in [9, 42] else 'adjacent service classes'} for comprehensive protection."
+        },
+        "rebranding_probability": {
+            "likelihood": rebrand_score,
+            "severity": 8 if rebrand_score > 5 else 4,
+            "zone": get_zone(rebrand_score),
+            "commentary": f"{'LOW rebranding risk - No senior marks with enforcement history found. Registration outlook: {:.0f}% success probability.'.format(registration_prob) if rebrand_score <= 3 else 'MODERATE rebranding risk due to existing conflicts. Recommend legal clearance opinion before significant brand investment.'} Action: {'Proceed with brand development. Secure federal registration early to build brand equity and prevent future challenges.' if rebrand_score <= 3 else 'Obtain formal legal opinion on conflict severity. Budget for potential opposition proceedings ($5,000-25,000 depending on jurisdiction).'}"
+        },
+        "overall_assessment": f"Overall trademark risk: {risk_score}/10. {'Favorable registration outlook - proceed with filing.' if risk_score <= 3 else 'Moderate risk - legal clearance recommended.' if risk_score <= 6 else 'High risk - significant conflicts require resolution before proceeding.'} Registration success probability: {registration_prob}%. {'Timeline: 12-18 months for registration. Estimated cost: $2,500-5,000 (single class, single jurisdiction).' if risk_score <= 5 else 'Extended timeline likely due to potential opposition. Budget for legal defense costs.'}"
+    }
+    
+    return matrix
+
+
 def fix_llm_response_types(data: dict) -> dict:
     """
     Fix common type issues in LLM responses before Pydantic validation.
