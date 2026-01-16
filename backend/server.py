@@ -2706,11 +2706,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "opposition_period": "4 months post-publication",
                     "estimated_completion": "18-24 months total"
                 },
-                "strategic_classification": {
-                    "brand_type": "Coined/Invented",
-                    "strength_tier": "STRONG" if trademark_risk <= 3 else "MODERATE" if trademark_risk <= 6 else "WEAK",
-                    "legal_distinctiveness": "High - invented terms receive strongest protection"
-                },
+                "strategic_classification": f"{'STRONG' if trademark_risk <= 3 else 'MODERATE' if trademark_risk <= 6 else 'WEAK'} - Coined/Invented term with {'high' if trademark_risk <= 3 else 'moderate'} legal distinctiveness",
                 "trademark_classes": [str(nice_class.get('class_number', 3))],
                 "trademark_matrix": {
                     "primary_class": nice_class.get('class_number', 3),
