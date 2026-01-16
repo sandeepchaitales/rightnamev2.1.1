@@ -930,7 +930,7 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
                         {/* Recommendation */}
                         {socialAvailability?.recommendation && (
                             <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                <p className="text-xs text-blue-700">{socialAvailability.recommendation}</p>
+                                <p className="text-xs text-blue-700"><MarkdownText text={socialAvailability.recommendation} /></p>
                             </div>
                         )}
                     </div>
