@@ -468,34 +468,74 @@ def generate_cultural_analysis(countries: list, brand_name: str) -> list:
 
 # ============ LEGAL PRECEDENTS & TRADEMARK INTELLIGENCE ============
 TRADEMARK_LEGAL_PRECEDENTS = {
+    "polaroid_test": {
+        "case_name": "Polaroid Corp. v. Polarad Electronics Corp.",
+        "court": "U.S. Second Circuit Court of Appeals",
+        "year": "1961",
+        "principle": "Established the 8-factor test for trademark likelihood of confusion analysis: (1) strength of mark, (2) similarity of marks, (3) proximity of products, (4) likelihood of bridging the gap, (5) actual confusion, (6) defendant's good faith, (7) quality of defendant's product, (8) buyer sophistication",
+        "relevance": "Multi-factor analysis including similarity of marks, proximity of goods, and buyer sophistication"
+    },
+    "sleekcraft_test": {
+        "case_name": "AMF Inc. v. Sleekcraft Boats",
+        "court": "U.S. Ninth Circuit Court of Appeals",
+        "year": "1979",
+        "principle": "Set standard for likelihood of confusion in similar product markets. Established the 'sound, sight, and meaning' test for determining mark similarity. Examines marks as they would appear to consumers in marketplace conditions",
+        "relevance": "Sound, sight, and meaning test for determining mark similarity - critical for phonetic conflicts"
+    },
+    "dupont_factors": {
+        "case_name": "In re E.I. du Pont de Nemours & Co.",
+        "court": "Court of Customs and Patent Appeals",
+        "year": "1973",
+        "principle": "Created comprehensive 13-factor test for analyzing likelihood of confusion in trademark registration proceedings. Includes similarity of marks, relatedness of goods/services, trade channels, sophistication of purchasers",
+        "relevance": "13-factor test is the gold standard for USPTO trademark examination"
+    },
+    "famous_mark_dilution": {
+        "case_name": "Moseley v. V Secret Catalogue, Inc.",
+        "court": "U.S. Supreme Court",
+        "year": "2003",
+        "principle": "Famous marks receive protection against dilution by blurring or tarnishment even in unrelated product categories. Requires proof of actual dilution for injunctive relief",
+        "relevance": "Cannot use famous marks (Apple, Nike, Coca-Cola) even for unrelated products"
+    },
     "descriptive_rejection": {
-        "case_name": "In re Steelbuilding.com (Fed. Cir. 2005)",
-        "principle": "Merely descriptive terms cannot be registered without proof of secondary meaning",
-        "relevance": "Coined/invented names avoid this risk entirely"
-    },
-    "likelihood_of_confusion": {
-        "case_name": "DuPont Analysis (In re E.I. du Pont de Nemours, 1973)",
-        "principle": "13-factor test determines likelihood of confusion between marks",
-        "relevance": "Factors include: similarity of marks, relatedness of goods, sophistication of buyers"
-    },
-    "phonetic_similarity": {
-        "case_name": "Kabushiki Kaisha Hattori Seiko v. Diligent (2nd Cir. 1979)",
-        "principle": "Phonetic equivalence can establish likelihood of confusion even with different spelling",
-        "relevance": "Sound-alikes in same category are high risk"
-    },
-    "famous_mark_protection": {
-        "case_name": "Moseley v. V Secret Catalogue (2003)",
-        "principle": "Famous marks receive protection against dilution even in unrelated categories",
-        "relevance": "Cannot use Apple for restaurant, Nike for software"
-    },
-    "prior_use_doctrine": {
-        "case_name": "Blue Bell v. Farah (5th Cir. 1975)",
-        "principle": "First to use in commerce has priority over first to file",
-        "relevance": "Important in US; varies internationally"
+        "case_name": "In re Steelbuilding.com",
+        "court": "Federal Circuit",
+        "year": "2005",
+        "principle": "Merely descriptive terms cannot be registered without proof of acquired distinctiveness (secondary meaning). Generic terms are never registrable",
+        "relevance": "Coined/invented names like 'RAMARAYA' avoid this risk entirely"
     }
 }
 
-REGISTRATION_TIMELINE_STAGES = {
+def generate_legal_precedents(trademark_risk_level: str) -> list:
+    """Generate relevant legal precedents based on risk level"""
+    precedents = []
+    
+    # Always include Polaroid and Sleekcraft - the foundational cases
+    precedents.append({
+        "case_name": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["case_name"],
+        "court": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["court"],
+        "year": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["year"],
+        "relevance": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["relevance"],
+        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["principle"]
+    })
+    
+    precedents.append({
+        "case_name": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["case_name"],
+        "court": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["court"],
+        "year": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["year"],
+        "relevance": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["relevance"],
+        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["principle"]
+    })
+    
+    # Add DuPont for all cases
+    precedents.append({
+        "case_name": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["case_name"],
+        "court": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["court"],
+        "year": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["year"],
+        "relevance": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["relevance"],
+        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["principle"]
+    })
+    
+    return precedents
     "India": [
         {"stage": "Filing & Formalities Examination", "duration": "1-2 months", "risk": "Minor objections possible on formalities"},
         {"stage": "Substantive Examination", "duration": "3-6 months", "risk": "Examiner objections on descriptiveness/similarity"},
