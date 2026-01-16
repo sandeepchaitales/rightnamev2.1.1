@@ -543,11 +543,16 @@ async def research_country_market(
     category: str,
     country: str,
     brand_name: str,
-    fallback_data: Dict[str, Any] = None
+    fallback_data: Dict[str, Any] = None,
+    positioning: str = "Mid-Range"
 ) -> MarketIntelligence:
     """
-    Research real market intelligence for a category + country combination.
+    Research real market intelligence for a category + country + positioning combination.
     Uses LLM + web search for accuracy, with fallback data if research fails.
+    
+    KEY IMPROVEMENT: Includes positioning in search queries to get segment-specific competitors.
+    Example: "Mid-Range Hotel Chain India" returns Lemon Tree, Ginger, Keys
+    Instead of: "Hotel Chain India" which returns mixed segments (OYO to Taj)
     """
     country_flags = {
         "India": "🇮🇳", "USA": "🇺🇸", "United States": "🇺🇸", "UK": "🇬🇧", 
@@ -556,7 +561,7 @@ async def research_country_market(
         "Canada": "🇨🇦", "Brazil": "🇧🇷"
     }
     
-    logger.info(f"🔬 Starting market research for {category} in {country}...")
+    logger.info(f"🔬 Starting {positioning} market research for {category} in {country}...")
     
     intelligence = MarketIntelligence(
         country=country,
@@ -565,15 +570,15 @@ async def research_country_market(
     )
     
     try:
-        # Step 1: Web search for competitors
-        competitor_search = await search_competitors(category, country)
+        # Step 1: Web search for competitors WITH POSITIONING
+        competitor_search = await search_competitors(category, country, positioning)
         
         # Step 2: Web search for market intelligence
         market_search = await search_market_intelligence(category, country)
         
-        # Step 3: LLM analysis of competitors
+        # Step 3: LLM analysis of competitors WITH POSITIONING
         competitor_data = await llm_analyze_competitors(
-            category, country, brand_name, competitor_search
+            category, country, brand_name, competitor_search, positioning
         )
         
         if competitor_data and competitor_data.get("competitors"):
@@ -583,13 +588,14 @@ async def research_country_market(
             intelligence.x_axis_label = competitor_data.get("x_axis_label", intelligence.x_axis_label)
             intelligence.y_axis_label = competitor_data.get("y_axis_label", intelligence.y_axis_label)
             intelligence.key_trends = competitor_data.get("key_trends", [])
-            intelligence.sources_used.append("Web Search + LLM Analysis")
+            intelligence.sources_used.append(f"Web Search + LLM Analysis ({positioning} segment)")
             
-            # Step 4: LLM white space analysis
+            # Step 4: LLM white space analysis WITH POSITIONING
             white_space_data = await llm_analyze_white_space(
                 category, country, brand_name,
                 json.dumps(competitor_data, indent=2),
-                market_search
+                market_search,
+                positioning
             )
             
             if white_space_data:
@@ -599,8 +605,8 @@ async def research_country_market(
                 intelligence.user_brand_position = white_space_data.get("user_brand_position", {
                     "x_coordinate": 65,
                     "y_coordinate": 72,
-                    "quadrant": "Accessible Premium",
-                    "rationale": f"Optimal positioning for {brand_name} in {country}"
+                    "quadrant": f"{positioning} Segment",
+                    "rationale": f"Optimal {positioning} positioning for {brand_name} in {country}"
                 })
                 intelligence.research_quality = "HIGH"
             else:
