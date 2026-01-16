@@ -300,7 +300,7 @@ Return ONLY valid JSON. No markdown, no explanation.
 
 ```json
 {
-  "executive_summary": "MINIMUM 100 words. DO NOT include headers like 'RIGHTNAME BRAND EVALUATION REPORT'. Start directly with brand analysis. Format: '[Brand Name]' is a [adjective] choice for [category] because [core reason]. Discuss phonetic quality, market fit, trademark viability, and strategic positioning. End with clear verdict recommendation. Write as flowing prose, not bullet points.",
+  "executive_summary": "MINIMUM 100 words. CRITICAL RULES: 1) DO NOT start with brand name, verdict, score, or category. 2) DO NOT include 'RIGHTNAME BRAND EVALUATION REPORT' or similar headers. 3) DO NOT repeat info shown elsewhere (verdict, score are shown in UI). START with strategic insight about what the name communicates. Example opening: 'This name possesses a distinctive phonetic architecture that...' or 'The linguistic construction creates immediate associations with...' INCLUDE: What emotional/functional benefits the name evokes, cultural resonance across target markets, trademark viability assessment, strategic positioning potential. END with a forward-looking recommendation. Write as sophisticated consulting prose.",
   
   "brand_scores": [
     {
