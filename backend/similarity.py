@@ -134,12 +134,26 @@ GLOBAL_FAMOUS_BRANDS = [
     # Entertainment
     "Disney", "Warner Bros", "Universal", "Paramount", "Sony Pictures", "MGM",
     "HBO", "Showtime", "Hulu", "Paramount Plus", "Peacock", "ESPN", "CNN", "Fox",
+    # Consumer Goods Giants (CRITICAL - Previously Missing!)
+    "Kimberly", "Kimberly Clark", "Kleenex", "Huggies", "Kotex", "Scott",
+    "Procter Gamble", "P&G", "Tide", "Pampers", "Bounty", "Charmin", "Crest", "Oral B",
+    "Unilever", "Colgate", "Palmolive", "Johnson Johnson", "Band Aid", "Tylenol",
+    "3M", "Post It", "Scotch", "Henkel", "Persil", "Schwarzkopf",
+    "Reckitt", "Lysol", "Dettol", "Durex", "Enfamil", "Mead Johnson",
+    "Church Dwight", "Arm Hammer", "OxiClean", "Clorox", "Glad", "Brita",
+    "SC Johnson", "Windex", "Glade", "Raid", "Ziploc", "Reynolds",
+    # Pharma Giants
+    "Pfizer", "Johnson Johnson", "Merck", "AbbVie", "Bristol Myers", "Eli Lilly",
+    "AstraZeneca", "Novartis", "Roche", "Sanofi", "GSK", "GlaxoSmithKline", "Bayer",
     # Others
     "FedEx", "UPS", "USPS", "DHL", "Amazon Prime", "eBay", "Etsy", "Shopify",
     "Alibaba", "AliExpress", "Wish", "Wayfair", "Overstock", "Chewy", "Petco", "PetSmart",
     # Indian Major Brands
     "Tata", "Reliance", "Adani", "Birla", "Mahindra", "Godrej", "Bajaj", "Infosys", "Wipro"
 ]
+
+# Jaro-Winkler threshold for flagging similarity (lowered from implicit 95 to 85)
+JARO_WINKLER_DANGER_THRESHOLD = 85.0  # 85%+ similarity = DANGER
 
 
 def normalize_name(name: str) -> str:
