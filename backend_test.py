@@ -5281,7 +5281,7 @@ class BrandEvaluationTester:
         payload = {
             "brand_names": ["RamaRaya"],
             "category": "Hotel Chain",
-            "positioning": "Premium boutique hotel chain",
+            "positioning": "Premium",
             "market_scope": "Multi-Country",
             "countries": [{"name": "India"}, {"name": "Thailand"}]
         }
