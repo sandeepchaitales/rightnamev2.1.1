@@ -218,6 +218,92 @@ COUNTRY_FLAGS = {
     "Spain": "🇪🇸", "Netherlands": "🇳🇱", "Mexico": "🇲🇽", "Russia": "🇷🇺", "Global": "🌍"
 }
 
+# ============ SACRED/ROYAL/RELIGIOUS NAME DATABASE ============
+SACRED_ROYAL_NAMES = {
+    "Thailand": {
+        "royal_terms": ["rama", "chakri", "bhumibol", "vajiralongkorn", "sirikit", "maha", "chulalongkorn", "mongkut", "prajadhipok", "ananda", "mahidol"],
+        "royal_titles": ["phra", "somdet", "chao", "phraya", "khun", "luang"],
+        "buddhist_terms": ["buddha", "sangha", "dharma", "dhamma", "wat", "phra", "bhikkhu", "nirvana", "bodhi", "arhat"],
+        "warning": "⚠️ **CRITICAL CULTURAL RISK - THAILAND:** The brand name contains elements that may reference Thai royal nomenclature. In Thailand, the Chakri Dynasty monarchs use 'Rama' as their regnal name (Rama I through Rama X - current King Vajiralongkorn is Rama X). **Lèse-majesté laws (Section 112)** make it illegal to defame, insult, or threaten the royal family, punishable by 3-15 years imprisonment per offense. Using royal-associated names for commercial purposes could be perceived as appropriation of royal dignity and may face legal challenges, public backlash, or registration rejection by Thai authorities. **STRONGLY RECOMMEND:** Conduct formal legal review with Thai counsel before market entry."
+    },
+    "India": {
+        "deity_names": ["rama", "ram", "krishna", "shiva", "ganesh", "ganesha", "vishnu", "brahma", "lakshmi", "durga", "kali", "hanuman", "saraswati", "parvati", "indra", "surya"],
+        "sacred_terms": ["om", "aum", "namaste", "mantra", "puja", "devi", "deva", "swami", "guru", "ashram", "dharma", "karma", "moksha", "atman", "veda"],
+        "political_figures": ["gandhi", "modi", "nehru", "ambedkar", "patel"],
+        "warning": "⚠️ **CULTURAL SENSITIVITY - INDIA:** The brand name contains elements associated with Hindu deities, sacred terminology, or significant cultural/political figures. While not illegal, using deity names commercially can trigger **strong public sentiment and boycott movements**. The Hindu community has historically protested brands perceived as trivializing sacred names (e.g., protests against 'Lakshmi' branded products). **RECOMMENDATION:** Conduct sentiment analysis and consider alternative naming to avoid potential PR crises and market rejection in India's 1.4B+ population market."
+    },
+    "UAE": {
+        "islamic_sacred": ["allah", "muhammad", "mohammed", "mohammad", "mecca", "makkah", "medina", "madinah", "quran", "kaaba", "hajj", "umrah", "ramadan", "eid"],
+        "religious_terms": ["halal", "haram", "imam", "mosque", "masjid", "sheikh", "mufti", "fatwa", "jihad", "sharia", "salat", "zakat"],
+        "royal_terms": ["nahyan", "maktoum", "khalifa", "zayed", "rashid", "sultan", "emir", "amir"],
+        "warning": "⚠️ **CRITICAL CULTURAL/LEGAL RISK - UAE/GCC:** The brand name contains terms sacred to Islam or associated with UAE royal families. In UAE and GCC countries, **blasphemy laws** prohibit insults to Islam, and commercial use of sacred terms can result in trademark rejection, business closure, or legal prosecution. Royal family names are protected and cannot be used commercially without explicit permission. **MANDATORY:** Consult with UAE legal counsel and consider formal clearance from relevant authorities before market entry."
+    },
+    "Japan": {
+        "imperial_terms": ["tenno", "mikado", "chrysanthemum", "emperor", "imperial"],
+        "sacred_shinto": ["kami", "shinto", "shrine", "torii", "amaterasu", "izanagi", "izanami"],
+        "buddhist_terms": ["buddha", "zen", "temple", "bodhi", "dharma"],
+        "warning": "⚠️ **CULTURAL SENSITIVITY - JAPAN:** The brand name contains terms associated with the Japanese Imperial family or Shinto/Buddhist sacred terminology. While Japan has freedom of expression, **Imperial symbolism** (particularly the chrysanthemum crest) is legally protected. Religious terminology used commercially may face social disapproval. **RECOMMENDATION:** Review with Japanese cultural consultant and trademark attorney before market entry."
+    },
+    "China": {
+        "political_terms": ["mao", "zedong", "xi", "jinping", "communist", "revolution", "tiananmen"],
+        "sacred_terms": ["buddha", "dalai", "lama", "tibet", "falun", "gong"],
+        "cultural_terms": ["dragon", "emperor", "dynasty", "mandate", "heaven"],
+        "warning": "⚠️ **LEGAL/POLITICAL RISK - CHINA:** The brand name contains politically sensitive or religiously restricted terminology. China's trademark law prohibits marks that are **'detrimental to socialist morals or customs'** or have **'other unhealthy influences.'** Names associated with political figures, Tibetan Buddhism, or Falun Gong face automatic rejection. **MANDATORY:** Engage Chinese IP counsel for formal clearance before China market entry or manufacturing."
+    },
+    "Saudi Arabia": {
+        "islamic_sacred": ["allah", "muhammad", "mohammed", "mecca", "makkah", "medina", "madinah", "quran", "kaaba", "hajj", "prophet"],
+        "royal_terms": ["saud", "salman", "abdullah", "fahd", "faisal", "khalid"],
+        "warning": "⚠️ **CRITICAL LEGAL RISK - SAUDI ARABIA:** Saudi Arabia enforces strict **Islamic law (Sharia)** regarding sacred terminology. Commercial use of names of Allah, the Prophet, or holy cities is prohibited and may result in severe legal consequences including business closure, deportation, or imprisonment. Royal family names are protected by law. **MANDATORY:** Formal legal clearance required before any Saudi market activity."
+    },
+    "Israel": {
+        "religious_terms": ["yahweh", "jehovah", "elohim", "adonai", "torah", "talmud", "zion", "jerusalem", "temple", "sabbath", "kosher"],
+        "warning": "⚠️ **CULTURAL SENSITIVITY - ISRAEL:** The brand name contains Hebrew religious terminology. While Israel has freedom of expression, commercial use of sacred names may face **community opposition** and trademark challenges. **RECOMMENDATION:** Consult with Israeli trademark counsel."
+    },
+    "default": {
+        "warning": None
+    }
+}
+
+def check_sacred_royal_names(brand_name: str, countries: list) -> dict:
+    """Check if brand name contains sacred, royal, or culturally sensitive terms for target markets"""
+    brand_lower = brand_name.lower()
+    warnings = []
+    affected_countries = []
+    risk_score_modifier = 0
+    
+    for country in countries:
+        country_name = country.get('name') if isinstance(country, dict) else str(country)
+        sacred_data = SACRED_ROYAL_NAMES.get(country_name, SACRED_ROYAL_NAMES.get("default", {}))
+        
+        # Check all term categories for this country
+        all_terms = []
+        for key, value in sacred_data.items():
+            if key != "warning" and isinstance(value, list):
+                all_terms.extend(value)
+        
+        # Check if brand name contains any sacred/royal terms
+        matched_terms = []
+        for term in all_terms:
+            # Check for whole word or as part of compound word
+            if term in brand_lower or re.search(rf'\b{re.escape(term)}\b', brand_lower, re.IGNORECASE):
+                matched_terms.append(term)
+        
+        if matched_terms and sacred_data.get("warning"):
+            warnings.append({
+                "country": country_name,
+                "matched_terms": list(set(matched_terms)),
+                "warning": sacred_data["warning"]
+            })
+            affected_countries.append(country_name)
+            risk_score_modifier -= 2.0  # Reduce cultural resonance score
+    
+    return {
+        "has_issues": len(warnings) > 0,
+        "warnings": warnings,
+        "affected_countries": affected_countries,
+        "risk_score_modifier": risk_score_modifier
+    }
+
 # RESEARCHED Country-Specific Market Intelligence
 COUNTRY_MARKET_DATA = {
     "India": {
