@@ -6345,11 +6345,14 @@ class BrandEvaluationTester:
                 print(f"Brand score keys: {list(brand.keys())}")
                 
                 # Check if we have country_competitor_analysis in brand_scores[0]
-                if not brand.get("country_competitor_analysis"):
-                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, f"country_competitor_analysis field missing from brand_scores[0]. Available keys: {list(brand.keys())}")
+                country_analysis = brand.get("country_competitor_analysis")
+                if country_analysis is None:
+                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, f"country_competitor_analysis field is null")
                     return False
                 
-                country_analysis = brand["country_competitor_analysis"]
+                if not country_analysis:
+                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, f"country_competitor_analysis field is empty: {country_analysis}")
+                    return False
                 
                 # Find India analysis
                 india_analysis = None
