@@ -6333,9 +6333,14 @@ class BrandEvaluationTester:
             try:
                 data = response.json()
                 
+                # Debug: Print actual response structure
+                print(f"Actual response keys: {list(data.keys())}")
+                if data.get("brand_scores") and len(data["brand_scores"]) > 0:
+                    print(f"Brand score keys: {list(data['brand_scores'][0].keys())}")
+                
                 # Check if we have country_competitor_analysis
                 if not data.get("country_competitor_analysis"):
-                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, "country_competitor_analysis field missing")
+                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, f"country_competitor_analysis field missing. Available keys: {list(data.keys())}")
                     return False
                 
                 country_analysis = data["country_competitor_analysis"]
