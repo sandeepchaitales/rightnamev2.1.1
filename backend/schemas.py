@@ -406,6 +406,7 @@ class BrandScore(BaseModel):
     mitigation_strategies: Optional[Any] = Field(default=[], description="Risk mitigation strategies")
     domain_analysis: Optional[DomainAnalysis] = None
     multi_domain_availability: Optional[MultiDomainAvailability] = None
+    domain_strategy: Optional[Any] = Field(default=None, description="LLM-enhanced domain strategy analysis")
     social_availability: Optional[SocialAvailability] = None
     visibility_analysis: Optional[VisibilityAnalysis] = None
     cultural_analysis: List[CountryAnalysis] = Field(default=[])
