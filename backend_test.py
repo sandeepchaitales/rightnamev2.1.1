@@ -6461,15 +6461,21 @@ class BrandEvaluationTester:
                 
                 # Debug: Print actual response structure
                 print(f"Actual response keys: {list(data.keys())}")
-                if data.get("brand_scores") and len(data["brand_scores"]) > 0:
-                    print(f"Brand score keys: {list(data['brand_scores'][0].keys())}")
                 
-                # Check if we have cultural_analysis
-                if not data.get("cultural_analysis"):
-                    self.log_test("Sacred Name Detection - RamaRaya Structure", False, f"cultural_analysis field missing. Available keys: {list(data.keys())}")
+                # Check if we have brand_scores
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Sacred Name Detection - RamaRaya Brand Scores", False, "No brand scores returned")
                     return False
                 
-                cultural_analysis = data["cultural_analysis"]
+                brand = data["brand_scores"][0]
+                print(f"Brand score keys: {list(brand.keys())}")
+                
+                # Check if we have cultural_analysis in brand_scores[0]
+                if not brand.get("cultural_analysis"):
+                    self.log_test("Sacred Name Detection - RamaRaya Structure", False, f"cultural_analysis field missing from brand_scores[0]. Available keys: {list(brand.keys())}")
+                    return False
+                
+                cultural_analysis = brand["cultural_analysis"]
                 
                 # Test 1: Check for India sacred name warning
                 india_warning_found = False
