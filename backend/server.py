@@ -5355,20 +5355,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "score_impact": "-1 point max for taken .com",
                     "strategy_note": f"{'Secure primary .com domain' if domain_available else 'Consider .co or branded alternatives'} for {category} presence."
                 },
-                "multi_domain_availability": {
-                    "primary_domain": f"{brand_name.lower()}.com",
-                    "primary_available": domain_available,
-                    "category_domains": [
-                        {"domain": f"{brand_name.lower()}.beauty", "available": True, "status": "Available", "relevance": "HIGH"},
-                        {"domain": f"{brand_name.lower()}.shop", "available": True, "status": "Available", "relevance": "HIGH"}
-                    ],
-                    "country_domains": [
-                        {"domain": f"{brand_name.lower()}.in", "available": True, "status": "Available", "country": "India"},
-                        {"domain": f"{brand_name.lower()}.us", "available": True, "status": "Available", "country": "USA"}
-                    ],
-                    "recommended_domain": f"{brand_name.lower()}.com" if domain_available else f"{brand_name.lower()}.co",
-                    "acquisition_strategy": "Secure primary and category-specific TLDs"
-                },
+                "multi_domain_availability": generate_smart_domain_suggestions(brand_name, category, request.countries, domain_available),
                 "social_availability": {
                     "handle": brand_name.lower(),
                     "twitter": {"available": True, "url": f"https://twitter.com/{brand_name.lower()}"},
@@ -5389,7 +5376,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "trademark_conflicts": (trademark_data or {}).get("trademark_conflicts", []) if isinstance(trademark_data, dict) else [],
                     "company_conflicts": (trademark_data or {}).get("company_conflicts", []) if isinstance(trademark_data, dict) else [],
                     "common_law_conflicts": [],
-                    "legal_precedents": generate_legal_precedents("LOW" if trademark_risk <= 3 else "MEDIUM"),
+                    "legal_precedents": generate_legal_precedents("LOW" if trademark_risk <= 3 else "MEDIUM", request.countries, brand_name, category),
                     "critical_conflicts_count": (trademark_data or {}).get("critical_conflicts_count", 0) if isinstance(trademark_data, dict) else 0,
                     "high_risk_conflicts_count": (trademark_data or {}).get("high_risk_conflicts_count", 0) if isinstance(trademark_data, dict) else 0,
                     "total_conflicts_found": (trademark_data or {}).get("total_conflicts_found", 0) if isinstance(trademark_data, dict) else 0,
@@ -5407,12 +5394,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                         {"Trademark Strength": float(trademark_score)},
                         {"Market Perception": 7.0}
                     ],
-                    "recommendations": [
-                        {"title": "🏢 Domain Strategy", "content": f"Secure {brand_name.lower()}.com immediately" if domain_available else f"Acquire alternative TLDs (.co, .io) and consider {brand_name.lower()}.beauty for sector relevance"},
-                        {"title": "📋 Trademark Filing", "content": f"File trademark application in NICE Class {nice_class.get('class_number', 3)} ({nice_class.get('class_description', category)}). Consider Madrid Protocol for international protection."},
-                        {"title": "📱 Social Presence", "content": f"Reserve @{brand_name.lower()} on Instagram, Twitter, LinkedIn, Facebook, TikTok, and YouTube before public announcement."},
-                        {"title": "🎯 Brand Launch", "content": f"Develop comprehensive brand guidelines before market entry. Invest in initial awareness campaigns for the {category} sector."}
-                    ],
+                    "recommendations": generate_smart_final_recommendations(brand_name, category, request.countries, domain_available, nice_class),
                     "alternative_path": f"If primary strategy faces obstacles, consider: 1) Modified spelling variations, 2) Adding descriptive suffix (e.g., '{brand_name}Labs'), 3) Geographic modifiers for specific markets."
                 },
                 "mckinsey_analysis": {
