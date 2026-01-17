@@ -819,9 +819,17 @@ async def research_country_market(
             intelligence.x_axis_label = competitor_data.get("x_axis_label", intelligence.x_axis_label)
             intelligence.y_axis_label = competitor_data.get("y_axis_label", intelligence.y_axis_label)
             intelligence.key_trends = competitor_data.get("key_trends", [])
-            intelligence.sources_used.append(f"Web Search + LLM Analysis ({positioning} segment)")
             
             # Step 4: LLM white space analysis WITH POSITIONING
+            # Get market_search if not already retrieved (for LLM-FIRST path)
+            try:
+                if 'market_search' not in locals():
+                    market_search = await search_market_intelligence(category, country)
+                else:
+                    market_search = market_search if market_search else ""
+            except:
+                market_search = ""
+            
             white_space_data = await llm_analyze_white_space(
                 category, country, brand_name,
                 json.dumps(competitor_data, indent=2),
