@@ -6335,15 +6335,21 @@ class BrandEvaluationTester:
                 
                 # Debug: Print actual response structure
                 print(f"Actual response keys: {list(data.keys())}")
-                if data.get("brand_scores") and len(data["brand_scores"]) > 0:
-                    print(f"Brand score keys: {list(data['brand_scores'][0].keys())}")
                 
-                # Check if we have country_competitor_analysis
-                if not data.get("country_competitor_analysis"):
-                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, f"country_competitor_analysis field missing. Available keys: {list(data.keys())}")
+                # Check if we have brand_scores
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("LLM-First Competitor Detection - MediQuick Brand Scores", False, "No brand scores returned")
                     return False
                 
-                country_analysis = data["country_competitor_analysis"]
+                brand = data["brand_scores"][0]
+                print(f"Brand score keys: {list(brand.keys())}")
+                
+                # Check if we have country_competitor_analysis in brand_scores[0]
+                if not brand.get("country_competitor_analysis"):
+                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, f"country_competitor_analysis field missing from brand_scores[0]. Available keys: {list(brand.keys())}")
+                    return False
+                
+                country_analysis = brand["country_competitor_analysis"]
                 
                 # Find India analysis
                 india_analysis = None
