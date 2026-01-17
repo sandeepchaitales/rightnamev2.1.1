@@ -795,21 +795,20 @@ Return ONLY valid JSON.
           "has_trademark": "YES/NO/UNKNOWN - Is there a registered TM for this name in target category?",
           "alternatives": "IF VERDICT IS REJECT/NO-GO: Return empty array []. OTHERWISE: Suggest 4 domain alternatives",
           "strategy_note": "IF VERDICT IS REJECT/NO-GO: Return 'N/A - Name rejected'. OTHERWISE: Domain acquisition strategy.",
-          "score_impact": "-1 point max for taken .com. Prioritize category TLDs (.fashion, .tech, .shop) over .com"
+          "score_impact": "-1 point max for taken .com. Prioritize category-appropriate TLDs based on industry"
       },
 
       "multi_domain_availability": {
           "CRITICAL_RULE": "If verdict is REJECT or NO-GO, set recommended_domain and acquisition_strategy to 'N/A - Name rejected'",
+          "TLD_SELECTION_RULES": "Category-appropriate TLDs ONLY: Healthcare/Doctor → .health, .care, .doctor, .clinic | Finance → .finance, .bank, .pay | Tech/SaaS → .tech, .io, .app | Fashion → .fashion, .style | Food → .food, .cafe | Hotel → .hotel, .travel | E-commerce → .shop, .store",
           "category_domains": [
-              {"domain": "brand.shop", "status": "AVAILABLE/TAKEN", "available": true},
-              {"domain": "brand.store", "status": "AVAILABLE/TAKEN", "available": false}
+              {"domain": "brand.[category-tld]", "status": "AVAILABLE/TAKEN", "available": true, "reason": "Category-appropriate TLD"}
           ],
           "country_domains": [
-              {"domain": "brand.in", "status": "AVAILABLE/TAKEN", "available": true},
-              {"domain": "brand.co.in", "status": "AVAILABLE/TAKEN", "available": false}
+              {"domain": "brand.[country-tld]", "status": "AVAILABLE/TAKEN", "available": true, "country": "Target country - MUST include ALL target countries (.in, .us, .th, .ae, etc.)"}
           ],
-          "recommended_domain": "IF VERDICT IS REJECT/NO-GO: Return 'N/A - Name rejected'. OTHERWISE: Follow rules - 1) Fashion/Apparel → .fashion, .style, .shop 2) Single Country → country TLD (.in, .co.uk) 3) E-commerce → .shop, .store 4) Tech/SaaS → .io, .tech, .app",
-          "acquisition_strategy": "IF VERDICT IS REJECT/NO-GO: Return 'N/A - Name rejected'. OTHERWISE: Strategy for acquiring domains."
+          "recommended_domain": "IF VERDICT IS REJECT/NO-GO: Return 'N/A - Name rejected'. OTHERWISE: Follow rules - 1) Healthcare → .health, .care 2) Finance → .finance, .pay 3) Tech → .io, .tech 4) Country-specific → .in, .th, .ae etc. NEVER suggest .beauty/.shop for medical apps!",
+          "acquisition_strategy": "IF VERDICT IS REJECT/NO-GO: Return 'N/A - Name rejected'. OTHERWISE: Strategy including ALL country TLDs."
       },
 
       "social_availability": {
