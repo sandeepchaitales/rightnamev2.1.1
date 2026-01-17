@@ -19,9 +19,15 @@ import json
 import re
 import os
 import httpx
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
+
+# Load environment variables BEFORE importing emergent
+from dotenv import load_dotenv
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +41,7 @@ except ImportError:
     LlmChat = None
 
 EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
+logger.info(f"🔑 Market Intelligence: EMERGENT_KEY present = {bool(EMERGENT_KEY)}, LlmChat available = {LlmChat is not None}")
 
 
 @dataclass
