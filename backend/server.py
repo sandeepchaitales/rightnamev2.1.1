@@ -1707,75 +1707,505 @@ async def llm_first_country_analysis(
 
 
 # ============ LEGAL PRECEDENTS & TRADEMARK INTELLIGENCE ============
-TRADEMARK_LEGAL_PRECEDENTS = {
-    "polaroid_test": {
-        "case_name": "Polaroid Corp. v. Polarad Electronics Corp.",
-        "court": "U.S. Second Circuit Court of Appeals",
-        "year": "1961",
-        "principle": "Established the 8-factor test for trademark likelihood of confusion analysis: (1) strength of mark, (2) similarity of marks, (3) proximity of products, (4) likelihood of bridging the gap, (5) actual confusion, (6) defendant's good faith, (7) quality of defendant's product, (8) buyer sophistication",
-        "relevance": "Multi-factor analysis including similarity of marks, proximity of goods, and buyer sophistication"
-    },
-    "sleekcraft_test": {
-        "case_name": "AMF Inc. v. Sleekcraft Boats",
-        "court": "U.S. Ninth Circuit Court of Appeals",
-        "year": "1979",
-        "principle": "Set standard for likelihood of confusion in similar product markets. Established the 'sound, sight, and meaning' test for determining mark similarity. Examines marks as they would appear to consumers in marketplace conditions",
-        "relevance": "Sound, sight, and meaning test for determining mark similarity - critical for phonetic conflicts"
-    },
-    "dupont_factors": {
-        "case_name": "In re E.I. du Pont de Nemours & Co.",
-        "court": "Court of Customs and Patent Appeals",
-        "year": "1973",
-        "principle": "Created comprehensive 13-factor test for analyzing likelihood of confusion in trademark registration proceedings. Includes similarity of marks, relatedness of goods/services, trade channels, sophistication of purchasers",
-        "relevance": "13-factor test is the gold standard for USPTO trademark examination"
-    },
-    "famous_mark_dilution": {
-        "case_name": "Moseley v. V Secret Catalogue, Inc.",
-        "court": "U.S. Supreme Court",
-        "year": "2003",
-        "principle": "Famous marks receive protection against dilution by blurring or tarnishment even in unrelated product categories. Requires proof of actual dilution for injunctive relief",
-        "relevance": "Cannot use famous marks (Apple, Nike, Coca-Cola) even for unrelated products"
-    },
-    "descriptive_rejection": {
-        "case_name": "In re Steelbuilding.com",
-        "court": "Federal Circuit",
-        "year": "2005",
-        "principle": "Merely descriptive terms cannot be registered without proof of acquired distinctiveness (secondary meaning). Generic terms are never registrable",
-        "relevance": "Coined/invented names like 'RAMARAYA' avoid this risk entirely"
-    }
+# ============ CATEGORY-SPECIFIC TLD MAPPING ============
+# Maps categories to appropriate TLDs (NO generic .beauty/.shop for medical apps)
+
+CATEGORY_TLD_MAP = {
+    # Healthcare / Medical
+    "doctor": [".health", ".care", ".doctor", ".clinic", ".med", ".medical"],
+    "doctor appointment": [".health", ".care", ".doctor", ".clinic", ".med", ".medical"],
+    "healthcare": [".health", ".care", ".clinic", ".med", ".medical"],
+    "hospital": [".health", ".care", ".hospital", ".clinic", ".med"],
+    "pharmacy": [".pharmacy", ".health", ".care", ".med"],
+    "telemedicine": [".health", ".care", ".doctor", ".clinic", ".med"],
+    "medical": [".health", ".care", ".doctor", ".clinic", ".med"],
+    "wellness": [".health", ".care", ".fitness", ".life"],
+    
+    # Finance / Fintech
+    "finance": [".finance", ".money", ".bank", ".capital"],
+    "fintech": [".finance", ".money", ".pay", ".bank"],
+    "payments": [".pay", ".finance", ".money"],
+    "banking": [".bank", ".finance", ".money"],
+    "insurance": [".insurance", ".finance", ".life"],
+    
+    # Technology / SaaS
+    "technology": [".tech", ".io", ".dev", ".digital", ".app"],
+    "saas": [".io", ".app", ".tech", ".cloud", ".software"],
+    "software": [".software", ".io", ".app", ".tech"],
+    "ai": [".ai", ".tech", ".io"],
+    "app": [".app", ".io", ".tech"],
+    
+    # E-commerce / Retail
+    "ecommerce": [".shop", ".store", ".market", ".buy"],
+    "retail": [".shop", ".store", ".market"],
+    "marketplace": [".market", ".shop", ".store"],
+    
+    # Fashion / Beauty
+    "fashion": [".fashion", ".style", ".clothing", ".design"],
+    "beauty": [".beauty", ".style", ".skin", ".glow"],
+    "cosmetics": [".beauty", ".skin", ".glow"],
+    "skincare": [".skin", ".beauty", ".care", ".glow"],
+    "streetwear": [".fashion", ".style", ".clothing", ".wear"],
+    "apparel": [".fashion", ".clothing", ".style", ".wear"],
+    
+    # Food & Beverage
+    "food": [".food", ".kitchen", ".eat", ".menu"],
+    "restaurant": [".restaurant", ".food", ".menu", ".eat"],
+    "cafe": [".cafe", ".coffee", ".food"],
+    "chai": [".cafe", ".tea", ".food"],
+    "beverage": [".drink", ".cafe", ".bar"],
+    
+    # Hospitality / Travel
+    "hotel": [".hotel", ".hotels", ".travel", ".resort", ".stay"],
+    "hotel chain": [".hotel", ".hotels", ".travel", ".resort", ".stay"],
+    "travel": [".travel", ".tours", ".trip", ".vacation"],
+    "tourism": [".travel", ".tours", ".vacation"],
+    
+    # Education
+    "education": [".education", ".academy", ".school", ".learning"],
+    "edtech": [".education", ".academy", ".learning", ".study"],
+    
+    # Real Estate
+    "real estate": [".realty", ".property", ".estate", ".homes"],
+    "property": [".property", ".realty", ".homes"],
+    
+    # Default
+    "default": [".co", ".io", ".com", ".net"]
 }
 
-def generate_legal_precedents(trademark_risk_level: str) -> list:
-    """Generate relevant legal precedents based on risk level"""
-    precedents = []
+# Country code TLDs
+COUNTRY_TLD_MAP = {
+    "india": ".in",
+    "usa": ".us",
+    "united states": ".us",
+    "thailand": ".th",
+    "uae": ".ae",
+    "united arab emirates": ".ae",
+    "uk": ".co.uk",
+    "united kingdom": ".co.uk",
+    "singapore": ".sg",
+    "japan": ".jp",
+    "germany": ".de",
+    "france": ".fr",
+    "china": ".cn",
+    "australia": ".com.au",
+    "canada": ".ca",
+    "brazil": ".com.br",
+    "indonesia": ".id",
+    "malaysia": ".my",
+    "vietnam": ".vn",
+    "philippines": ".ph",
+    "south korea": ".kr",
+    "mexico": ".mx",
+    "spain": ".es",
+    "italy": ".it",
+    "netherlands": ".nl",
+    "saudi arabia": ".sa",
+    "qatar": ".qa",
+    "kuwait": ".kw"
+}
+
+
+def get_category_tlds(category: str) -> list:
+    """Get appropriate TLDs for a category (NO generic .beauty/.shop for medical)"""
+    category_lower = category.lower().strip()
     
-    # Always include Polaroid and Sleekcraft - the foundational cases
-    precedents.append({
-        "case_name": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["case_name"],
-        "court": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["court"],
-        "year": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["year"],
-        "relevance": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["relevance"],
-        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["polaroid_test"]["principle"]
-    })
+    # Check for exact match first
+    if category_lower in CATEGORY_TLD_MAP:
+        return CATEGORY_TLD_MAP[category_lower]
     
-    precedents.append({
-        "case_name": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["case_name"],
-        "court": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["court"],
-        "year": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["year"],
-        "relevance": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["relevance"],
-        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["sleekcraft_test"]["principle"]
-    })
+    # Check for partial match
+    for key, tlds in CATEGORY_TLD_MAP.items():
+        if key in category_lower or category_lower in key:
+            return tlds
     
-    # Add DuPont for all cases
-    precedents.append({
-        "case_name": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["case_name"],
-        "court": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["court"],
-        "year": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["year"],
-        "relevance": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["relevance"],
-        "key_principle": TRADEMARK_LEGAL_PRECEDENTS["dupont_factors"]["principle"]
-    })
+    # Check specific keywords
+    if any(word in category_lower for word in ["doctor", "health", "medical", "clinic", "hospital", "pharmacy", "appointment"]):
+        return CATEGORY_TLD_MAP["healthcare"]
+    if any(word in category_lower for word in ["finance", "pay", "bank", "money", "fintech"]):
+        return CATEGORY_TLD_MAP["finance"]
+    if any(word in category_lower for word in ["tech", "software", "saas", "app", "digital"]):
+        return CATEGORY_TLD_MAP["technology"]
+    if any(word in category_lower for word in ["fashion", "clothing", "apparel", "wear", "style"]):
+        return CATEGORY_TLD_MAP["fashion"]
+    if any(word in category_lower for word in ["hotel", "resort", "travel", "hospitality"]):
+        return CATEGORY_TLD_MAP["hotel"]
+    if any(word in category_lower for word in ["food", "restaurant", "cafe", "kitchen"]):
+        return CATEGORY_TLD_MAP["food"]
+    if any(word in category_lower for word in ["shop", "store", "ecommerce", "retail", "market"]):
+        return CATEGORY_TLD_MAP["ecommerce"]
     
-    return precedents
+    return CATEGORY_TLD_MAP["default"]
+
+
+def get_country_tlds(countries: list) -> list:
+    """Get country-specific TLDs for ALL target countries"""
+    country_tlds = []
+    
+    for country in countries:
+        country_name = country.get('name') if isinstance(country, dict) else str(country)
+        country_lower = country_name.lower().strip()
+        
+        if country_lower in COUNTRY_TLD_MAP:
+            country_tlds.append({
+                "tld": COUNTRY_TLD_MAP[country_lower],
+                "country": country_name.title()
+            })
+    
+    return country_tlds
+
+
+def generate_smart_domain_suggestions(brand_name: str, category: str, countries: list, domain_available: bool = True) -> dict:
+    """
+    Generate contextually appropriate domain suggestions based on:
+    1. Category (healthcare → .health, .care, .doctor - NOT .beauty/.shop)
+    2. ALL target countries (.in, .us, .th, .ae - not just .in/.us)
+    3. Primary .com availability
+    
+    Returns complete domain analysis with category-appropriate and country-specific TLDs.
+    """
+    brand_lower = brand_name.lower()
+    
+    # Get category-appropriate TLDs
+    category_tlds = get_category_tlds(category)
+    
+    # Get country TLDs for ALL target countries
+    country_tld_list = get_country_tlds(countries)
+    
+    # Build category domains
+    category_domains = []
+    for tld in category_tlds[:4]:  # Top 4 category TLDs
+        category_domains.append({
+            "domain": f"{brand_lower}{tld}",
+            "available": True,  # Will be checked by availability module
+            "status": "Available",
+            "relevance": "HIGH",
+            "reason": f"Category-appropriate TLD for {category}"
+        })
+    
+    # Build country domains for ALL target countries
+    country_domains = []
+    for country_tld in country_tld_list:
+        country_domains.append({
+            "domain": f"{brand_lower}{country_tld['tld']}",
+            "available": True,
+            "status": "Available",
+            "country": country_tld["country"],
+            "reason": f"Local market presence in {country_tld['country']}"
+        })
+    
+    # If no country TLDs found, add common ones
+    if not country_domains:
+        country_domains = [
+            {"domain": f"{brand_lower}.in", "available": True, "status": "Available", "country": "India"},
+            {"domain": f"{brand_lower}.us", "available": True, "status": "Available", "country": "USA"}
+        ]
+    
+    # Generate recommended domain
+    if domain_available:
+        recommended = f"{brand_lower}.com"
+        strategy = f"Secure {brand_lower}.com as primary domain, plus country TLDs ({', '.join([c['tld'] for c in country_tld_list])}) and category TLD ({category_tlds[0] if category_tlds else '.co'})"
+    else:
+        # Recommend best category TLD if .com not available
+        recommended = f"{brand_lower}{category_tlds[0]}" if category_tlds else f"{brand_lower}.co"
+        strategy = f"Primary .com taken. Secure {recommended} for {category} positioning, plus ALL country TLDs for local market presence."
+    
+    logging.info(f"🌐 SMART DOMAIN SUGGESTIONS for '{brand_name}' in {category}:")
+    logging.info(f"   Category TLDs: {category_tlds[:4]}")
+    logging.info(f"   Country TLDs: {[c['tld'] for c in country_tld_list]}")
+    
+    return {
+        "primary_domain": f"{brand_lower}.com",
+        "primary_available": domain_available,
+        "category_domains": category_domains,
+        "country_domains": country_domains,
+        "recommended_domain": recommended,
+        "acquisition_strategy": strategy
+    }
+
+
+# ============ LLM-FIRST LEGAL PRECEDENTS ============
+# Dynamically generate country-wise legal precedents using LLM
+
+LLM_LEGAL_PRECEDENTS_PROMPT = """You are a trademark law expert with comprehensive knowledge of intellectual property law across different jurisdictions.
+
+**TASK:** Generate relevant trademark legal precedents for brand registration in the specified countries.
+
+**BRAND:** {brand_name}
+**CATEGORY:** {category}
+**TARGET COUNTRIES:** {countries}
+**TRADEMARK RISK LEVEL:** {risk_level}
+
+**INSTRUCTIONS:**
+For EACH target country, provide 1-2 relevant legal precedents that would apply to trademark registration.
+Focus on cases that are:
+1. Directly relevant to the brand category ({category})
+2. Important for understanding trademark registration requirements
+3. Recent or landmark cases that set current standards
+
+**FORMAT YOUR RESPONSE AS JSON:**
+{{
+    "country_precedents": [
+        {{
+            "country": "Country Name",
+            "country_flag": "🇮🇳",
+            "precedents": [
+                {{
+                    "case_name": "Full case name",
+                    "court": "Court name",
+                    "year": "Year",
+                    "relevance": "Why this case matters for {brand_name} in {category}",
+                    "key_principle": "The main legal principle established"
+                }}
+            ]
+        }}
+    ],
+    "global_principles": [
+        {{
+            "principle": "Key principle name",
+            "description": "Brief description of the principle",
+            "applicability": "How it applies to {brand_name}"
+        }}
+    ]
+}}
+
+**COUNTRY-SPECIFIC GUIDANCE:**
+- **India:** Include IPO cases, Indian Courts trademark decisions, Sec 9/11 TM Act
+- **USA:** Include USPTO TTAB decisions, Polaroid/Sleekcraft factors, Lanham Act cases
+- **Thailand:** Include DIP decisions, Thai trademark law specifics, royal/sacred name restrictions
+- **UAE:** Include Ministry of Economy trademark decisions, GCC trademark framework, Islamic naming restrictions
+- **UK:** Include UKIPO decisions, UK TMA 1994 cases, passing off precedents
+- **Singapore:** Include IPOS decisions, Singapore TM Act cases
+- **Japan:** Include JPO decisions, Japan Trademark Law cases
+
+Return ONLY valid JSON, no explanations."""
+
+
+async def generate_llm_legal_precedents(
+    brand_name: str,
+    category: str,
+    countries: list,
+    risk_level: str = "LOW"
+) -> list:
+    """
+    LLM-FIRST approach to generate country-specific legal precedents.
+    
+    Returns country-wise precedents instead of hardcoded US-only cases.
+    Falls back to basic structure if LLM unavailable.
+    """
+    EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
+    
+    # Format countries for prompt
+    country_names = []
+    for country in countries:
+        name = country.get('name') if isinstance(country, dict) else str(country)
+        country_names.append(name)
+    countries_str = ", ".join(country_names)
+    
+    if not LlmChat or not EMERGENT_KEY:
+        logging.warning("LLM not available for legal precedents - using fallback")
+        return generate_fallback_legal_precedents(country_names, brand_name, category)
+    
+    try:
+        prompt = LLM_LEGAL_PRECEDENTS_PROMPT.format(
+            brand_name=brand_name,
+            category=category,
+            countries=countries_str,
+            risk_level=risk_level
+        )
+        
+        chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
+        user_msg = UserMessage(prompt)
+        
+        response = await asyncio.wait_for(
+            chat.send_message(user_msg),
+            timeout=25
+        )
+        
+        # Parse JSON response
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = re.sub(r'^```json?\s*', '', response_text)
+            response_text = re.sub(r'\s*```$', '', response_text)
+        
+        result = json.loads(response_text)
+        
+        precedents = result.get("country_precedents", [])
+        if precedents:
+            logging.info(f"⚖️ LLM-FIRST LEGAL PRECEDENTS generated for {len(precedents)} countries")
+            return precedents
+        
+    except asyncio.TimeoutError:
+        logging.warning("LLM legal precedents timed out - using fallback")
+    except json.JSONDecodeError as e:
+        logging.warning(f"Failed to parse LLM legal precedents: {e}")
+    except Exception as e:
+        logging.warning(f"LLM legal precedents failed: {e}")
+    
+    return generate_fallback_legal_precedents(country_names, brand_name, category)
+
+
+def generate_fallback_legal_precedents(countries: list, brand_name: str, category: str) -> list:
+    """Fallback legal precedents when LLM is unavailable - country-specific basics"""
+    
+    COUNTRY_PRECEDENT_DATA = {
+        "india": {
+            "flag": "🇮🇳",
+            "precedents": [
+                {
+                    "case_name": "Cadila Healthcare Ltd. v. Cadila Pharmaceuticals Ltd.",
+                    "court": "Supreme Court of India",
+                    "year": "2001",
+                    "relevance": f"Key case for phonetic similarity analysis in trademark disputes - relevant for '{brand_name}'",
+                    "key_principle": "Triple identity test (deceptive similarity): visual, phonetic, and structural comparison of marks"
+                },
+                {
+                    "case_name": "N.R. Dongre v. Whirlpool Corporation",
+                    "court": "Supreme Court of India",
+                    "year": "1996",
+                    "relevance": "Transborder reputation - important for international brand protection",
+                    "key_principle": "Well-known marks deserve protection even without local registration"
+                }
+            ]
+        },
+        "usa": {
+            "flag": "🇺🇸",
+            "precedents": [
+                {
+                    "case_name": "Polaroid Corp. v. Polarad Electronics Corp.",
+                    "court": "U.S. Second Circuit",
+                    "year": "1961",
+                    "relevance": f"Foundational 8-factor test for likelihood of confusion - applies to '{brand_name}' evaluation",
+                    "key_principle": "8-factor test: strength of mark, similarity, proximity of goods, bridging the gap, actual confusion, good faith, quality, buyer sophistication"
+                },
+                {
+                    "case_name": "In re E.I. du Pont de Nemours & Co.",
+                    "court": "Court of Customs and Patent Appeals",
+                    "year": "1973",
+                    "relevance": "USPTO standard for trademark examination",
+                    "key_principle": "13-factor test is the gold standard for USPTO trademark examination"
+                }
+            ]
+        },
+        "thailand": {
+            "flag": "🇹🇭",
+            "precedents": [
+                {
+                    "case_name": "Thailand Trademark Act B.E. 2534 (1991) - Royal Names Provision",
+                    "court": "Department of Intellectual Property (DIP)",
+                    "year": "1991",
+                    "relevance": f"CRITICAL for '{brand_name}' - Royal names (Rama, Chakri) are restricted under lèse-majesté laws",
+                    "key_principle": "Section 8 prohibits marks resembling royal names, national symbols, or marks contrary to public order"
+                },
+                {
+                    "case_name": "Central Intellectual Property and International Trade Court Guidelines",
+                    "court": "CIPITC Thailand",
+                    "year": "2016",
+                    "relevance": "Modern trademark dispute resolution framework",
+                    "key_principle": "Likelihood of confusion assessed through consumer perception and market context"
+                }
+            ]
+        },
+        "uae": {
+            "flag": "🇦🇪",
+            "precedents": [
+                {
+                    "case_name": "UAE Federal Law No. 37 of 1992 - Trademark Law",
+                    "court": "Ministry of Economy",
+                    "year": "1992",
+                    "relevance": f"Foundation for trademark registration in UAE - important for '{brand_name}'",
+                    "key_principle": "Article 3 prohibits marks contrary to public morals, Islamic values, or state symbols"
+                },
+                {
+                    "case_name": "GCC Trademark Law Framework",
+                    "court": "Gulf Cooperation Council",
+                    "year": "2006",
+                    "relevance": "Regional trademark protection across GCC states",
+                    "key_principle": "Unified examination standards across UAE, Saudi Arabia, Kuwait, Qatar, Bahrain, Oman"
+                }
+            ]
+        },
+        "uk": {
+            "flag": "🇬🇧",
+            "precedents": [
+                {
+                    "case_name": "Specsavers International Healthcare Ltd v Asda Stores Ltd",
+                    "court": "UK Court of Appeal",
+                    "year": "2012",
+                    "relevance": "Leading case on trademark infringement and comparative advertising",
+                    "key_principle": "Average consumer test and likelihood of confusion in trademark disputes"
+                }
+            ]
+        },
+        "singapore": {
+            "flag": "🇸🇬",
+            "precedents": [
+                {
+                    "case_name": "Staywell Hospitality Group v Starwood Hotels & Resorts",
+                    "court": "Singapore Court of Appeal",
+                    "year": "2014",
+                    "relevance": "Key case for similarity assessment in ASEAN region",
+                    "key_principle": "Step-by-step approach: marks-similarity → goods-similarity → confusion likelihood"
+                }
+            ]
+        },
+        "japan": {
+            "flag": "🇯🇵",
+            "precedents": [
+                {
+                    "case_name": "Japan Patent Office Examination Guidelines",
+                    "court": "JPO",
+                    "year": "2020",
+                    "relevance": "Current standard for trademark examination",
+                    "key_principle": "Focus on visual, phonetic, and conceptual similarity with consumer confusion test"
+                }
+            ]
+        }
+    }
+    
+    result = []
+    for country in countries:
+        country_lower = country.lower().strip()
+        if country_lower in COUNTRY_PRECEDENT_DATA:
+            data = COUNTRY_PRECEDENT_DATA[country_lower]
+            result.append({
+                "country": country.title(),
+                "country_flag": data["flag"],
+                "precedents": data["precedents"]
+            })
+        else:
+            # Generic fallback for unknown countries
+            result.append({
+                "country": country.title(),
+                "country_flag": "🌍",
+                "precedents": [{
+                    "case_name": f"{country.title()} Trademark Registration Framework",
+                    "court": f"{country.title()} IP Office",
+                    "year": "Current",
+                    "relevance": f"Local trademark registration requirements for '{brand_name}'",
+                    "key_principle": "Standard distinctiveness and non-confusion requirements apply"
+                }]
+            })
+    
+    logging.info(f"⚖️ FALLBACK LEGAL PRECEDENTS generated for {len(result)} countries")
+    return result
+
+
+def generate_legal_precedents(trademark_risk_level: str, countries: list = None, brand_name: str = "", category: str = "") -> list:
+    """
+    Synchronous wrapper for legal precedents generation.
+    For backward compatibility - calls fallback directly.
+    Use generate_llm_legal_precedents() for async LLM-first approach.
+    """
+    if not countries:
+        countries = ["USA", "India"]
+    
+    country_names = []
+    for country in countries:
+        name = country.get('name') if isinstance(country, dict) else str(country)
+        country_names.append(name)
+    
+    return generate_fallback_legal_precedents(country_names, brand_name, category)
 
 
 def generate_rich_executive_summary(
