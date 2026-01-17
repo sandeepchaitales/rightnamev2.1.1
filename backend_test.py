@@ -6303,9 +6303,8 @@ class BrandEvaluationTester:
             "brand_names": ["MediQuick"],
             "category": "Doctor Appointment App",
             "positioning": "Mid-Range",
-            "target_countries": [
-                {"name": "India", "priority": "primary"}
-            ]
+            "market_scope": "Single Country",
+            "countries": ["India"]
         }
         
         try:
