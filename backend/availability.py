@@ -331,3 +331,284 @@ async def check_full_availability(brand_name: str, category: str, countries: Lis
         "domain_availability": domain_results,
         "social_availability": social_results
     }
+
+
+# ============ LLM-ENHANCED DOMAIN ANALYSIS ============
+# Combines WHOIS factual data with LLM intelligence
+
+LLM_DOMAIN_ANALYSIS_PROMPT = """You are a domain strategy expert helping a brand acquire the best digital real estate.
+
+**BRAND:** {brand_name}
+**CATEGORY:** {category}
+**TARGET COUNTRIES:** {countries}
+
+**WHOIS RESULTS (FACTUAL DATA):**
+{whois_data}
+
+**YOUR TASK:**
+Analyze the domain availability data and provide strategic recommendations.
+
+**ANALYZE:**
+1. **Primary .com Status**: Is it available? If taken, assess acquisition difficulty.
+2. **Category TLD Strategy**: Which category-specific TLDs best fit {category}?
+3. **Country TLD Priority**: Rank country TLDs by market importance.
+4. **Acquisition Strategy**: If key domains are taken, what's the best approach?
+5. **Domain Quality Score**: Rate the brand name's domain potential (1-10).
+6. **Risk Assessment**: Typo domains, competitor squatting risks.
+7. **Creative Alternatives**: If .com taken, suggest prefix/suffix alternatives.
+
+**RESPOND IN JSON:**
+{{
+    "domain_quality_score": 8,
+    "domain_quality_reasoning": "Short, memorable, no hyphens, clear spelling",
+    
+    "primary_com_analysis": {{
+        "status": "AVAILABLE/TAKEN",
+        "acquisition_difficulty": "EASY/MODERATE/HARD/VERY_HARD",
+        "estimated_cost": "$10-15/year" or "$5,000-50,000 (premium)" or "Not for sale",
+        "recommendation": "Secure immediately" or "Consider alternatives"
+    }},
+    
+    "category_tld_ranking": [
+        {{"tld": ".health", "fit_score": 9, "reason": "Perfect for healthcare category"}},
+        {{"tld": ".care", "fit_score": 8, "reason": "Conveys caring service"}}
+    ],
+    
+    "country_tld_priority": [
+        {{"tld": ".in", "country": "India", "priority": 1, "reason": "Primary market"}},
+        {{"tld": ".th", "country": "Thailand", "priority": 2, "reason": "Secondary market"}}
+    ],
+    
+    "acquisition_strategy": {{
+        "immediate_actions": ["Register .com if available", "Secure all country TLDs"],
+        "if_com_taken": "Try get{brand_name}.com, {brand_name}app.com, or use .health as primary",
+        "budget_estimate": "$100-500 for standard registration" or "$5,000+ for premium acquisition"
+    }},
+    
+    "risk_assessment": {{
+        "typo_risk": "LOW/MEDIUM/HIGH",
+        "typo_domains_to_secure": ["sethworks.com", "stethwork.com"],
+        "competitor_squatting_risk": "LOW/MEDIUM/HIGH",
+        "trademark_conflict_risk": "LOW/MEDIUM/HIGH"
+    }},
+    
+    "creative_alternatives": [
+        {{"domain": "getstethworks.com", "type": "prefix", "availability_guess": "LIKELY_AVAILABLE"}},
+        {{"domain": "stethworksapp.com", "type": "suffix", "availability_guess": "LIKELY_AVAILABLE"}},
+        {{"domain": "trystethworks.com", "type": "prefix", "availability_guess": "LIKELY_AVAILABLE"}}
+    ],
+    
+    "final_recommendation": "Concise 2-3 sentence domain strategy recommendation"
+}}
+
+Return ONLY valid JSON."""
+
+
+async def llm_analyze_domain_strategy(
+    brand_name: str,
+    category: str,
+    countries: List[str],
+    whois_results: Dict
+) -> Dict:
+    """
+    LLM-ENHANCED DOMAIN ANALYSIS
+    
+    Takes factual WHOIS data and adds intelligent analysis:
+    - Domain quality scoring
+    - Acquisition strategy
+    - Risk assessment
+    - Creative alternatives
+    
+    Falls back to basic analysis if LLM unavailable.
+    """
+    if not LlmChat or not EMERGENT_KEY:
+        logging.warning("🌐 LLM not available for domain analysis - using basic analysis")
+        return generate_basic_domain_analysis(brand_name, category, countries, whois_results)
+    
+    # Format WHOIS data for LLM
+    whois_summary = format_whois_for_llm(whois_results)
+    countries_str = ", ".join(countries) if isinstance(countries, list) else str(countries)
+    
+    try:
+        prompt = LLM_DOMAIN_ANALYSIS_PROMPT.format(
+            brand_name=brand_name,
+            category=category,
+            countries=countries_str,
+            whois_data=whois_summary
+        )
+        
+        chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
+        user_msg = UserMessage(prompt)
+        
+        response = await asyncio.wait_for(
+            chat.send_message(user_msg),
+            timeout=20
+        )
+        
+        # Parse JSON response
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = re.sub(r'^```json?\s*', '', response_text)
+            response_text = re.sub(r'\s*```$', '', response_text)
+        
+        result = json.loads(response_text)
+        
+        logging.info(f"🤖 LLM DOMAIN ANALYSIS for '{brand_name}': Quality={result.get('domain_quality_score')}/10")
+        
+        return {
+            "llm_enhanced": True,
+            "analysis": result
+        }
+        
+    except asyncio.TimeoutError:
+        logging.warning(f"LLM domain analysis timed out for '{brand_name}'")
+    except json.JSONDecodeError as e:
+        logging.warning(f"Failed to parse LLM domain analysis: {e}")
+    except Exception as e:
+        logging.warning(f"LLM domain analysis failed: {e}")
+    
+    return generate_basic_domain_analysis(brand_name, category, countries, whois_results)
+
+
+def format_whois_for_llm(whois_results: Dict) -> str:
+    """Format WHOIS results into readable text for LLM"""
+    lines = []
+    
+    # Available domains
+    available = whois_results.get("available_domains", [])
+    if available:
+        lines.append(f"✅ AVAILABLE DOMAINS ({len(available)}):")
+        for d in available[:6]:
+            lines.append(f"   - {d.get('domain', 'unknown')}")
+    
+    # Taken domains
+    taken = whois_results.get("taken_domains", [])
+    if taken:
+        lines.append(f"❌ TAKEN DOMAINS ({len(taken)}):")
+        for d in taken[:6]:
+            lines.append(f"   - {d.get('domain', 'unknown')}")
+    
+    # Unknown/timeout
+    unknown = whois_results.get("unknown_domains", [])
+    if unknown:
+        lines.append(f"❓ UNKNOWN STATUS ({len(unknown)}):")
+        for d in unknown[:4]:
+            lines.append(f"   - {d.get('domain', 'unknown')} ({d.get('status', 'unknown')})")
+    
+    # Summary
+    summary = whois_results.get("summary", {})
+    lines.append(f"\nSUMMARY: {summary.get('available_count', 0)} available, {summary.get('taken_count', 0)} taken out of {summary.get('total_checked', 0)} checked")
+    
+    return "\n".join(lines)
+
+
+def generate_basic_domain_analysis(
+    brand_name: str,
+    category: str,
+    countries: List[str],
+    whois_results: Dict
+) -> Dict:
+    """Basic domain analysis when LLM is unavailable"""
+    
+    available = whois_results.get("available_domains", [])
+    taken = whois_results.get("taken_domains", [])
+    
+    # Check if .com is available
+    com_available = any(d.get("domain", "").endswith(".com") and d.get("available") for d in available)
+    com_taken = any(d.get("domain", "").endswith(".com") and not d.get("available") for d in taken)
+    
+    # Calculate domain quality score
+    name_lower = brand_name.lower()
+    quality_score = 7  # Base score
+    
+    # Adjust based on name characteristics
+    if len(name_lower) <= 8:
+        quality_score += 1  # Short names are better
+    if len(name_lower) > 15:
+        quality_score -= 1  # Long names are harder
+    if "-" in name_lower or "_" in name_lower:
+        quality_score -= 1  # Hyphens are bad for domains
+    if name_lower.isalpha():
+        quality_score += 0.5  # All letters is cleaner
+    
+    quality_score = min(10, max(1, quality_score))
+    
+    # Build analysis
+    analysis = {
+        "domain_quality_score": round(quality_score, 1),
+        "domain_quality_reasoning": f"{'Short and memorable' if len(name_lower) <= 10 else 'Longer name'}, {'clear spelling' if name_lower.isalpha() else 'contains numbers/special chars'}",
+        
+        "primary_com_analysis": {
+            "status": "AVAILABLE" if com_available else "TAKEN" if com_taken else "UNKNOWN",
+            "acquisition_difficulty": "EASY" if com_available else "MODERATE",
+            "estimated_cost": "$10-15/year" if com_available else "$500-5000 (estimated)",
+            "recommendation": "Secure immediately" if com_available else "Consider category TLD as primary"
+        },
+        
+        "category_tld_ranking": [
+            {"tld": tld, "fit_score": 7, "reason": f"Category-appropriate for {category}"}
+            for tld in whois_results.get("category_tlds_checked", [])[:3]
+        ],
+        
+        "country_tld_priority": [
+            {"tld": tld, "country": countries[i] if i < len(countries) else "Unknown", "priority": i + 1, "reason": "Target market"}
+            for i, tld in enumerate(whois_results.get("country_tlds_checked", [])[:4])
+        ],
+        
+        "acquisition_strategy": {
+            "immediate_actions": [
+                "Register .com" if com_available else f"Register available TLDs",
+                "Secure primary country TLDs"
+            ],
+            "if_com_taken": f"Consider get{name_lower}.com or {name_lower}app.com",
+            "budget_estimate": "$100-300 for standard registration"
+        },
+        
+        "risk_assessment": {
+            "typo_risk": "LOW" if len(name_lower) <= 8 else "MEDIUM",
+            "typo_domains_to_secure": [],
+            "competitor_squatting_risk": "LOW",
+            "trademark_conflict_risk": "UNKNOWN - requires trademark search"
+        },
+        
+        "creative_alternatives": [
+            {"domain": f"get{name_lower}.com", "type": "prefix", "availability_guess": "LIKELY_AVAILABLE"},
+            {"domain": f"{name_lower}app.com", "type": "suffix", "availability_guess": "LIKELY_AVAILABLE"},
+            {"domain": f"try{name_lower}.com", "type": "prefix", "availability_guess": "LIKELY_AVAILABLE"}
+        ],
+        
+        "final_recommendation": f"{'Secure {}.com immediately as primary domain.' if com_available else 'Primary .com is taken. Consider category-specific TLD or creative alternatives.'} Register country TLDs for {', '.join(countries[:2])} market presence.".format(name_lower)
+    }
+    
+    logging.info(f"📊 BASIC DOMAIN ANALYSIS for '{brand_name}': Quality={quality_score}/10, .com={'available' if com_available else 'taken'}")
+    
+    return {
+        "llm_enhanced": False,
+        "analysis": analysis
+    }
+
+
+async def check_full_availability_with_llm(brand_name: str, category: str, countries: List[str]) -> Dict:
+    """
+    ENHANCED availability check - WHOIS + Social + LLM Analysis
+    
+    1. WHOIS Check (factual) - Is domain actually available?
+    2. Social Check (factual) - Are handles available?
+    3. LLM Analysis (intelligent) - Strategy, quality, alternatives
+    """
+    # Run all checks concurrently
+    domain_task = check_multi_domain_availability(brand_name, category, countries)
+    social_task = check_social_availability(brand_name, countries)
+    
+    domain_results, social_results = await asyncio.gather(domain_task, social_task)
+    
+    # Add LLM analysis on top of WHOIS results
+    llm_analysis = await llm_analyze_domain_strategy(
+        brand_name, category, countries, domain_results
+    )
+    
+    return {
+        "domain_availability": domain_results,
+        "social_availability": social_results,
+        "domain_strategy": llm_analysis
+    }
