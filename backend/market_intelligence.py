@@ -775,16 +775,42 @@ async def research_country_market(
     )
     
     try:
-        # Step 1: Web search for competitors WITH POSITIONING
-        competitor_search = await search_competitors(category, country, positioning)
+        # ========== NEW: LLM-FIRST COMPETITOR DETECTION ==========
+        # Step 0: Try LLM-FIRST approach (direct LLM knowledge query)
+        # This is FASTER and more ACCURATE for common categories
+        llm_first_result = await llm_first_get_competitors(category, country, positioning)
         
-        # Step 2: Web search for market intelligence
-        market_search = await search_market_intelligence(category, country)
+        competitor_data = None
         
-        # Step 3: LLM analysis of competitors WITH POSITIONING
-        competitor_data = await llm_analyze_competitors(
-            category, country, brand_name, competitor_search, positioning
-        )
+        if llm_first_result and llm_first_result.get("competitors") and len(llm_first_result["competitors"]) >= 3:
+            # LLM-FIRST SUCCESS! Use direct LLM knowledge
+            logger.info(f"🤖 LLM-FIRST SUCCESS for {category} in {country}: {len(llm_first_result['competitors'])} competitors")
+            competitor_data = {
+                "competitors": llm_first_result["competitors"],
+                "market_size": llm_first_result.get("market_size"),
+                "growth_rate": llm_first_result.get("growth_rate"),
+                "x_axis_label": llm_first_result.get("x_axis_label", f"Price: Budget → Premium"),
+                "y_axis_label": llm_first_result.get("y_axis_label", f"Experience: Basic → Premium"),
+                "key_trends": []
+            }
+            intelligence.sources_used.append(f"LLM-FIRST Knowledge ({llm_first_result.get('confidence', 'MEDIUM')} confidence)")
+        else:
+            # LLM-FIRST didn't return enough data, fallback to web search
+            logger.info(f"📡 LLM-FIRST insufficient for {category} in {country}, trying web search...")
+            
+            # Step 1: Web search for competitors WITH POSITIONING
+            competitor_search = await search_competitors(category, country, positioning)
+            
+            # Step 2: Web search for market intelligence
+            market_search = await search_market_intelligence(category, country)
+            
+            # Step 3: LLM analysis of competitors WITH POSITIONING
+            competitor_data = await llm_analyze_competitors(
+                category, country, brand_name, competitor_search, positioning
+            )
+            
+            if competitor_data:
+                intelligence.sources_used.append(f"Web Search + LLM Analysis ({positioning} segment)")
         
         if competitor_data and competitor_data.get("competitors"):
             intelligence.competitors = competitor_data["competitors"]
