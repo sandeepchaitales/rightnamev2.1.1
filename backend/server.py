@@ -1924,6 +1924,62 @@ def generate_smart_domain_suggestions(brand_name: str, category: str, countries:
     }
 
 
+def generate_smart_final_recommendations(
+    brand_name: str,
+    category: str,
+    countries: list,
+    domain_available: bool,
+    nice_class: dict
+) -> list:
+    """
+    Generate smart, category-aware and country-specific recommendations.
+    NO generic .beauty/.shop for medical apps, etc.
+    """
+    brand_lower = brand_name.lower()
+    
+    # Get category-appropriate TLDs
+    category_tlds = get_category_tlds(category)
+    top_category_tld = category_tlds[0] if category_tlds else ".co"
+    
+    # Get country TLDs
+    country_tld_list = get_country_tlds(countries)
+    country_tld_str = ", ".join([f"{c['tld']} ({c['country']})" for c in country_tld_list[:3]])
+    
+    # Build domain strategy recommendation
+    if domain_available:
+        domain_strategy = f"Secure {brand_lower}.com as primary domain. Also register country TLDs ({country_tld_str}) for local market presence and {brand_lower}{top_category_tld} for {category} sector relevance."
+    else:
+        domain_strategy = f"Primary .com unavailable. Secure {brand_lower}{top_category_tld} for {category} positioning. Register country TLDs ({country_tld_str}) for local markets. Consider get{brand_lower}.com or {brand_lower}app.com alternatives."
+    
+    # Build trademark filing recommendation with country-specific guidance
+    country_names = [c.get('name') if isinstance(c, dict) else str(c) for c in countries]
+    if len(country_names) > 1:
+        trademark_recommendation = f"File trademark in NICE Class {nice_class.get('class_number', 9)} ({nice_class.get('class_description', category)}). For multi-country ({', '.join(country_names[:3])}), consider Madrid Protocol for cost-effective international registration."
+    else:
+        trademark_recommendation = f"File trademark in {country_names[0] if country_names else 'target country'} under NICE Class {nice_class.get('class_number', 9)} ({nice_class.get('class_description', category)}). Process typically 12-18 months."
+    
+    recommendations = [
+        {
+            "title": "🏢 Domain Strategy",
+            "content": domain_strategy
+        },
+        {
+            "title": "📋 Trademark Filing",
+            "content": trademark_recommendation
+        },
+        {
+            "title": "📱 Social Presence",
+            "content": f"Reserve @{brand_lower} on Instagram, Twitter, LinkedIn, Facebook, TikTok, and YouTube before public announcement. Consistency across platforms builds brand recognition."
+        },
+        {
+            "title": "🎯 Brand Launch",
+            "content": f"Develop comprehensive brand guidelines for {category} positioning before market entry in {', '.join(country_names[:2])}. Localize messaging for each target market."
+        }
+    ]
+    
+    return recommendations
+
+
 # ============ LLM-FIRST LEGAL PRECEDENTS ============
 # Dynamically generate country-wise legal precedents using LLM
 
