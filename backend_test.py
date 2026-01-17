@@ -6580,6 +6580,240 @@ class BrandEvaluationTester:
         
         return self.print_summary()
 
+    def test_llm_enhanced_domain_strategy(self):
+        """Test NEW LLM-Enhanced Domain Strategy feature for StethWorks Doctor Appointment App"""
+        payload = {
+            "brand_names": ["StethWorks"],
+            "category": "Doctor Appointment App",
+            "positioning": "Mid-Range",
+            "market_scope": "Multi-Country",
+            "countries": ["India", "USA", "Thailand", "UAE"]
+        }
+        
+        try:
+            print(f"\n🌐 Testing NEW LLM-Enhanced Domain Strategy feature...")
+            print(f"Test Case: StethWorks Doctor Appointment App")
+            print(f"Countries: India, USA, Thailand, UAE")
+            print(f"Expected: domain_strategy field with LLM analysis")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120 seconds as specified
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("LLM-Enhanced Domain Strategy - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                # Check if we have brand_scores
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("LLM-Enhanced Domain Strategy - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # Test 1: Check domain_strategy field exists
+                if "domain_strategy" not in brand:
+                    self.log_test("LLM-Enhanced Domain Strategy - Field Missing", False, "domain_strategy field missing from response")
+                    return False
+                
+                domain_strategy = brand["domain_strategy"]
+                if not domain_strategy:
+                    self.log_test("LLM-Enhanced Domain Strategy - Data Missing", False, "domain_strategy is null/empty")
+                    return False
+                
+                print(f"✅ Found domain_strategy field")
+                
+                # Test 2: Check llm_enhanced boolean
+                if "llm_enhanced" not in domain_strategy:
+                    self.log_test("LLM-Enhanced Domain Strategy - llm_enhanced Missing", False, "llm_enhanced field missing")
+                    return False
+                
+                llm_enhanced = domain_strategy.get("llm_enhanced")
+                if not isinstance(llm_enhanced, bool):
+                    self.log_test("LLM-Enhanced Domain Strategy - llm_enhanced Type", False, f"llm_enhanced should be boolean, got {type(llm_enhanced)}")
+                    return False
+                
+                print(f"✅ llm_enhanced: {llm_enhanced}")
+                
+                # Test 3: Check analysis object
+                if "analysis" not in domain_strategy:
+                    self.log_test("LLM-Enhanced Domain Strategy - Analysis Missing", False, "analysis object missing")
+                    return False
+                
+                analysis = domain_strategy["analysis"]
+                if not isinstance(analysis, dict):
+                    self.log_test("LLM-Enhanced Domain Strategy - Analysis Type", False, f"analysis should be object, got {type(analysis)}")
+                    return False
+                
+                # Test 4: Check domain_quality_score (1-10)
+                if "domain_quality_score" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Quality Score Missing", False, "domain_quality_score missing")
+                    return False
+                
+                quality_score = analysis.get("domain_quality_score")
+                if not isinstance(quality_score, (int, float)) or not (1 <= quality_score <= 10):
+                    self.log_test("LLM-Enhanced Domain Strategy - Quality Score Range", False, f"domain_quality_score should be 1-10, got {quality_score}")
+                    return False
+                
+                print(f"✅ domain_quality_score: {quality_score}/10")
+                
+                # Test 5: Check domain_quality_reasoning
+                if "domain_quality_reasoning" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Quality Reasoning Missing", False, "domain_quality_reasoning missing")
+                    return False
+                
+                quality_reasoning = analysis.get("domain_quality_reasoning", "")
+                if not isinstance(quality_reasoning, str) or len(quality_reasoning) < 20:
+                    self.log_test("LLM-Enhanced Domain Strategy - Quality Reasoning Content", False, f"domain_quality_reasoning should be substantial string, got {len(quality_reasoning)} chars")
+                    return False
+                
+                print(f"✅ domain_quality_reasoning: {len(quality_reasoning)} characters")
+                
+                # Test 6: Check primary_com_analysis
+                if "primary_com_analysis" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - COM Analysis Missing", False, "primary_com_analysis missing")
+                    return False
+                
+                com_analysis = analysis["primary_com_analysis"]
+                required_com_fields = ["status", "acquisition_difficulty", "estimated_cost", "recommendation"]
+                missing_com_fields = [field for field in required_com_fields if field not in com_analysis]
+                
+                if missing_com_fields:
+                    self.log_test("LLM-Enhanced Domain Strategy - COM Analysis Fields", False, f"Missing COM analysis fields: {missing_com_fields}")
+                    return False
+                
+                print(f"✅ primary_com_analysis: {com_analysis.get('status', 'N/A')}")
+                
+                # Test 7: Check category_tld_ranking
+                if "category_tld_ranking" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Category TLD Missing", False, "category_tld_ranking missing")
+                    return False
+                
+                category_tlds = analysis["category_tld_ranking"]
+                if not isinstance(category_tlds, list) or len(category_tlds) == 0:
+                    self.log_test("LLM-Enhanced Domain Strategy - Category TLD Array", False, f"category_tld_ranking should be non-empty array, got {type(category_tlds)}")
+                    return False
+                
+                # Check for healthcare-related TLDs
+                tld_names = [tld.get("tld", "") for tld in category_tlds if isinstance(tld, dict)]
+                expected_healthcare_tlds = [".health", ".care", ".doctor", ".clinic"]
+                found_healthcare_tlds = [tld for tld in expected_healthcare_tlds if any(tld in name for name in tld_names)]
+                
+                if len(found_healthcare_tlds) < 2:  # Should have at least 2 healthcare TLDs
+                    print(f"⚠️  Warning: Expected more healthcare TLDs, found: {found_healthcare_tlds}")
+                
+                print(f"✅ category_tld_ranking: {len(category_tlds)} TLDs")
+                
+                # Test 8: Check country_tld_priority (ALL 4 countries)
+                if "country_tld_priority" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Country TLD Missing", False, "country_tld_priority missing")
+                    return False
+                
+                country_tlds = analysis["country_tld_priority"]
+                if not isinstance(country_tlds, list):
+                    self.log_test("LLM-Enhanced Domain Strategy - Country TLD Array", False, f"country_tld_priority should be array, got {type(country_tlds)}")
+                    return False
+                
+                # Check for ALL 4 expected country TLDs
+                country_tld_names = [tld.get("tld", "") for tld in country_tlds if isinstance(tld, dict)]
+                expected_country_tlds = [".in", ".us", ".th", ".ae"]
+                found_country_tlds = [tld for tld in expected_country_tlds if any(tld in name for name in country_tld_names)]
+                
+                if len(found_country_tlds) < 4:
+                    self.log_test("LLM-Enhanced Domain Strategy - All Country TLDs", False, f"Expected all 4 country TLDs {expected_country_tlds}, found: {found_country_tlds}")
+                    return False
+                
+                print(f"✅ country_tld_priority: All 4 countries (.in, .us, .th, .ae)")
+                
+                # Test 9: Check acquisition_strategy
+                if "acquisition_strategy" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Acquisition Strategy Missing", False, "acquisition_strategy missing")
+                    return False
+                
+                acq_strategy = analysis["acquisition_strategy"]
+                required_acq_fields = ["immediate_actions", "if_com_taken", "budget_estimate"]
+                missing_acq_fields = [field for field in required_acq_fields if field not in acq_strategy]
+                
+                if missing_acq_fields:
+                    self.log_test("LLM-Enhanced Domain Strategy - Acquisition Strategy Fields", False, f"Missing acquisition strategy fields: {missing_acq_fields}")
+                    return False
+                
+                print(f"✅ acquisition_strategy: Complete")
+                
+                # Test 10: Check risk_assessment
+                if "risk_assessment" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Risk Assessment Missing", False, "risk_assessment missing")
+                    return False
+                
+                risk_assessment = analysis["risk_assessment"]
+                required_risk_fields = ["typo_risk", "competitor_squatting_risk"]
+                missing_risk_fields = [field for field in required_risk_fields if field not in risk_assessment]
+                
+                if missing_risk_fields:
+                    self.log_test("LLM-Enhanced Domain Strategy - Risk Assessment Fields", False, f"Missing risk assessment fields: {missing_risk_fields}")
+                    return False
+                
+                print(f"✅ risk_assessment: Complete")
+                
+                # Test 11: Check creative_alternatives
+                if "creative_alternatives" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Creative Alternatives Missing", False, "creative_alternatives missing")
+                    return False
+                
+                alternatives = analysis["creative_alternatives"]
+                if not isinstance(alternatives, list):
+                    self.log_test("LLM-Enhanced Domain Strategy - Creative Alternatives Array", False, f"creative_alternatives should be array, got {type(alternatives)}")
+                    return False
+                
+                print(f"✅ creative_alternatives: {len(alternatives)} suggestions")
+                
+                # Test 12: Check final_recommendation
+                if "final_recommendation" not in analysis:
+                    self.log_test("LLM-Enhanced Domain Strategy - Final Recommendation Missing", False, "final_recommendation missing")
+                    return False
+                
+                final_rec = analysis.get("final_recommendation", "")
+                if not isinstance(final_rec, str) or len(final_rec) < 50:
+                    self.log_test("LLM-Enhanced Domain Strategy - Final Recommendation Content", False, f"final_recommendation should be substantial string, got {len(final_rec)} chars")
+                    return False
+                
+                print(f"✅ final_recommendation: {len(final_rec)} characters")
+                
+                # Test 13: Check response time (should be within 120 seconds)
+                if response_time > 120:
+                    self.log_test("LLM-Enhanced Domain Strategy - Response Time", False, f"Response time {response_time:.2f}s exceeded 120s limit")
+                    return False
+                
+                print(f"✅ Response time: {response_time:.2f}s (within 120s limit)")
+                
+                self.log_test("LLM-Enhanced Domain Strategy - Complete Test", True, 
+                            f"All domain strategy checks passed. LLM Enhanced: {llm_enhanced}, Quality Score: {quality_score}/10, Response Time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("LLM-Enhanced Domain Strategy - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("LLM-Enhanced Domain Strategy - Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("LLM-Enhanced Domain Strategy - Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
