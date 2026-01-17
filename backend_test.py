@@ -7201,11 +7201,17 @@ def main():
 
 if __name__ == "__main__":
     # Check if specific tests are requested
-    if len(sys.argv) > 1 and sys.argv[1] == "specific":
-        # Run only the specific tests requested in the review
-        tester = BrandEvaluationTester()
-        success = tester.run_specific_tests()
-        sys.exit(0 if success else 1)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "specific":
+            # Run only the specific tests requested in the review
+            tester = BrandEvaluationTester()
+            success = tester.run_specific_tests()
+            sys.exit(0 if success else 1)
+        elif sys.argv[1] == "tld":
+            # Run only the TLD & Legal Precedents test
+            tester = BrandEvaluationTester()
+            success = tester.run_tld_legal_precedents_test_only()
+            sys.exit(0 if success else 1)
     else:
         # Run Admin Panel API tests by default (as requested in review)
         sys.exit(main())
