@@ -1783,26 +1783,56 @@ const TrademarkResearchSection = ({ trademarkResearch, registrationTimeline, mit
                 </PrintCard>
             )}
             
-            {/* Legal Precedents */}
+            {/* Legal Precedents - Updated for Country-Wise Structure */}
             {trademarkResearch.legal_precedents && trademarkResearch.legal_precedents.length > 0 && (
                 <PrintCard>
                     <div className="bg-white rounded-2xl p-6 border border-violet-200">
                         <SubSectionHeader icon={Scale} title="Relevant Legal Precedents" color="violet" />
                         
-                        <div className="space-y-3">
-                            {trademarkResearch.legal_precedents.map((precedent, i) => (
-                                <div key={i} className="p-4 bg-violet-50 rounded-xl border border-violet-100">
-                                    <div className="font-bold text-violet-800 mb-1">{precedent.case_name}</div>
-                                    <div className="text-xs text-slate-600 mb-2">
-                                        {precedent.court && <span>{precedent.court}</span>}
-                                        {precedent.year && <span> • {precedent.year}</span>}
+                        <div className="space-y-4">
+                            {trademarkResearch.legal_precedents.map((countryPrecedent, i) => (
+                                <div key={i} className="border border-violet-100 rounded-xl overflow-hidden">
+                                    {/* Country Header */}
+                                    <div className="bg-violet-100 px-4 py-2 flex items-center gap-2">
+                                        <span className="text-xl">{countryPrecedent.country_flag || '🌍'}</span>
+                                        <span className="font-bold text-violet-800">{countryPrecedent.country || 'Unknown'}</span>
                                     </div>
-                                    {precedent.relevance && (
-                                        <p className="text-sm text-slate-700"><MarkdownText text={precedent.relevance} /></p>
-                                    )}
-                                    {precedent.key_principle && (
-                                        <p className="text-xs text-violet-600 mt-2 italic">Key Principle: <MarkdownText text={precedent.key_principle} /></p>
-                                    )}
+                                    
+                                    {/* Precedents for this country */}
+                                    <div className="p-4 space-y-3">
+                                        {countryPrecedent.precedents && countryPrecedent.precedents.map((precedent, j) => (
+                                            <div key={j} className="p-3 bg-violet-50 rounded-lg border border-violet-100">
+                                                <div className="font-bold text-violet-800 mb-1">{precedent.case_name}</div>
+                                                <div className="text-xs text-slate-600 mb-2">
+                                                    {precedent.court && <span>{precedent.court}</span>}
+                                                    {precedent.year && <span> • {precedent.year}</span>}
+                                                </div>
+                                                {precedent.relevance && (
+                                                    <p className="text-sm text-slate-700"><MarkdownText text={precedent.relevance} /></p>
+                                                )}
+                                                {precedent.key_principle && (
+                                                    <p className="text-xs text-violet-600 mt-2 italic">Key Principle: <MarkdownText text={precedent.key_principle} /></p>
+                                                )}
+                                            </div>
+                                        ))}
+                                        
+                                        {/* Fallback for old format (flat precedent objects) */}
+                                        {!countryPrecedent.precedents && countryPrecedent.case_name && (
+                                            <div className="p-3 bg-violet-50 rounded-lg border border-violet-100">
+                                                <div className="font-bold text-violet-800 mb-1">{countryPrecedent.case_name}</div>
+                                                <div className="text-xs text-slate-600 mb-2">
+                                                    {countryPrecedent.court && <span>{countryPrecedent.court}</span>}
+                                                    {countryPrecedent.year && <span> • {countryPrecedent.year}</span>}
+                                                </div>
+                                                {countryPrecedent.relevance && (
+                                                    <p className="text-sm text-slate-700"><MarkdownText text={countryPrecedent.relevance} /></p>
+                                                )}
+                                                {countryPrecedent.key_principle && (
+                                                    <p className="text-xs text-violet-600 mt-2 italic">Key Principle: <MarkdownText text={countryPrecedent.key_principle} /></p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
