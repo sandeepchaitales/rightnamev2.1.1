@@ -6453,9 +6453,14 @@ class BrandEvaluationTester:
             try:
                 data = response.json()
                 
+                # Debug: Print actual response structure
+                print(f"Actual response keys: {list(data.keys())}")
+                if data.get("brand_scores") and len(data["brand_scores"]) > 0:
+                    print(f"Brand score keys: {list(data['brand_scores'][0].keys())}")
+                
                 # Check if we have cultural_analysis
                 if not data.get("cultural_analysis"):
-                    self.log_test("Sacred Name Detection - RamaRaya Structure", False, "cultural_analysis field missing")
+                    self.log_test("Sacred Name Detection - RamaRaya Structure", False, f"cultural_analysis field missing. Available keys: {list(data.keys())}")
                     return False
                 
                 cultural_analysis = data["cultural_analysis"]
