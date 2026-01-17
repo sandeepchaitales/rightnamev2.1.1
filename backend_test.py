@@ -6079,10 +6079,8 @@ class BrandEvaluationTester:
             "brand_names": ["RamaRaya"],
             "category": "Hotel Chain",
             "positioning": "Mid-Range",
-            "target_countries": [
-                {"name": "India", "priority": "primary"},
-                {"name": "Thailand", "priority": "secondary"}
-            ]
+            "market_scope": "Multi-Country",
+            "countries": ["India", "Thailand"]
         }
         
         try:
