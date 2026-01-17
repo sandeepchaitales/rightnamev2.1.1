@@ -1513,6 +1513,91 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
     return result
 
 
+def merge_cultural_analysis_with_sacred_names(
+    market_intel_cultural: list,
+    local_cultural_analysis: list,
+    brand_name: str,
+    countries: list
+) -> list:
+    """
+    CRITICAL: Merge market intelligence cultural data with local sacred name detection.
+    
+    The issue: market_intelligence fallback doesn't include sacred name detection.
+    The fix: Always run local generate_cultural_analysis (which has sacred name detection)
+             and merge/enhance with market_intelligence data if available.
+    
+    Priority: Local analysis (with sacred names) takes precedence for risk detection.
+    """
+    if not market_intel_cultural:
+        # No market intelligence data, use local analysis directly
+        logging.info(f"🔤 Using LOCAL cultural analysis with sacred name detection for '{brand_name}'")
+        return local_cultural_analysis
+    
+    if not local_cultural_analysis:
+        logging.warning(f"⚠️ No local cultural analysis - sacred name detection may be missing for '{brand_name}'")
+        return market_intel_cultural
+    
+    # Create lookup for local analysis by country
+    local_by_country = {}
+    for item in local_cultural_analysis:
+        country = item.get("country", "").lower()
+        local_by_country[country] = item
+    
+    # Merge: Use market_intel as base, enhance with local sacred name detection
+    merged = []
+    for mi_item in market_intel_cultural:
+        country = mi_item.get("country", "Unknown")
+        country_lower = country.lower()
+        
+        local_item = local_by_country.get(country_lower, {})
+        
+        # Get linguistic analysis from local (has sacred name detection)
+        local_notes = local_item.get("cultural_notes", "")
+        local_linguistic = local_item.get("linguistic_analysis", {})
+        local_linguistic_check = local_item.get("linguistic_check", "")
+        
+        # Check if local analysis detected risks
+        has_local_risks = (
+            local_linguistic.get("risk_count", 0) > 0 or
+            "CRITICAL" in local_linguistic.get("overall_resonance", "") or
+            "SACRED" in local_notes.upper() or
+            "ROYAL" in local_notes.upper() or
+            "⚠️" in local_linguistic_check
+        )
+        
+        merged_item = mi_item.copy()
+        
+        if has_local_risks:
+            # Local detected sacred/cultural risks - use local analysis
+            logging.warning(f"⚠️ SACRED NAME RISK DETECTED for '{brand_name}' in {country} - using local analysis")
+            merged_item["cultural_notes"] = local_notes
+            merged_item["linguistic_check"] = local_linguistic_check
+            merged_item["linguistic_analysis"] = local_linguistic
+            # Reduce score if risks detected
+            if local_linguistic.get("overall_resonance") == "CRITICAL":
+                merged_item["cultural_resonance_score"] = min(
+                    merged_item.get("cultural_resonance_score", 7.0),
+                    local_item.get("cultural_resonance_score", 5.0)
+                )
+        else:
+            # No local risks - can use market_intel data
+            # But still enhance with local linguistic analysis
+            if local_linguistic and not merged_item.get("linguistic_analysis"):
+                merged_item["linguistic_analysis"] = local_linguistic
+        
+        merged.append(merged_item)
+    
+    # Add any countries in local but not in market_intel
+    mi_countries = {item.get("country", "").lower() for item in market_intel_cultural}
+    for local_item in local_cultural_analysis:
+        country_lower = local_item.get("country", "").lower()
+        if country_lower not in mi_countries:
+            merged.append(local_item)
+            logging.info(f"📊 Added local cultural analysis for {local_item.get('country')} (not in market_intel)")
+    
+    return merged
+
+
 # ============ LLM-FIRST RESEARCH INTEGRATION ============
 
 async def llm_first_country_analysis(
