@@ -6297,6 +6297,267 @@ class BrandEvaluationTester:
             self.log_test("RamaRaya Smoke Test - Exception", False, str(e))
             return False
 
+    def test_llm_first_competitor_detection_mediquick(self):
+        """Test Case 1: Doctor Appointment App (LLM-First Test) - MediQuick should show healthcare competitors"""
+        payload = {
+            "brand_names": ["MediQuick"],
+            "category": "Doctor Appointment App",
+            "positioning": "Mid-Range",
+            "target_countries": [
+                {"name": "India", "priority": "primary"}
+            ]
+        }
+        
+        try:
+            print(f"\n🤖 Testing LLM-FIRST COMPETITOR DETECTION with MediQuick...")
+            print(f"Expected: Healthcare app competitors (Practo, 1mg, Lybrate, Apollo 24/7, MediBuddy, Tata Health)")
+            print(f"NOT expected: Generic tech companies (Zoho, Infosys, TCS)")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120-second timeout as specified
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("LLM-First Competitor Detection - MediQuick HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                # Check if we have country_competitor_analysis
+                if not data.get("country_competitor_analysis"):
+                    self.log_test("LLM-First Competitor Detection - MediQuick Structure", False, "country_competitor_analysis field missing")
+                    return False
+                
+                country_analysis = data["country_competitor_analysis"]
+                
+                # Find India analysis
+                india_analysis = None
+                for country_data in country_analysis:
+                    if country_data.get("country", "").lower() == "india":
+                        india_analysis = country_data
+                        break
+                
+                if not india_analysis:
+                    self.log_test("LLM-First Competitor Detection - MediQuick India", False, "India analysis not found in country_competitor_analysis")
+                    return False
+                
+                # Check competitors list
+                competitors = india_analysis.get("competitors", [])
+                if not competitors:
+                    self.log_test("LLM-First Competitor Detection - MediQuick Competitors", False, "No competitors found for India")
+                    return False
+                
+                # Extract competitor names
+                competitor_names = []
+                for comp in competitors:
+                    if isinstance(comp, dict):
+                        competitor_names.append(comp.get("name", "").lower())
+                    elif isinstance(comp, str):
+                        competitor_names.append(comp.lower())
+                
+                print(f"Found competitors: {competitor_names}")
+                
+                # Test 1: Check for expected healthcare competitors
+                expected_healthcare = ["practo", "1mg", "lybrate", "apollo", "medibuddy", "tata health"]
+                found_healthcare = []
+                for expected in expected_healthcare:
+                    for competitor in competitor_names:
+                        if expected in competitor:
+                            found_healthcare.append(expected)
+                            break
+                
+                if len(found_healthcare) < 2:  # Should find at least 2 healthcare competitors
+                    self.log_test("LLM-First Competitor Detection - MediQuick Healthcare", False, 
+                                f"Expected healthcare competitors not found. Found: {found_healthcare}, All competitors: {competitor_names}")
+                    return False
+                
+                # Test 2: Check that generic tech companies are NOT present
+                generic_tech = ["zoho", "infosys", "tcs", "wipro", "hcl"]
+                found_generic = []
+                for generic in generic_tech:
+                    for competitor in competitor_names:
+                        if generic in competitor:
+                            found_generic.append(generic)
+                
+                if found_generic:
+                    self.log_test("LLM-First Competitor Detection - MediQuick Generic Tech", False, 
+                                f"Found generic tech companies (should not be present): {found_generic}")
+                    return False
+                
+                # Test 3: Check backend logs for LLM-FIRST messages (we can't access logs directly, but check response structure)
+                response_text = json.dumps(data).lower()
+                
+                self.log_test("LLM-First Competitor Detection - MediQuick", True, 
+                            f"Healthcare competitors found: {found_healthcare}, No generic tech companies, Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("LLM-First Competitor Detection - MediQuick JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("LLM-First Competitor Detection - MediQuick Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("LLM-First Competitor Detection - MediQuick Exception", False, str(e))
+            return False
+
+    def test_sacred_name_detection_ramaraya(self):
+        """Test Case 2: RamaRaya Sacred Name (Sacred Name Detection Fix) - Should detect sacred/royal name warnings"""
+        payload = {
+            "brand_names": ["RamaRaya"],
+            "category": "Hotel Chain",
+            "positioning": "Mid-Range",
+            "target_countries": [
+                {"name": "India", "priority": "primary"},
+                {"name": "Thailand", "priority": "secondary"}
+            ]
+        }
+        
+        try:
+            print(f"\n⚠️ Testing SACRED NAME DETECTION with RamaRaya...")
+            print(f"Expected: Sacred name warnings for India (Hindu deity Rama) and Thailand (Royal name - lèse-majesté risk)")
+            print(f"Expected: CRITICAL or HIGH resonance warnings")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120-second timeout as specified
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Sacred Name Detection - RamaRaya HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                # Check if we have cultural_analysis
+                if not data.get("cultural_analysis"):
+                    self.log_test("Sacred Name Detection - RamaRaya Structure", False, "cultural_analysis field missing")
+                    return False
+                
+                cultural_analysis = data["cultural_analysis"]
+                
+                # Test 1: Check for India sacred name warning
+                india_warning_found = False
+                thailand_warning_found = False
+                
+                # Check if cultural_analysis is a string or object
+                if isinstance(cultural_analysis, str):
+                    cultural_text = cultural_analysis.lower()
+                    
+                    # Check for India Hindu deity warning
+                    if any(term in cultural_text for term in ["rama", "hindu", "deity", "lord rama"]) and "india" in cultural_text:
+                        india_warning_found = True
+                    
+                    # Check for Thailand royal warning
+                    if any(term in cultural_text for term in ["rama", "royal", "king", "lèse-majesté", "thailand"]) and "thailand" in cultural_text:
+                        thailand_warning_found = True
+                
+                elif isinstance(cultural_analysis, dict):
+                    # Check nested structure
+                    for key, value in cultural_analysis.items():
+                        if isinstance(value, str):
+                            value_lower = value.lower()
+                            if "india" in key.lower() or "india" in value_lower:
+                                if any(term in value_lower for term in ["rama", "hindu", "deity", "lord rama"]):
+                                    india_warning_found = True
+                            if "thailand" in key.lower() or "thailand" in value_lower:
+                                if any(term in value_lower for term in ["rama", "royal", "king", "lèse-majesté"]):
+                                    thailand_warning_found = True
+                
+                elif isinstance(cultural_analysis, list):
+                    # Check list of cultural items
+                    for item in cultural_analysis:
+                        if isinstance(item, dict):
+                            item_text = json.dumps(item).lower()
+                            if "india" in item_text and any(term in item_text for term in ["rama", "hindu", "deity"]):
+                                india_warning_found = True
+                            if "thailand" in item_text and any(term in item_text for term in ["rama", "royal", "king", "lèse-majesté"]):
+                                thailand_warning_found = True
+                
+                # Test 2: Check for CRITICAL or HIGH resonance warnings
+                response_text = json.dumps(data).lower()
+                critical_high_found = any(term in response_text for term in ["critical", "high resonance", "high risk"])
+                
+                # Test 3: Verify both countries have warnings
+                warnings_found = []
+                if india_warning_found:
+                    warnings_found.append("India (Hindu deity)")
+                if thailand_warning_found:
+                    warnings_found.append("Thailand (Royal name)")
+                
+                if len(warnings_found) < 2:
+                    missing_warnings = []
+                    if not india_warning_found:
+                        missing_warnings.append("India (Hindu deity Rama)")
+                    if not thailand_warning_found:
+                        missing_warnings.append("Thailand (Royal name Rama)")
+                    
+                    self.log_test("Sacred Name Detection - RamaRaya Warnings", False, 
+                                f"Missing sacred name warnings for: {missing_warnings}. Found: {warnings_found}")
+                    return False
+                
+                if not critical_high_found:
+                    self.log_test("Sacred Name Detection - RamaRaya Severity", False, 
+                                "No CRITICAL or HIGH resonance warnings found in response")
+                    return False
+                
+                self.log_test("Sacred Name Detection - RamaRaya", True, 
+                            f"Sacred name warnings found for: {warnings_found}, Critical/High severity detected, Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Sacred Name Detection - RamaRaya JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Sacred Name Detection - RamaRaya Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Sacred Name Detection - RamaRaya Exception", False, str(e))
+            return False
+
+    def run_specific_tests(self):
+        """Run only the specific tests requested in the review"""
+        print("🎯 Running SPECIFIC TESTS for LLM-FIRST COMPETITOR DETECTION and SACRED NAME DETECTION")
+        print("="*80)
+        
+        # Test 1: Basic API Health
+        if not self.test_api_health():
+            print("❌ API Health check failed - stopping tests")
+            return False
+        
+        # Test 2: LLM-First Competitor Detection
+        print("\n🤖 Testing LLM-FIRST COMPETITOR DETECTION...")
+        self.test_llm_first_competitor_detection_mediquick()
+        
+        # Test 3: Sacred Name Detection
+        print("\n⚠️ Testing SACRED NAME DETECTION...")
+        self.test_sacred_name_detection_ramaraya()
+        
+        return self.print_summary()
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
