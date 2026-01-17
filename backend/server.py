@@ -5412,6 +5412,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "strategy_note": f"{'Secure primary .com domain' if domain_available else 'Consider .co or branded alternatives'} for {category} presence."
                 },
                 "multi_domain_availability": generate_smart_domain_suggestions(brand_name, category, request.countries, domain_available),
+                "domain_strategy": generate_fallback_domain_strategy(brand_name, category, request.countries, domain_available),
                 "social_availability": {
                     "handle": brand_name.lower(),
                     "twitter": {"available": True, "url": f"https://twitter.com/{brand_name.lower()}"},
