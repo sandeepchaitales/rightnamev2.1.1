@@ -6964,6 +6964,184 @@ class BrandEvaluationTester:
             self.log_test("LLM-First Market Intelligence - Exception", False, str(e))
             return False
 
+    def test_tld_suggestions_and_legal_precedents_fix(self):
+        """Test NEW TLD suggestions and Legal Precedents fixes for StethWorks Doctor Appointment App"""
+        payload = {
+            "brand_names": ["StethWorks"],
+            "category": "Doctor Appointment App",
+            "positioning": "Mid-Range",
+            "market_scope": "Multi-Country",
+            "countries": ["India", "USA", "Thailand", "UAE"]
+        }
+        
+        try:
+            print(f"\n🏥 Testing TLD Suggestions & Legal Precedents Fixes...")
+            print(f"Test Case: StethWorks Doctor Appointment App in India, USA, Thailand, UAE")
+            print(f"Expected:")
+            print(f"  ✅ Healthcare TLDs: .health, .care, .doctor, .clinic")
+            print(f"  ✅ ALL Country TLDs: .in (India), .us (USA), .th (Thailand), .ae (UAE)")
+            print(f"  ❌ Should NOT have: .beauty, .shop (wrong for medical)")
+            print(f"  ✅ Country-specific legal precedents for all 4 countries")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120 seconds as specified
+            )
+            response_time = time.time() - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("TLD & Legal Precedents Fix - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("TLD & Legal Precedents Fix - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                issues = []
+                
+                # ============ VERIFY FIX 1: TLD SUGGESTIONS ============
+                print(f"\n🔍 VERIFYING FIX 1: TLD SUGGESTIONS")
+                
+                # Check multi_domain_availability field
+                if "multi_domain_availability" not in brand:
+                    issues.append("multi_domain_availability field missing")
+                else:
+                    domain_data = brand["multi_domain_availability"]
+                    if not domain_data:
+                        issues.append("multi_domain_availability is null/empty")
+                    else:
+                        # Convert to string for easier searching
+                        domain_text = json.dumps(domain_data).lower()
+                        
+                        # ❌ Should NOT have beauty/shop TLDs
+                        wrong_tlds = [".beauty", ".shop"]
+                        found_wrong_tlds = [tld for tld in wrong_tlds if tld in domain_text]
+                        if found_wrong_tlds:
+                            issues.append(f"Found WRONG TLDs for medical category: {found_wrong_tlds}")
+                        
+                        # ✅ Should have healthcare TLDs
+                        healthcare_tlds = [".health", ".care", ".doctor", ".clinic"]
+                        found_healthcare_tlds = [tld for tld in healthcare_tlds if tld in domain_text]
+                        missing_healthcare_tlds = [tld for tld in healthcare_tlds if tld not in found_healthcare_tlds]
+                        
+                        if len(found_healthcare_tlds) < 2:  # Should have at least 2 healthcare TLDs
+                            issues.append(f"Missing healthcare TLDs. Found: {found_healthcare_tlds}, Expected: {healthcare_tlds}")
+                        
+                        # ✅ Should have ALL 4 country TLDs
+                        country_tlds = [".in", ".us", ".th", ".ae"]
+                        found_country_tlds = [tld for tld in country_tlds if tld in domain_text]
+                        missing_country_tlds = [tld for tld in country_tlds if tld not in found_country_tlds]
+                        
+                        if len(found_country_tlds) < 4:
+                            issues.append(f"Missing country TLDs. Found: {found_country_tlds}, Missing: {missing_country_tlds}")
+                        
+                        print(f"  ✅ Healthcare TLDs found: {found_healthcare_tlds}")
+                        print(f"  ✅ Country TLDs found: {found_country_tlds}")
+                        if found_wrong_tlds:
+                            print(f"  ❌ Wrong TLDs found: {found_wrong_tlds}")
+                
+                # ============ VERIFY FIX 2: LEGAL PRECEDENTS ============
+                print(f"\n⚖️ VERIFYING FIX 2: LEGAL PRECEDENTS")
+                
+                # Check trademark_research.legal_precedents
+                if "trademark_research" not in brand:
+                    issues.append("trademark_research field missing")
+                else:
+                    tm_research = brand["trademark_research"]
+                    if not tm_research:
+                        issues.append("trademark_research is null/empty")
+                    elif "legal_precedents" not in tm_research:
+                        issues.append("legal_precedents field missing from trademark_research")
+                    else:
+                        legal_precedents = tm_research["legal_precedents"]
+                        if not legal_precedents or len(legal_precedents) == 0:
+                            issues.append("legal_precedents array is empty")
+                        else:
+                            # Convert to string for analysis
+                            precedents_text = json.dumps(legal_precedents).lower()
+                            
+                            # Check for country-specific precedents
+                            expected_countries = ["india", "usa", "thailand", "uae"]
+                            country_indicators = {
+                                "india": ["indian", "india", "ipo", "delhi high court", "bombay high court"],
+                                "usa": ["uspto", "ttab", "federal circuit", "lanham act"],
+                                "thailand": ["dip", "thai trademark act", "thailand", "thai"],
+                                "uae": ["ministry of economy", "gcc", "uae", "emirates"]
+                            }
+                            
+                            countries_found = []
+                            for country, indicators in country_indicators.items():
+                                if any(indicator in precedents_text for indicator in indicators):
+                                    countries_found.append(country)
+                            
+                            missing_countries = [c for c in expected_countries if c not in countries_found]
+                            
+                            if len(countries_found) < 3:  # Should have at least 3 out of 4 countries
+                                issues.append(f"Insufficient country-specific legal precedents. Found: {countries_found}, Missing: {missing_countries}")
+                            
+                            # ❌ Should NOT be only US-centric
+                            us_only_indicators = ["polaroid", "sleekcraft", "dupont"]
+                            if all(indicator in precedents_text for indicator in us_only_indicators) and len(countries_found) <= 1:
+                                issues.append("Legal precedents appear to be US-centric only (Polaroid, Sleekcraft, DuPont)")
+                            
+                            print(f"  ✅ Countries with specific precedents: {countries_found}")
+                            if missing_countries:
+                                print(f"  ⚠️ Countries missing specific precedents: {missing_countries}")
+                
+                # ============ BACKEND LOG VERIFICATION ============
+                print(f"\n📋 Note: Backend log verification would require access to server logs")
+                print(f"Expected log messages:")
+                print(f"  - '🌐 SMART DOMAIN SUGGESTIONS for StethWorks in Doctor Appointment App'")
+                print(f"  - 'Category TLDs: [.health, .care, .doctor...]'")
+                print(f"  - 'Country TLDs: [.in, .us, .th, .ae]'")
+                print(f"  - '⚖️ FALLBACK LEGAL PRECEDENTS generated for 4 countries'")
+                
+                # ============ FINAL ASSESSMENT ============
+                if issues:
+                    self.log_test("TLD & Legal Precedents Fix", False, "; ".join(issues))
+                    return False
+                
+                self.log_test("TLD & Legal Precedents Fix", True, 
+                            f"Both fixes verified successfully. Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("TLD & Legal Precedents Fix - JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("TLD & Legal Precedents Fix - Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("TLD & Legal Precedents Fix - Exception", False, str(e))
+            return False
+
+    def run_tld_legal_precedents_test_only(self):
+        """Run only the TLD suggestions and Legal Precedents test"""
+        print("🏥 RIGHTNAME TLD & Legal Precedents Fix Testing")
+        print("="*70)
+        print("Testing NEW fixes for:")
+        print("1. Category-aware TLD suggestions (healthcare TLDs)")
+        print("2. Country-specific legal precedents")
+        print("="*70)
+        
+        # Test the specific fix
+        success = self.test_tld_suggestions_and_legal_precedents_fix()
+        
+        # Print summary
+        return self.print_summary()
+
 def main():
     """Main function to run Admin Panel API tests as requested in review"""
     tester = BrandEvaluationTester()
