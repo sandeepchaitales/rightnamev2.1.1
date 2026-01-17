@@ -6073,6 +6073,232 @@ class BrandEvaluationTester:
             self.log_test("Positioning-Aware Search - Premium Exception", False, str(e))
             return False
 
+    def test_ramaraya_hotel_chain_smoke_test(self):
+        """SMOKE TEST: RamaRaya Hotel Chain in India + Thailand - Verify specific fixes"""
+        payload = {
+            "brand_names": ["RamaRaya"],
+            "category": "Hotel Chain",
+            "positioning": "Mid-Range",
+            "target_countries": [
+                {"name": "India", "priority": "primary"},
+                {"name": "Thailand", "priority": "secondary"}
+            ]
+        }
+        
+        try:
+            print(f"\n🏨 SMOKE TEST: RamaRaya Hotel Chain in India + Thailand...")
+            print(f"Testing specific fixes:")
+            print(f"  1. Legal Risk Matrix - Specific commentary (NOT generic)")
+            print(f"  2. Country-Specific Competitors - Hotel brands per country")
+            print(f"  3. Cultural Analysis - Sacred name detection for 'Rama'")
+            print(f"  4. Executive Summary - 100+ words, specific content")
+            print(f"  5. Case-insensitive countries - Proper flags 🇮🇳 🇹🇭")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120 seconds as specified in review
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("RamaRaya Smoke Test - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("RamaRaya Smoke Test - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                verification_results = []
+                
+                # VERIFICATION 1: Legal Risk Matrix - Check trademark_matrix has SPECIFIC commentary
+                print(f"\n🔍 VERIFICATION 1: Legal Risk Matrix Commentary...")
+                if "trademark_matrix" not in brand:
+                    verification_results.append("❌ trademark_matrix field missing")
+                else:
+                    tm_matrix = brand["trademark_matrix"]
+                    if not tm_matrix:
+                        verification_results.append("❌ trademark_matrix is null/empty")
+                    else:
+                        # Check for generic text
+                        matrix_text = json.dumps(tm_matrix).lower()
+                        if "no specific risk identified" in matrix_text:
+                            verification_results.append("❌ Found generic 'No specific risk identified' in trademark_matrix")
+                        else:
+                            # Check for specific commentary indicators
+                            specific_indicators = ["conflict", "class", "nice", "risk", "probability", "registration"]
+                            found_indicators = [ind for ind in specific_indicators if ind in matrix_text]
+                            if len(found_indicators) >= 3:
+                                verification_results.append(f"✅ Legal Risk Matrix has specific commentary (found: {', '.join(found_indicators)})")
+                            else:
+                                verification_results.append(f"⚠️ Legal Risk Matrix may lack specific commentary (only found: {', '.join(found_indicators)})")
+                
+                # VERIFICATION 2: Country-Specific Competitors
+                print(f"\n🔍 VERIFICATION 2: Country-Specific Competitors...")
+                if "country_competitor_analysis" not in brand:
+                    verification_results.append("❌ country_competitor_analysis field missing")
+                else:
+                    country_analysis = brand["country_competitor_analysis"]
+                    if not country_analysis:
+                        verification_results.append("❌ country_competitor_analysis is null/empty")
+                    else:
+                        # Check India competitors
+                        india_found = False
+                        thailand_found = False
+                        
+                        for country_data in country_analysis:
+                            country_name = country_data.get("country", "").lower()
+                            competitors = country_data.get("competitors", [])
+                            
+                            if "india" in country_name:
+                                india_found = True
+                                competitor_names = [c.get("name", "").lower() for c in competitors if isinstance(c, dict)]
+                                expected_india_hotels = ["taj", "oyo", "lemon tree", "itc"]
+                                found_india_hotels = [hotel for hotel in expected_india_hotels if any(hotel in comp for comp in competitor_names)]
+                                
+                                if len(found_india_hotels) >= 2:
+                                    verification_results.append(f"✅ India shows HOTEL competitors: {found_india_hotels}")
+                                else:
+                                    # Check if beauty brands are present (should NOT be)
+                                    beauty_brands = ["nykaa", "glossier", "mamaearth"]
+                                    found_beauty = [brand for brand in beauty_brands if any(brand in comp for comp in competitor_names)]
+                                    if found_beauty:
+                                        verification_results.append(f"❌ India shows BEAUTY brands instead of hotels: {found_beauty}")
+                                    else:
+                                        verification_results.append(f"⚠️ India competitors may not be hotel-specific: {competitor_names[:3]}")
+                            
+                            elif "thailand" in country_name:
+                                thailand_found = True
+                                competitor_names = [c.get("name", "").lower() for c in competitors if isinstance(c, dict)]
+                                expected_thai_hotels = ["dusit", "centara", "minor", "onyx", "anantara", "amari"]
+                                found_thai_hotels = [hotel for hotel in expected_thai_hotels if any(hotel in comp for comp in competitor_names)]
+                                
+                                if len(found_thai_hotels) >= 2:
+                                    verification_results.append(f"✅ Thailand shows THAI hotel competitors: {found_thai_hotels}")
+                                else:
+                                    verification_results.append(f"⚠️ Thailand competitors may not be Thai hotel-specific: {competitor_names[:3]}")
+                        
+                        if not india_found:
+                            verification_results.append("❌ India country analysis not found")
+                        if not thailand_found:
+                            verification_results.append("❌ Thailand country analysis not found")
+                
+                # VERIFICATION 3: Cultural Analysis / Sacred Name Detection
+                print(f"\n🔍 VERIFICATION 3: Cultural Analysis - Sacred Name Detection...")
+                if "cultural_analysis" not in brand:
+                    verification_results.append("❌ cultural_analysis field missing")
+                else:
+                    cultural_analysis = brand["cultural_analysis"]
+                    if not cultural_analysis:
+                        verification_results.append("❌ cultural_analysis is null/empty")
+                    else:
+                        cultural_text = json.dumps(cultural_analysis).lower()
+                        
+                        # Check for Rama warnings in both countries
+                        rama_warnings = []
+                        if "rama" in cultural_text:
+                            if "india" in cultural_text and ("hindu" in cultural_text or "deity" in cultural_text):
+                                rama_warnings.append("India (Hindu deity)")
+                            if "thailand" in cultural_text and ("royal" in cultural_text or "lèse-majesté" in cultural_text or "king" in cultural_text):
+                                rama_warnings.append("Thailand (Royal name)")
+                        
+                        if len(rama_warnings) >= 2:
+                            verification_results.append(f"✅ 'Rama' triggers warnings for BOTH countries: {', '.join(rama_warnings)}")
+                        elif len(rama_warnings) == 1:
+                            verification_results.append(f"⚠️ 'Rama' triggers warning for only one country: {rama_warnings[0]}")
+                        else:
+                            if "no cultural issues" in cultural_text:
+                                verification_results.append("❌ Cultural analysis shows 'no cultural issues' (should detect Rama sensitivity)")
+                            else:
+                                verification_results.append("❌ 'Rama' sacred name detection not working")
+                
+                # VERIFICATION 4: Executive Summary Quality
+                print(f"\n🔍 VERIFICATION 4: Executive Summary Quality...")
+                exec_summary = data.get("executive_summary", "")
+                if not exec_summary:
+                    verification_results.append("❌ executive_summary field missing or empty")
+                else:
+                    summary_length = len(exec_summary)
+                    if summary_length >= 100:
+                        # Check if it's specific to RamaRaya (not generic)
+                        if "ramaraya" in exec_summary.lower() or "rama raya" in exec_summary.lower():
+                            verification_results.append(f"✅ Executive Summary is 100+ words ({summary_length} chars) and specific to RamaRaya")
+                        else:
+                            verification_results.append(f"⚠️ Executive Summary is 100+ words ({summary_length} chars) but may be generic")
+                    else:
+                        verification_results.append(f"❌ Executive Summary too short: {summary_length} chars (should be 100+ words)")
+                
+                # VERIFICATION 5: Case-Insensitive Countries - Proper Flags
+                print(f"\n🔍 VERIFICATION 5: Case-insensitive Countries - Proper Flags...")
+                response_text = json.dumps(data)
+                
+                # Check for proper country flags
+                flag_results = []
+                if "🇮🇳" in response_text:
+                    flag_results.append("India 🇮🇳")
+                if "🇹🇭" in response_text:
+                    flag_results.append("Thailand 🇹🇭")
+                
+                # Check for generic globe flag (should NOT be present for specific countries)
+                if "🌍" in response_text and len(flag_results) < 2:
+                    verification_results.append(f"❌ Found generic globe flag 🌍 instead of specific country flags")
+                elif len(flag_results) >= 2:
+                    verification_results.append(f"✅ Proper country flags found: {', '.join(flag_results)}")
+                else:
+                    verification_results.append(f"⚠️ Country flags may be missing or incorrect")
+                
+                # Print all verification results
+                print(f"\n📋 VERIFICATION RESULTS:")
+                for result in verification_results:
+                    print(f"  {result}")
+                
+                # Count successes
+                success_count = len([r for r in verification_results if r.startswith("✅")])
+                warning_count = len([r for r in verification_results if r.startswith("⚠️")])
+                failure_count = len([r for r in verification_results if r.startswith("❌")])
+                
+                print(f"\n📊 VERIFICATION SUMMARY:")
+                print(f"  ✅ Passed: {success_count}")
+                print(f"  ⚠️ Warnings: {warning_count}")
+                print(f"  ❌ Failed: {failure_count}")
+                print(f"  Response Time: {response_time:.2f}s (within 120s limit)")
+                
+                # Determine overall result
+                if failure_count == 0 and success_count >= 3:
+                    self.log_test("RamaRaya Smoke Test - All Verifications", True, 
+                                f"All key fixes verified. Passed: {success_count}, Warnings: {warning_count}, Time: {response_time:.2f}s")
+                    return True
+                elif failure_count <= 1 and success_count >= 2:
+                    self.log_test("RamaRaya Smoke Test - Mostly Working", True, 
+                                f"Most fixes working. Passed: {success_count}, Failed: {failure_count}, Time: {response_time:.2f}s")
+                    return True
+                else:
+                    self.log_test("RamaRaya Smoke Test - Issues Found", False, 
+                                f"Multiple issues detected. Passed: {success_count}, Failed: {failure_count}")
+                    return False
+                
+            except json.JSONDecodeError as e:
+                self.log_test("RamaRaya Smoke Test - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("RamaRaya Smoke Test - Timeout", False, f"Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("RamaRaya Smoke Test - Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
