@@ -1980,6 +1980,114 @@ def generate_smart_final_recommendations(
     return recommendations
 
 
+def generate_fallback_domain_strategy(
+    brand_name: str,
+    category: str,
+    countries: list,
+    domain_available: bool
+) -> dict:
+    """
+    Generate domain strategy analysis (fallback when LLM not available).
+    This provides intelligent domain recommendations based on WHOIS results.
+    
+    When LLM IS available, this is enhanced by llm_analyze_domain_strategy() in availability.py
+    """
+    brand_lower = brand_name.lower()
+    
+    # Get category and country TLDs
+    category_tlds = get_category_tlds(category)
+    country_tld_list = get_country_tlds(countries)
+    
+    # Calculate domain quality score
+    quality_score = 7.0
+    if len(brand_lower) <= 8:
+        quality_score += 1.0
+    if len(brand_lower) > 15:
+        quality_score -= 1.0
+    if brand_lower.isalpha():
+        quality_score += 0.5
+    if "-" in brand_lower:
+        quality_score -= 1.0
+    quality_score = min(10.0, max(1.0, quality_score))
+    
+    # Determine acquisition difficulty
+    if domain_available:
+        acquisition_difficulty = "EASY"
+        estimated_cost = "$10-15/year"
+        primary_recommendation = "Secure immediately - standard registration pricing"
+    else:
+        acquisition_difficulty = "MODERATE"
+        estimated_cost = "$500-5000 (premium negotiation likely required)"
+        primary_recommendation = f"Consider category TLD ({category_tlds[0] if category_tlds else '.co'}) as primary, or creative alternatives"
+    
+    # Build country TLD priority
+    country_names = [c.get('name') if isinstance(c, dict) else str(c) for c in countries]
+    country_tld_priority = []
+    for i, country_tld in enumerate(country_tld_list[:4]):
+        country_tld_priority.append({
+            "tld": country_tld["tld"],
+            "country": country_tld["country"],
+            "priority": i + 1,
+            "reason": "Primary market" if i == 0 else "Secondary market"
+        })
+    
+    # Build category TLD ranking
+    category_tld_ranking = []
+    for i, tld in enumerate(category_tlds[:4]):
+        category_tld_ranking.append({
+            "tld": tld,
+            "fit_score": 9 - i,  # Decreasing scores
+            "reason": f"Category-appropriate for {category}"
+        })
+    
+    strategy = {
+        "llm_enhanced": False,
+        "analysis": {
+            "domain_quality_score": round(quality_score, 1),
+            "domain_quality_reasoning": f"{'Short and memorable' if len(brand_lower) <= 10 else 'Longer name - consider abbreviation'}, {'clean alphanumeric' if brand_lower.isalnum() else 'contains special characters'}",
+            
+            "primary_com_analysis": {
+                "status": "AVAILABLE" if domain_available else "TAKEN",
+                "acquisition_difficulty": acquisition_difficulty,
+                "estimated_cost": estimated_cost,
+                "recommendation": primary_recommendation
+            },
+            
+            "category_tld_ranking": category_tld_ranking,
+            "country_tld_priority": country_tld_priority,
+            
+            "acquisition_strategy": {
+                "immediate_actions": [
+                    f"Register {brand_lower}.com" if domain_available else f"Secure {brand_lower}{category_tlds[0] if category_tlds else '.co'}",
+                    f"Register ALL country TLDs: {', '.join([c['tld'] for c in country_tld_list[:4]])}"
+                ],
+                "if_com_taken": f"Best alternatives: get{brand_lower}.com, {brand_lower}app.com, or use {category_tlds[0] if category_tlds else '.co'} as primary",
+                "budget_estimate": "$100-500 for comprehensive domain portfolio"
+            },
+            
+            "risk_assessment": {
+                "typo_risk": "LOW" if len(brand_lower) <= 8 else "MEDIUM" if len(brand_lower) <= 12 else "HIGH",
+                "typo_domains_to_secure": [],
+                "competitor_squatting_risk": "LOW",
+                "trademark_conflict_risk": "Check trademark_research section"
+            },
+            
+            "creative_alternatives": [
+                {"domain": f"get{brand_lower}.com", "type": "prefix", "availability_guess": "LIKELY_AVAILABLE"},
+                {"domain": f"{brand_lower}app.com", "type": "suffix", "availability_guess": "LIKELY_AVAILABLE"},
+                {"domain": f"try{brand_lower}.com", "type": "prefix", "availability_guess": "LIKELY_AVAILABLE"},
+                {"domain": f"{brand_lower}hq.com", "type": "suffix", "availability_guess": "LIKELY_AVAILABLE"}
+            ],
+            
+            "final_recommendation": f"{'Secure ' + brand_lower + '.com immediately at standard pricing.' if domain_available else 'Primary .com is taken. Recommend ' + brand_lower + (category_tlds[0] if category_tlds else '.co') + ' as primary domain.'} Register country TLDs ({', '.join([c['tld'] for c in country_tld_list[:3]])}) for {', '.join(country_names[:2])} market presence."
+        }
+    }
+    
+    logging.info(f"🌐 DOMAIN STRATEGY for '{brand_name}': Quality={quality_score}/10, .com={'AVAILABLE' if domain_available else 'TAKEN'}")
+    
+    return strategy
+
+
 # ============ LLM-FIRST LEGAL PRECEDENTS ============
 # Dynamically generate country-wise legal precedents using LLM
 
