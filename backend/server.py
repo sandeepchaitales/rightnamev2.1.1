@@ -4763,7 +4763,14 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     f"**Digital Availability:** Multiple domain and social handle options available"
                 ],
                 "cons": generate_risk_cons(brand_name, request.countries, category, domain_available, verdict),
-                "cultural_analysis": fallback_cultural if fallback_cultural else generate_cultural_analysis(request.countries, brand_name, category),
+                # CRITICAL FIX: Always use generate_cultural_analysis for sacred name detection
+                # If market_intelligence has data, merge it, but always run local analysis
+                "cultural_analysis": merge_cultural_analysis_with_sacred_names(
+                    fallback_cultural,
+                    generate_cultural_analysis(request.countries, brand_name, category),
+                    brand_name,
+                    request.countries
+                ),
                 "competitor_analysis": global_competitor_analysis if global_competitor_analysis else {
                     "x_axis_label": f"Price: Budget → Premium",
                     "y_axis_label": f"Innovation: Traditional → Modern",
