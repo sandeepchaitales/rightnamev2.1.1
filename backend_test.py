@@ -6310,6 +6310,10 @@ class BrandEvaluationTester:
             print("❌ API health check failed, stopping tests")
             return False
         
+        # PRIORITY: RamaRaya Hotel Chain Smoke Test (as requested in review)
+        print("\n🎯 PRIORITY TEST: RamaRaya Hotel Chain Smoke Test")
+        self.test_ramaraya_hotel_chain_smoke_test()
+        
         # PRIORITY: Test currency logic as per review request
         print("\n💰 PRIORITY: Testing Currency Logic...")
         self.test_currency_single_country_usa()
