@@ -1,11 +1,30 @@
 """
 Social Handle & Multi-Domain Availability Checker
+Enhanced with LLM-powered domain strategy analysis
 """
 import aiohttp
 import asyncio
 import whois
 import logging
+import os
+import json
+import re
 from typing import List, Dict, Optional
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
+# Import Emergent LLM
+try:
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+except ImportError:
+    logging.warning("emergentintegrations not found for availability module")
+    LlmChat = None
+
+EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
 # Country to TLD mapping
 COUNTRY_TLDS = {
