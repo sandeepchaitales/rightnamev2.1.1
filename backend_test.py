@@ -8611,6 +8611,11 @@ if __name__ == "__main__":
             tester = BrandEvaluationTester()
             success = tester.run_tld_legal_precedents_test_only()
             sys.exit(0 if success else 1)
+        elif sys.argv[1] == "deep-trace":
+            # Run only the Deep-Trace Analysis tests
+            tester = BrandEvaluationTester()
+            success = tester.run_deep_trace_tests_only()
+            sys.exit(0 if success else 1)
     else:
         # Run Admin Panel API tests by default (as requested in review)
         sys.exit(main())
