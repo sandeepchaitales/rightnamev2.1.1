@@ -1045,8 +1045,7 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
         result["warning"] = "⛔ Generic terms CANNOT be trademarked. Choose a different name."
         result["reasoning"] = f"'{brand_name}' literally describes or names the '{industry}' category. Generic terms are free for all to use."
         
-        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → GENERIC (names the category)")
-        return result
+        return cache_and_return(result, f"🏷️ CLASSIFICATION: '{brand_name}' → GENERIC (names the category)")
     
     # ========== STEP 3: DESCRIPTIVE CHECK ==========
     # Do the dictionary words DIRECTLY describe the product?
