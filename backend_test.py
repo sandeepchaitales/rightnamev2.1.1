@@ -7830,6 +7830,11 @@ class BrandEvaluationTester:
                     else:
                         print(f"✅ warning_triggered = true")
                 
+                    # Test 7: Check conflict_summary mentions the issue
+                    conflict_summary = visibility_analysis.get("conflict_summary", "")
+                    if conflict_summary and "NO DIRECT CONFLICTS" in conflict_summary.upper():
+                        analysis_issues.append("conflict_summary shows 'NO DIRECT CONFLICTS' despite Category King conflict")
+                
                 # Test 6: Check for Deep-Trace Analysis indicators
                 summary = brand.get("summary", "")
                 final_assessment = brand.get("final_assessment", {})
@@ -7843,14 +7848,12 @@ class BrandEvaluationTester:
                 else:
                     print(f"✅ Deep-Trace Analysis or Rapido conflict detected")
                 
-                # Test 7: Check conflict_summary mentions the issue
-                conflict_summary = visibility_analysis.get("conflict_summary", "")
-                if conflict_summary and "NO DIRECT CONFLICTS" in conflict_summary.upper():
-                    analysis_issues.append("conflict_summary shows 'NO DIRECT CONFLICTS' despite Category King conflict")
-                
                 if analysis_issues:
                     self.log_test("Conflict Relevance Analysis - Rapidoy", False, "; ".join(analysis_issues))
                     return False
+                
+                # Set default values for summary
+                direct_competitors = visibility_analysis.get("direct_competitors", []) if visibility_analysis else []
                 
                 self.log_test("Conflict Relevance Analysis - Rapidoy", True, 
                             f"Category King conflict detected. NameScore: {namescore}/100, Verdict: {verdict}, Competitors: {len(direct_competitors)}, Response time: {response_time:.2f}s")
