@@ -5707,6 +5707,19 @@ def generate_intelligent_trademark_matrix(brand_name: str, category: str, tradem
     return matrix
 
 
+def safe_get(obj, key, default=None):
+    """
+    Safely get attribute from dict, dataclass, or Pydantic model.
+    Handles all object types uniformly.
+    """
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    # For dataclass or Pydantic model - use getattr
+    return getattr(obj, key, default)
+
+
 def build_conflict_relevance_analysis(
     brand_name: str,
     category: str,
@@ -5732,15 +5745,15 @@ def build_conflict_relevance_analysis(
     
     # ==================== SOURCE 1: TRADEMARK RESEARCH ====================
     if trademark_data:
-        tm_conflicts = trademark_data.get('trademark_conflicts', [])
-        co_conflicts = trademark_data.get('company_conflicts', [])
+        tm_conflicts = safe_get(trademark_data, 'trademark_conflicts', [])
+        co_conflicts = safe_get(trademark_data, 'company_conflicts', [])
         nice_class = get_nice_classification(category)
-        user_class = nice_class.get('class_number', 35)
+        user_class = nice_class.get('class_number', 35) if isinstance(nice_class, dict) else getattr(nice_class, 'class_number', 35)
         
         for conflict in tm_conflicts:
-            conflict_class = conflict.get('class_number')
-            conflict_name = conflict.get('name', 'Unknown')
-            conflict_status = conflict.get('status', 'UNKNOWN')
+            conflict_class = safe_get(conflict, 'class_number')
+            conflict_name = safe_get(conflict, 'name', 'Unknown')
+            conflict_status = safe_get(conflict, 'status', 'UNKNOWN')
             
             # Determine if same class = DIRECT, different class = NAME_TWIN
             if conflict_class and str(conflict_class) == str(user_class):
@@ -5775,17 +5788,17 @@ def build_conflict_relevance_analysis(
         
         # Company conflicts are typically more serious (they're operating businesses)
         for conflict in co_conflicts:
-            company_name = conflict.get('name', 'Unknown')
-            company_industry = conflict.get('industry', 'Unknown')
-            company_status = conflict.get('status', 'ACTIVE')
+            company_name = safe_get(conflict, 'name', 'Unknown')
+            company_industry = safe_get(conflict, 'industry', 'Unknown') or 'Unknown'
+            company_status = safe_get(conflict, 'status', 'ACTIVE')
             
             # Check if industry overlaps
             industry_lower = (industry or category or "").lower()
-            company_industry_lower = company_industry.lower()
+            company_industry_lower = company_industry.lower() if company_industry else ""
             
             # Keywords to check for industry match
             industry_match = any(kw in company_industry_lower for kw in industry_lower.split()) or \
-                           any(kw in industry_lower for kw in company_industry_lower.split())
+                           any(kw in industry_lower for kw in company_industry_lower.split()) if company_industry_lower else False
             
             if industry_match or company_status == 'ACTIVE':
                 direct_competitors.append({
@@ -5799,7 +5812,7 @@ def build_conflict_relevance_analysis(
                     "reason": f"COMPANY CONFLICT: {company_name} is an active {company_status} company in {company_industry}.",
                     "source": "Company Registry (MCA/ROC)",
                     "status": company_status,
-                    "cin": conflict.get('cin', 'N/A')
+                    "cin": safe_get(conflict, 'cin', 'N/A')
                 })
                 logging.info(f"   ⚠️ COMPANY CONFLICT: {company_name} ({company_industry})")
             else:
