@@ -6814,6 +6814,188 @@ class BrandEvaluationTester:
             self.log_test("LLM-Enhanced Domain Strategy - Exception", False, str(e))
             return False
 
+    def test_formula_based_cultural_scoring(self):
+        """Test NEW FORMULA-BASED CULTURAL SCORING for StethWorks Doctor Appointment App"""
+        payload = {
+            "brand_names": ["StethWorks"],
+            "category": "Doctor Appointment App",
+            "positioning": "Mid-Range",
+            "market_scope": "Multi-Country",
+            "countries": ["India", "USA", "Thailand", "UAE"]
+        }
+        
+        try:
+            print(f"\n🧮 Testing NEW FORMULA-BASED CULTURAL SCORING...")
+            print(f"Test Case: StethWorks Doctor Appointment App in India, USA, Thailand, UAE")
+            print(f"Expected: NEW score_breakdown with safety_score, fluency_score, vibe_score, formula, calculation")
+            print(f"Critical: Thailand should have LOWER fluency score than USA (Th/W sounds difficult)")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120 seconds as specified in review
+            )
+            response_time = time.time() - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Formula-Based Cultural Scoring - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Formula-Based Cultural Scoring - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # Check if cultural_analysis exists
+                if "cultural_analysis" not in brand:
+                    self.log_test("Formula-Based Cultural Scoring - Cultural Analysis Missing", False, "cultural_analysis field missing from brand")
+                    return False
+                
+                cultural_analysis = brand["cultural_analysis"]
+                if not cultural_analysis:
+                    self.log_test("Formula-Based Cultural Scoring - Cultural Analysis Empty", False, "cultural_analysis is null/empty")
+                    return False
+                
+                # Test each country for NEW score_breakdown object
+                required_countries = ["India", "USA", "Thailand", "UAE"]
+                country_scores = {}
+                validation_errors = []
+                
+                for country in required_countries:
+                    print(f"\n🔍 Checking {country} cultural analysis...")
+                    
+                    # Find country data (case-insensitive)
+                    country_data = None
+                    for key, value in cultural_analysis.items():
+                        if country.lower() in key.lower() or key.lower() in country.lower():
+                            country_data = value
+                            break
+                    
+                    if not country_data:
+                        validation_errors.append(f"{country}: No cultural analysis data found")
+                        continue
+                    
+                    # VERIFICATION 1: Check NEW score_breakdown object exists
+                    if "score_breakdown" not in country_data:
+                        validation_errors.append(f"{country}: Missing 'score_breakdown' object")
+                        continue
+                    
+                    score_breakdown = country_data["score_breakdown"]
+                    if not score_breakdown:
+                        validation_errors.append(f"{country}: 'score_breakdown' is null/empty")
+                        continue
+                    
+                    # VERIFICATION 2: Check required fields in score_breakdown
+                    required_fields = ["safety_score", "fluency_score", "vibe_score", "formula", "calculation", "final_score", "risk_verdict"]
+                    missing_fields = [field for field in required_fields if field not in score_breakdown]
+                    
+                    if missing_fields:
+                        validation_errors.append(f"{country}: Missing score_breakdown fields: {missing_fields}")
+                        continue
+                    
+                    # VERIFICATION 3: Validate score ranges (0-10)
+                    safety_score = score_breakdown.get("safety_score")
+                    fluency_score = score_breakdown.get("fluency_score")
+                    vibe_score = score_breakdown.get("vibe_score")
+                    final_score = score_breakdown.get("final_score")
+                    
+                    if not all(isinstance(score, (int, float)) and 0 <= score <= 10 for score in [safety_score, fluency_score, vibe_score, final_score]):
+                        validation_errors.append(f"{country}: Scores not in 0-10 range. Safety: {safety_score}, Fluency: {fluency_score}, Vibe: {vibe_score}, Final: {final_score}")
+                        continue
+                    
+                    # VERIFICATION 4: Check formula format
+                    formula = score_breakdown.get("formula", "")
+                    expected_formula = "(Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)"
+                    if expected_formula not in formula:
+                        validation_errors.append(f"{country}: Formula doesn't match expected format. Got: {formula}")
+                    
+                    # VERIFICATION 5: Check calculation shows actual math
+                    calculation = score_breakdown.get("calculation", "")
+                    if not calculation or len(calculation) < 10:
+                        validation_errors.append(f"{country}: Calculation field missing or too short: {calculation}")
+                    
+                    # VERIFICATION 6: Check risk_verdict values
+                    risk_verdict = score_breakdown.get("risk_verdict", "")
+                    valid_verdicts = ["SAFE", "CAUTION", "CRITICAL"]
+                    if risk_verdict not in valid_verdicts:
+                        validation_errors.append(f"{country}: Invalid risk_verdict '{risk_verdict}'. Expected one of: {valid_verdicts}")
+                    
+                    # Store scores for comparison
+                    country_scores[country] = {
+                        "safety_score": safety_score,
+                        "fluency_score": fluency_score,
+                        "vibe_score": vibe_score,
+                        "final_score": final_score,
+                        "risk_verdict": risk_verdict
+                    }
+                    
+                    print(f"   ✅ {country}: Safety={safety_score}, Fluency={fluency_score}, Vibe={vibe_score}, Final={final_score}, Verdict={risk_verdict}")
+                
+                # VERIFICATION 7: Check DIFFERENT scores for different countries
+                if len(country_scores) >= 2:
+                    # Critical test: Thailand should have LOWER fluency score than USA
+                    if "Thailand" in country_scores and "USA" in country_scores:
+                        thailand_fluency = country_scores["Thailand"]["fluency_score"]
+                        usa_fluency = country_scores["USA"]["fluency_score"]
+                        
+                        if thailand_fluency >= usa_fluency:
+                            validation_errors.append(f"CRITICAL: Thailand fluency score ({thailand_fluency}) should be LOWER than USA ({usa_fluency}) due to Th/W pronunciation difficulty")
+                    
+                    # Check that not all countries have identical scores
+                    all_final_scores = [scores["final_score"] for scores in country_scores.values()]
+                    if len(set(all_final_scores)) == 1:
+                        validation_errors.append("All countries have identical final scores - scores should vary by country")
+                
+                # VERIFICATION 8: Check cultural notes include formula display
+                formula_display_found = False
+                for country, country_data in cultural_analysis.items():
+                    cultural_notes = country_data.get("cultural_notes", "")
+                    if "📊 CULTURAL FIT SCORE:" in cultural_notes or "CULTURAL FIT SCORE" in cultural_notes:
+                        formula_display_found = True
+                        break
+                
+                if not formula_display_found:
+                    validation_errors.append("Cultural notes should include '📊 CULTURAL FIT SCORE: X/10' display")
+                
+                # Check for validation errors
+                if validation_errors:
+                    error_summary = "; ".join(validation_errors[:3])  # Show first 3 errors
+                    if len(validation_errors) > 3:
+                        error_summary += f" (and {len(validation_errors) - 3} more errors)"
+                    self.log_test("Formula-Based Cultural Scoring - Validation", False, error_summary)
+                    return False
+                
+                # Success summary
+                countries_tested = len(country_scores)
+                thailand_usa_comparison = ""
+                if "Thailand" in country_scores and "USA" in country_scores:
+                    thailand_usa_comparison = f"Thailand fluency ({country_scores['Thailand']['fluency_score']}) < USA fluency ({country_scores['USA']['fluency_score']})"
+                
+                self.log_test("Formula-Based Cultural Scoring - Complete", True, 
+                            f"All verifications passed. Countries tested: {countries_tested}/4. {thailand_usa_comparison}. Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Formula-Based Cultural Scoring - JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Formula-Based Cultural Scoring - Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Formula-Based Cultural Scoring - Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
