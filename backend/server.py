@@ -3450,6 +3450,688 @@ def generate_rich_executive_summary(
     return "".join(summary_parts)
 
 
+# ============================================================================
+# STRATEGY SNAPSHOT FRAMEWORK (Award-Winning Brand Strategy & Trademark Consultant)
+# ============================================================================
+# Implements 6-step professional framework:
+# 1. Legal Trademark Spectrum Classification
+# 2. Descriptiveness Depth Test
+# 3. Linguistic & Phonetic Evaluation
+# 4. Industry × Positioning Alignment Test
+# 5. Competitive Imitability Risk
+# 6. Brand Asset Ceiling Assessment
+# ============================================================================
+
+def generate_strategy_snapshot(
+    brand_name: str,
+    classification: dict,
+    category: str,
+    positioning: str,
+    countries: list,
+    domain_available: bool,
+    trademark_risk: int,
+    social_data: dict = None
+) -> dict:
+    """
+    Generate investor-grade Strategy Snapshot following the 6-step framework.
+    
+    Returns:
+        {
+            "legal_classification": str,
+            "classification_reasoning": str,
+            "descriptiveness_depth": dict,  # Only for DESCRIPTIVE/SUGGESTIVE
+            "linguistic_evaluation": dict,
+            "positioning_alignment": dict,
+            "imitability_risk": dict,
+            "brand_asset_ceiling": dict,
+            "strengths": list,
+            "risks": list,
+            "final_verdict": str
+        }
+    """
+    
+    # ========== STEP 1: LEGAL TRADEMARK SPECTRUM CLASSIFICATION ==========
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    tokens = classification.get("tokens", [])
+    dictionary_tokens = classification.get("dictionary_tokens", [])
+    invented_tokens = classification.get("invented_tokens", [])
+    
+    # Generate examiner-style legal reasoning
+    legal_reasoning = generate_legal_reasoning(brand_name, legal_category, dictionary_tokens, invented_tokens, category)
+    
+    # ========== STEP 2: DESCRIPTIVENESS DEPTH TEST ==========
+    descriptiveness_depth = None
+    if legal_category in ["DESCRIPTIVE", "SUGGESTIVE"]:
+        descriptiveness_depth = assess_descriptiveness_depth(brand_name, dictionary_tokens, category)
+    
+    # ========== STEP 3: LINGUISTIC & PHONETIC EVALUATION ==========
+    linguistic_eval = evaluate_linguistics_and_phonetics(brand_name, countries)
+    
+    # ========== STEP 4: INDUSTRY × POSITIONING ALIGNMENT ==========
+    positioning_alignment = assess_positioning_alignment(brand_name, legal_category, category, positioning)
+    
+    # ========== STEP 5: COMPETITIVE IMITABILITY RISK ==========
+    imitability_risk = assess_imitability_risk(brand_name, legal_category, dictionary_tokens, category)
+    
+    # ========== STEP 6: BRAND ASSET CEILING ASSESSMENT ==========
+    asset_ceiling = assess_brand_asset_ceiling(
+        brand_name, legal_category, positioning, trademark_risk, 
+        positioning_alignment, imitability_risk
+    )
+    
+    # ========== GENERATE STRENGTHS & RISKS ==========
+    strengths = generate_strategic_strengths(
+        brand_name, legal_category, linguistic_eval, positioning_alignment,
+        imitability_risk, asset_ceiling, domain_available, social_data
+    )
+    
+    risks = generate_strategic_risks(
+        brand_name, legal_category, descriptiveness_depth, linguistic_eval,
+        positioning_alignment, imitability_risk, asset_ceiling, domain_available, countries
+    )
+    
+    # ========== FINAL VERDICT ==========
+    final_verdict = generate_final_verdict(
+        brand_name, legal_category, positioning, positioning_alignment, 
+        asset_ceiling, trademark_risk
+    )
+    
+    return {
+        "legal_classification": legal_category,
+        "classification_reasoning": legal_reasoning,
+        "descriptiveness_depth": descriptiveness_depth,
+        "linguistic_evaluation": linguistic_eval,
+        "positioning_alignment": positioning_alignment,
+        "imitability_risk": imitability_risk,
+        "brand_asset_ceiling": asset_ceiling,
+        "strengths": strengths,
+        "risks": risks,
+        "final_verdict": final_verdict
+    }
+
+
+def generate_legal_reasoning(brand_name: str, category: str, dictionary_tokens: list, invented_tokens: list, industry: str) -> str:
+    """Generate USPTO/EUIPO/WIPO examiner-style legal reasoning."""
+    
+    if category == "GENERIC":
+        return (
+            f"'{brand_name}' directly names the product category '{industry}'. "
+            f"Under TMEP §1209.01(a), generic terms are unregistrable as they must remain free for all market participants. "
+            f"No amount of acquired distinctiveness can overcome generic status."
+        )
+    
+    elif category == "DESCRIPTIVE":
+        token_list = ", ".join([f"'{t}'" for t in dictionary_tokens]) if dictionary_tokens else "common words"
+        return (
+            f"'{brand_name}' comprises dictionary words ({token_list}) that directly describe the product/service attributes. "
+            f"Per TMEP §1209.01(b), descriptive marks require proof of Secondary Meaning (acquired distinctiveness) under §2(f). "
+            f"Registration on Supplemental Register possible; Principal Register requires 5+ years exclusive use evidence."
+        )
+    
+    elif category == "SUGGESTIVE":
+        return (
+            f"'{brand_name}' suggests qualities of the product but requires imagination to connect name to goods/services. "
+            f"Under Zatarains v. Oak Grove Smokehouse, suggestive marks are inherently distinctive. "
+            f"Registrable on Principal Register without Secondary Meaning proof, though enforcement scope is narrower than arbitrary/fanciful."
+        )
+    
+    elif category == "ARBITRARY":
+        return (
+            f"'{brand_name}' uses a common word in a context unrelated to its dictionary meaning. "
+            f"Like 'Apple' for computers or 'Amazon' for e-commerce, arbitrary marks receive strong protection under Lanham Act §2. "
+            f"Inherently distinctive; broad enforcement scope across similar goods/services."
+        )
+    
+    else:  # FANCIFUL
+        return (
+            f"'{brand_name}' is a coined/invented term with no prior dictionary meaning. "
+            f"Fanciful marks like 'Xerox', 'Kodak', and 'Häagen-Dazs' receive the strongest trademark protection. "
+            f"Inherently distinctive; maximum enforcement scope; highest brand asset value potential."
+        )
+
+
+def assess_descriptiveness_depth(brand_name: str, dictionary_tokens: list, category: str) -> dict:
+    """
+    For DESCRIPTIVE/SUGGESTIVE marks, assess HOW descriptive:
+    - HIGH: Directly describes function or category
+    - MODERATE: Describes benefit or feature
+    - LOW: Tangential relationship
+    """
+    brand_lower = brand_name.lower()
+    category_lower = category.lower()
+    
+    # Check what the name describes
+    describes_function = False
+    describes_benefit = False
+    describes_category = False
+    
+    # Function words
+    function_indicators = ["check", "track", "find", "get", "book", "pay", "scan", "search", "send", "call", "connect", "shop", "buy", "sell", "rent", "hire"]
+    # Benefit words
+    benefit_indicators = ["fast", "quick", "easy", "smart", "safe", "secure", "best", "pro", "premium", "fresh", "clean", "healthy"]
+    
+    for token in dictionary_tokens:
+        token_lower = token.lower()
+        if token_lower in function_indicators:
+            describes_function = True
+        if token_lower in benefit_indicators:
+            describes_benefit = True
+        if token_lower in category_lower or category_lower in token_lower:
+            describes_category = True
+    
+    # Determine depth
+    if describes_function and describes_category:
+        depth = "HIGH"
+        describes = "Function + Category"
+        reasoning = f"Name directly states what the product does (function) and for what (category). Maximum descriptiveness = weakest protection."
+    elif describes_function:
+        depth = "HIGH"
+        describes = "Function"
+        reasoning = f"Name directly describes what the product does. Functional descriptiveness is difficult to overcome."
+    elif describes_category:
+        depth = "HIGH"
+        describes = "Category"
+        reasoning = f"Name incorporates category terminology. Risk of examiner refusal under descriptiveness grounds."
+    elif describes_benefit:
+        depth = "MODERATE"
+        describes = "Benefit"
+        reasoning = f"Name suggests product benefits rather than literal function. Secondary Meaning may be achievable with evidence."
+    else:
+        depth = "LOW"
+        describes = "Tangential"
+        reasoning = f"Descriptive elements are tangential to core product. Closer to suggestive; registration more likely."
+    
+    return {
+        "depth": depth,
+        "describes": describes,
+        "reasoning": reasoning
+    }
+
+
+def evaluate_linguistics_and_phonetics(brand_name: str, countries: list) -> dict:
+    """
+    Evaluate:
+    - Pronunciation ease
+    - Memorability
+    - Spelling confusion risk
+    - Cross-cultural neutrality
+    """
+    
+    # Pronunciation difficulty factors
+    difficult_combinations = ["sch", "tch", "ght", "phl", "xyl", "zw", "ck", "qu"]
+    difficult_endings = ["eux", "ough", "eaux", "heim", "stadt"]
+    
+    pronunciation_issues = []
+    for combo in difficult_combinations:
+        if combo in brand_name.lower():
+            pronunciation_issues.append(f"'{combo}' cluster may cause pronunciation hesitation")
+    
+    for ending in difficult_endings:
+        if brand_name.lower().endswith(ending):
+            pronunciation_issues.append(f"'-{ending}' ending unfamiliar in non-European markets")
+    
+    # Check syllable count (2-3 is optimal)
+    vowels = sum(1 for c in brand_name.lower() if c in 'aeiou')
+    syllable_estimate = max(1, vowels)
+    
+    if syllable_estimate > 4:
+        pronunciation_issues.append(f"~{syllable_estimate} syllables exceeds optimal 2-3 for memorability")
+    
+    # Spelling confusion risk
+    spelling_risks = []
+    confusing_patterns = [
+        ("ph", "f"), ("ck", "k"), ("ie", "y"), ("ey", "y"), ("oo", "u"),
+        ("ee", "i"), ("ou", "u"), ("ight", "ite")
+    ]
+    for pattern, alternative in confusing_patterns:
+        if pattern in brand_name.lower():
+            spelling_risks.append(f"'{pattern}' could be typed as '{alternative}'")
+    
+    # Memorability score
+    memorability_score = 10
+    if len(brand_name) > 10:
+        memorability_score -= 2
+    if len(brand_name) > 14:
+        memorability_score -= 2
+    if syllable_estimate > 3:
+        memorability_score -= 1
+    if len(spelling_risks) > 0:
+        memorability_score -= 1
+    memorability_score = max(3, memorability_score)
+    
+    # Cultural neutrality check (basic)
+    cultural_flags = []
+    sensitive_sounds = {
+        "Thailand": ["rama", "king", "royal", "chakri"],
+        "India": ["ram", "krishna", "shiva", "allah"],
+        "China": ["xi", "mao", "death", "four"],
+        "Japan": ["shi", "ku"]  # shi=death, ku=suffering
+    }
+    
+    for country in countries:
+        if country in sensitive_sounds:
+            for sound in sensitive_sounds[country]:
+                if sound in brand_name.lower():
+                    cultural_flags.append(f"{country}: '{sound}' may have cultural sensitivity")
+    
+    return {
+        "pronunciation_ease": "HIGH" if len(pronunciation_issues) == 0 else "MODERATE" if len(pronunciation_issues) <= 2 else "LOW",
+        "pronunciation_issues": pronunciation_issues,
+        "memorability_score": memorability_score,
+        "memorability_rating": "HIGH" if memorability_score >= 8 else "MODERATE" if memorability_score >= 6 else "LOW",
+        "spelling_confusion_risk": spelling_risks,
+        "cultural_flags": cultural_flags,
+        "overall_linguistic_rating": "STRONG" if len(pronunciation_issues) == 0 and memorability_score >= 7 and len(cultural_flags) == 0 else "ADEQUATE" if memorability_score >= 5 else "WEAK"
+    }
+
+
+def assess_positioning_alignment(brand_name: str, legal_category: str, industry: str, positioning: str) -> dict:
+    """
+    Assess whether the name supports:
+    - Industry naming norms
+    - Stated positioning tier
+    
+    Luxury requires abstraction; Mass allows clarity.
+    """
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    
+    # Positioning expectations
+    positioning_requirements = {
+        "luxury": {
+            "ideal_categories": ["FANCIFUL", "ARBITRARY"],
+            "acceptable_categories": ["SUGGESTIVE"],
+            "problematic_categories": ["DESCRIPTIVE", "GENERIC"],
+            "expectation": "Abstraction, mystery, non-descriptiveness (Hermès, Chanel, Rolex)"
+        },
+        "premium": {
+            "ideal_categories": ["FANCIFUL", "ARBITRARY", "SUGGESTIVE"],
+            "acceptable_categories": [],
+            "problematic_categories": ["DESCRIPTIVE", "GENERIC"],
+            "expectation": "Distinctiveness with subtle meaning (Tesla, Apple, Spotify)"
+        },
+        "mid-range": {
+            "ideal_categories": ["SUGGESTIVE", "ARBITRARY"],
+            "acceptable_categories": ["FANCIFUL", "DESCRIPTIVE"],
+            "problematic_categories": ["GENERIC"],
+            "expectation": "Balance of clarity and distinctiveness (Netflix, PayPal)"
+        },
+        "budget": {
+            "ideal_categories": ["DESCRIPTIVE", "SUGGESTIVE"],
+            "acceptable_categories": ["ARBITRARY", "FANCIFUL"],
+            "problematic_categories": ["GENERIC"],
+            "expectation": "Clarity over uniqueness (Dollar General, Toys R Us)"
+        },
+        "mass": {
+            "ideal_categories": ["DESCRIPTIVE", "SUGGESTIVE"],
+            "acceptable_categories": ["ARBITRARY"],
+            "problematic_categories": ["GENERIC"],
+            "expectation": "Immediate comprehension (General Electric, American Airlines)"
+        }
+    }
+    
+    # Get positioning requirements
+    pos_key = "mid-range"
+    for key in positioning_requirements:
+        if key in positioning_lower:
+            pos_key = key
+            break
+    
+    requirements = positioning_requirements[pos_key]
+    
+    # Check alignment
+    if legal_category in requirements["ideal_categories"]:
+        alignment = "STRONG"
+        alignment_reasoning = f"'{brand_name}' ({legal_category}) is ideal for {pos_key.title()} positioning. {requirements['expectation']}"
+    elif legal_category in requirements["acceptable_categories"]:
+        alignment = "ADEQUATE"
+        alignment_reasoning = f"'{brand_name}' ({legal_category}) is acceptable for {pos_key.title()} positioning, though not optimal. {requirements['expectation']}"
+    elif legal_category in requirements["problematic_categories"]:
+        alignment = "MISALIGNED"
+        alignment_reasoning = f"'{brand_name}' ({legal_category}) conflicts with {pos_key.title()} positioning requirements. {requirements['expectation']}"
+    else:
+        alignment = "NEUTRAL"
+        alignment_reasoning = f"'{brand_name}' positioning alignment is neutral."
+    
+    # Premium pricing power assessment
+    pricing_power = "HIGH" if legal_category in ["FANCIFUL", "ARBITRARY"] else "MODERATE" if legal_category == "SUGGESTIVE" else "LOW"
+    
+    return {
+        "positioning": pos_key.title(),
+        "alignment": alignment,
+        "alignment_reasoning": alignment_reasoning,
+        "pricing_power": pricing_power,
+        "industry_norms_fit": "STANDARD" if legal_category not in ["GENERIC"] else "NON-COMPLIANT"
+    }
+
+
+def assess_imitability_risk(brand_name: str, legal_category: str, dictionary_tokens: list, category: str) -> dict:
+    """
+    Assess:
+    - Ease of cloning via prefixes/suffixes
+    - Phonetic/visual lookalike risk
+    - Naming congestion in category
+    """
+    
+    brand_lower = brand_name.lower()
+    
+    # Clone-ability assessment
+    clone_examples = []
+    
+    # Prefix variations
+    common_prefixes = ["my", "get", "go", "i", "e", "ez", "quick", "smart", "super", "mega", "pro", "neo"]
+    for prefix in common_prefixes:
+        if brand_lower.startswith(prefix):
+            clone_examples.append(f"Remove prefix: '{brand_name[len(prefix):]}'")
+            break
+    
+    # Suffix variations
+    common_suffixes = ["ly", "ify", "er", "io", "app", "hub", "lab", "box", "now", "go", "pro"]
+    for suffix in common_suffixes:
+        if brand_lower.endswith(suffix):
+            clone_examples.append(f"Alternative suffix: '{brand_name[:-len(suffix)]}Hub', '{brand_name[:-len(suffix)]}Now'")
+            break
+    
+    # Word substitution risk (for descriptive names)
+    if len(dictionary_tokens) >= 2:
+        clone_examples.append(f"Synonym swap: Replace '{dictionary_tokens[0]}' with synonym")
+        clone_examples.append(f"Pluralization: '{brand_name}s' or '{brand_name}Plus'")
+    
+    # Phonetic lookalike risk
+    phonetic_risk = []
+    vowel_swaps = [("a", "e"), ("e", "i"), ("i", "y"), ("o", "u")]
+    for v1, v2 in vowel_swaps:
+        if v1 in brand_lower:
+            variant = brand_lower.replace(v1, v2, 1)
+            phonetic_risk.append(f"'{variant.title()}' (vowel swap)")
+    
+    # Imitability score
+    if legal_category == "FANCIFUL":
+        imitability = "LOW"
+        imitability_reasoning = "Coined terms are difficult to clone without obvious infringement."
+    elif legal_category == "ARBITRARY":
+        imitability = "LOW"
+        imitability_reasoning = "Arbitrary usage creates unique brand space."
+    elif legal_category == "SUGGESTIVE":
+        imitability = "MODERATE"
+        imitability_reasoning = "Suggestive names face competition from similar suggestions in same category."
+    else:  # DESCRIPTIVE or GENERIC
+        imitability = "HIGH"
+        imitability_reasoning = "Descriptive terms invite direct competition from synonyms and variations."
+    
+    return {
+        "imitability_level": imitability,
+        "imitability_reasoning": imitability_reasoning,
+        "clone_examples": clone_examples[:3],  # Limit to 3
+        "phonetic_lookalikes": phonetic_risk[:2],  # Limit to 2
+        "congestion_risk": "HIGH" if legal_category in ["DESCRIPTIVE", "GENERIC"] else "MODERATE" if legal_category == "SUGGESTIVE" else "LOW"
+    }
+
+
+def assess_brand_asset_ceiling(
+    brand_name: str, 
+    legal_category: str, 
+    positioning: str,
+    trademark_risk: int,
+    positioning_alignment: dict,
+    imitability_risk: dict
+) -> dict:
+    """
+    Evaluate long-term brand asset value:
+    - Trademark enforceability
+    - Premium pricing power
+    - Multi-category expansion potential
+    - Acquisition attractiveness
+    """
+    
+    # Trademark enforceability
+    enforceability_scores = {
+        "FANCIFUL": ("MAXIMUM", "Full scope of protection across related goods/services"),
+        "ARBITRARY": ("HIGH", "Strong protection within product category"),
+        "SUGGESTIVE": ("MODERATE", "Protection limited to confusingly similar marks"),
+        "DESCRIPTIVE": ("LIMITED", "Protection only after Secondary Meaning established"),
+        "GENERIC": ("NONE", "Cannot be enforced as trademark")
+    }
+    enforceability, enforce_reason = enforceability_scores.get(legal_category, ("UNKNOWN", ""))
+    
+    # Multi-category expansion potential
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        expansion = "HIGH"
+        expansion_reason = "Abstract name enables expansion into adjacent categories"
+    elif legal_category == "SUGGESTIVE":
+        expansion = "MODERATE"
+        expansion_reason = "Suggestive meaning may constrain category stretch"
+    else:
+        expansion = "LOW"
+        expansion_reason = "Descriptive names are category-locked"
+    
+    # Acquisition attractiveness
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    
+    if legal_category in ["FANCIFUL", "ARBITRARY"] and "luxury" in positioning_lower or "premium" in positioning_lower:
+        acquisition = "HIGH"
+        acquisition_reason = "Strong trademark + premium positioning = valuable IP asset"
+    elif legal_category in ["FANCIFUL", "ARBITRARY", "SUGGESTIVE"]:
+        acquisition = "MODERATE"
+        acquisition_reason = "Defensible trademark but acquisition premium depends on market position"
+    else:
+        acquisition = "LOW"
+        acquisition_reason = "Weak trademark limits strategic value in M&A"
+    
+    # Overall ceiling
+    ceiling_factors = {
+        "FANCIFUL": 95,
+        "ARBITRARY": 85,
+        "SUGGESTIVE": 65,
+        "DESCRIPTIVE": 40,
+        "GENERIC": 10
+    }
+    base_ceiling = ceiling_factors.get(legal_category, 50)
+    
+    # Adjustments
+    if positioning_alignment.get("alignment") == "MISALIGNED":
+        base_ceiling -= 15
+    if imitability_risk.get("imitability_level") == "HIGH":
+        base_ceiling -= 10
+    if trademark_risk > 5:
+        base_ceiling -= (trademark_risk - 5) * 3
+    
+    base_ceiling = max(10, min(95, base_ceiling))
+    
+    if base_ceiling >= 80:
+        ceiling_rating = "HIGH"
+    elif base_ceiling >= 60:
+        ceiling_rating = "MODERATE"
+    elif base_ceiling >= 40:
+        ceiling_rating = "LIMITED"
+    else:
+        ceiling_rating = "MINIMAL"
+    
+    return {
+        "ceiling_score": base_ceiling,
+        "ceiling_rating": ceiling_rating,
+        "trademark_enforceability": enforceability,
+        "enforceability_reasoning": enforce_reason,
+        "expansion_potential": expansion,
+        "expansion_reasoning": expansion_reason,
+        "acquisition_attractiveness": acquisition,
+        "acquisition_reasoning": acquisition_reason
+    }
+
+
+def generate_strategic_strengths(
+    brand_name: str,
+    legal_category: str,
+    linguistic_eval: dict,
+    positioning_alignment: dict,
+    imitability_risk: dict,
+    asset_ceiling: dict,
+    domain_available: bool,
+    social_data: dict
+) -> list:
+    """Generate KEY STRATEGIC STRENGTHS based on framework analysis."""
+    
+    strengths = []
+    
+    # Legal strength
+    if legal_category == "FANCIFUL":
+        strengths.append(f"**Strongest Trademark Class:** Coined term receives maximum legal protection under TMEP §1209")
+    elif legal_category == "ARBITRARY":
+        strengths.append(f"**Strong Trademark Position:** Arbitrary usage provides inherent distinctiveness")
+    elif legal_category == "SUGGESTIVE":
+        strengths.append(f"**Registrable Without Proof:** Suggestive mark is inherently distinctive; no Secondary Meaning required")
+    
+    # Linguistic strengths
+    if linguistic_eval.get("pronunciation_ease") == "HIGH":
+        strengths.append(f"**Phonetic Clarity:** Clean pronunciation across English and non-native markets")
+    if linguistic_eval.get("memorability_rating") == "HIGH":
+        strengths.append(f"**High Memorability:** {len(brand_name)}-character length optimized for recall ({linguistic_eval.get('memorability_score', 7)}/10)")
+    if not linguistic_eval.get("cultural_flags"):
+        strengths.append(f"**Cultural Neutrality:** No adverse connotations detected across target markets")
+    
+    # Positioning strengths
+    if positioning_alignment.get("alignment") == "STRONG":
+        strengths.append(f"**Positioning Fit:** Name architecture supports {positioning_alignment.get('positioning', 'Premium')} market positioning")
+    if positioning_alignment.get("pricing_power") == "HIGH":
+        strengths.append(f"**Premium Pricing Power:** Abstract naming enables price premium over descriptive competitors")
+    
+    # Competitive strengths
+    if imitability_risk.get("imitability_level") == "LOW":
+        strengths.append(f"**Defensible Moat:** Low clone-ability provides competitive barrier")
+    
+    # Asset strengths
+    if asset_ceiling.get("expansion_potential") == "HIGH":
+        strengths.append(f"**Expansion Runway:** Name supports multi-category and geographic expansion")
+    if asset_ceiling.get("acquisition_attractiveness") == "HIGH":
+        strengths.append(f"**Investment Grade:** Strong IP asset suitable for premium acquisition valuation")
+    
+    # Digital strengths
+    if domain_available:
+        strengths.append(f"**Domain Available:** Primary .com domain securable")
+    
+    # Ensure at least one strength for descriptive names
+    if not strengths and legal_category == "DESCRIPTIVE":
+        strengths.append(f"**Immediate Comprehension:** Name clearly communicates product function - low customer education cost")
+        strengths.append(f"**SEO Potential:** Descriptive terms may benefit from search query matching")
+    
+    return strengths[:6]  # Limit to 6
+
+
+def generate_strategic_risks(
+    brand_name: str,
+    legal_category: str,
+    descriptiveness_depth: dict,
+    linguistic_eval: dict,
+    positioning_alignment: dict,
+    imitability_risk: dict,
+    asset_ceiling: dict,
+    domain_available: bool,
+    countries: list
+) -> list:
+    """Generate KEY STRATEGIC RISKS based on framework analysis."""
+    
+    risks = []
+    
+    # Legal risks
+    if legal_category == "GENERIC":
+        risks.append(f"**⛔ UNREGISTRABLE:** Generic terms cannot be trademarked under any jurisdiction")
+    elif legal_category == "DESCRIPTIVE":
+        if descriptiveness_depth and descriptiveness_depth.get("depth") == "HIGH":
+            risks.append(f"**Weak Trademark:** {descriptiveness_depth.get('describes', 'Descriptive')} descriptiveness requires Secondary Meaning proof (5+ years exclusive use)")
+        else:
+            risks.append(f"**Limited Protection:** Descriptive marks require evidence of acquired distinctiveness for Principal Register")
+    
+    # Descriptiveness depth risks
+    if descriptiveness_depth:
+        if descriptiveness_depth.get("depth") == "HIGH":
+            risks.append(f"**Registration Challenge:** {descriptiveness_depth.get('reasoning', 'High descriptiveness may face examiner refusal')}")
+    
+    # Positioning misalignment
+    if positioning_alignment.get("alignment") == "MISALIGNED":
+        risks.append(f"**Positioning Conflict:** {positioning_alignment.get('alignment_reasoning', 'Name conflicts with target market positioning')}")
+    if positioning_alignment.get("pricing_power") == "LOW":
+        risks.append(f"**Zero Premium Signal:** Descriptive name commoditizes offering - pricing power limited")
+    
+    # Imitability risks
+    if imitability_risk.get("imitability_level") == "HIGH":
+        clones = imitability_risk.get("clone_examples", [])
+        if clones:
+            risks.append(f"**High Clone Risk:** Easily imitated via {clones[0] if clones else 'synonyms and variations'}")
+        risks.append(f"**No Competitive Moat:** {imitability_risk.get('imitability_reasoning', 'Descriptive terms invite direct competition')}")
+    
+    # Linguistic risks
+    if linguistic_eval.get("pronunciation_issues"):
+        risks.append(f"**Pronunciation Barrier:** {linguistic_eval['pronunciation_issues'][0]}")
+    if linguistic_eval.get("cultural_flags"):
+        for flag in linguistic_eval["cultural_flags"][:2]:
+            risks.append(f"**Cultural Sensitivity:** {flag}")
+    if linguistic_eval.get("memorability_rating") == "LOW":
+        risks.append(f"**Low Memorability:** {len(brand_name)} characters exceeds optimal length for word-of-mouth")
+    
+    # Asset ceiling risks
+    if asset_ceiling.get("ceiling_rating") in ["LIMITED", "MINIMAL"]:
+        risks.append(f"**Low Asset Ceiling:** Brand value capped at {asset_ceiling.get('ceiling_score', 40)}/100 due to weak trademark position")
+    if asset_ceiling.get("expansion_potential") == "LOW":
+        risks.append(f"**Category Lock:** {asset_ceiling.get('expansion_reasoning', 'Descriptive names constrain category expansion')}")
+    if asset_ceiling.get("acquisition_attractiveness") == "LOW":
+        risks.append(f"**Limited Exit Value:** {asset_ceiling.get('acquisition_reasoning', 'Weak trademark limits M&A premium')}")
+    
+    # Digital risks
+    if not domain_available:
+        risks.append(f"**Domain Unavailable:** Primary .com domain taken - acquisition or alternative strategy required")
+    
+    # If minimal risks found
+    if not risks:
+        risks.append(f"**Standard Due Diligence:** Recommend comprehensive trademark search before filing")
+    
+    return risks[:6]  # Limit to 6
+
+
+def generate_final_verdict(
+    brand_name: str,
+    legal_category: str,
+    positioning: str,
+    positioning_alignment: dict,
+    asset_ceiling: dict,
+    trademark_risk: int
+) -> str:
+    """Generate 1-2 sentence decisive, no-hedging final consultant verdict."""
+    
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    ceiling_score = asset_ceiling.get("ceiling_score", 50)
+    alignment = positioning_alignment.get("alignment", "NEUTRAL")
+    
+    # FANCIFUL - Best case
+    if legal_category == "FANCIFUL" and alignment != "MISALIGNED":
+        return f"'{brand_name}' is an investment-grade trademark asset. Recommend immediate filing with comprehensive global protection strategy."
+    
+    # ARBITRARY - Strong
+    if legal_category == "ARBITRARY" and alignment != "MISALIGNED":
+        return f"'{brand_name}' offers strong trademark defensibility. Proceed with registration; prioritize key jurisdictions for enforcement."
+    
+    # SUGGESTIVE - Solid
+    if legal_category == "SUGGESTIVE":
+        if alignment == "STRONG":
+            return f"'{brand_name}' balances memorability with protectability. Suitable for trademark filing with standard watch service."
+        else:
+            return f"'{brand_name}' is registrable but faces category competition. Consider strengthening brand architecture through design marks."
+    
+    # DESCRIPTIVE - Problematic for premium
+    if legal_category == "DESCRIPTIVE":
+        if "luxury" in positioning_lower or "premium" in positioning_lower:
+            return f"'{brand_name}' is fundamentally unsuitable for {positioning_lower} positioning. Recommend renaming with arbitrary or fanciful approach for investor-grade IP."
+        elif ceiling_score >= 50:
+            return f"'{brand_name}' may function for mass-market but limits long-term brand equity. Acceptable if speed-to-market outweighs IP strength."
+        else:
+            return f"'{brand_name}' offers weak trademark protection and low asset ceiling. Recommend exploring distinctive alternatives before significant brand investment."
+    
+    # GENERIC - Reject
+    if legal_category == "GENERIC":
+        return f"'{brand_name}' is legally unprotectable. Immediate renaming required before any market investment."
+    
+    # Default
+    return f"'{brand_name}' requires trademark attorney consultation before proceeding. Classification ambiguity suggests registration risk."
+
+
 def generate_risk_cons(brand_name: str, countries: list, category: str, domain_available: bool, verdict: str) -> list:
     """
     Generate KEY RISKS section that aligns with the Executive Summary.
