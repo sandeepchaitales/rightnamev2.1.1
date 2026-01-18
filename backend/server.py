@@ -948,7 +948,17 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
     - Compound Rule: FaceBook = Face + Book = NOT Coined
     - Conservative Rule: If borderline, default to weaker category
     - No Fluff Rule: Legal accuracy > Marketing appeal
+    
+    CACHING: Results are cached to avoid duplicate calculations.
     """
+    global _CLASSIFICATION_CACHE
+    
+    # Check cache first
+    cache_key = f"{brand_name.lower()}|{industry.lower()}"
+    if cache_key in _CLASSIFICATION_CACHE:
+        logging.info(f"🏷️ CLASSIFICATION (CACHED): '{brand_name}' → {_CLASSIFICATION_CACHE[cache_key]['category']}")
+        return _CLASSIFICATION_CACHE[cache_key]
+    
     brand_lower = brand_name.lower()
     industry_lower = industry.lower()
     
