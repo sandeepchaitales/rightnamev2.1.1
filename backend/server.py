@@ -959,6 +959,12 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
         logging.info(f"🏷️ CLASSIFICATION (CACHED): '{brand_name}' → {_CLASSIFICATION_CACHE[cache_key]['category']}")
         return _CLASSIFICATION_CACHE[cache_key]
     
+    # Helper to store in cache before returning
+    def cache_and_return(result, log_msg):
+        _CLASSIFICATION_CACHE[cache_key] = result
+        logging.info(log_msg)
+        return result
+    
     brand_lower = brand_name.lower()
     industry_lower = industry.lower()
     
