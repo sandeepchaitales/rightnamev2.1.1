@@ -8198,6 +8198,349 @@ class BrandEvaluationTester:
         # Print summary
         return self.print_summary()
 
+    def test_deep_trace_analysis_rapidoy(self):
+        """CRITICAL TEST CASE: Deep-Trace Analysis for Rapidoy in Ride-hailing (should REJECT due to Rapido conflict)"""
+        payload = {
+            "brand_names": ["Rapidoy"],
+            "category": "Ride-hailing",
+            "industry": "Transport",
+            "countries": ["India"],
+            "positioning": "Mid-Range"
+        }
+        
+        try:
+            print(f"\n🔍 CRITICAL TEST: Deep-Trace Analysis - Rapidoy in Ride-hailing...")
+            print(f"Expected: REJECT verdict due to Rapido ($5B ride-hailing company) conflict")
+            print(f"Expected: Root extraction 'rapidoy' → 'rapid'")
+            print(f"Expected: Score 0-40 (HIGH RISK zone)")
+            print(f"Expected: Deep-Trace logs in backend")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120-second timeout as requested
+            )
+            response_time = time.time() - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Deep-Trace Analysis - Rapidoy HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Deep-Trace Analysis - Rapidoy Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                deep_trace_issues = []
+                
+                # Test 1: Check NameScore is in HIGH RISK zone (0-40)
+                namescore = brand.get("namescore")
+                if namescore is None:
+                    deep_trace_issues.append("NameScore missing from response")
+                elif not (0 <= namescore <= 40):
+                    deep_trace_issues.append(f"Expected HIGH RISK score (0-40), got {namescore}/100")
+                else:
+                    print(f"✅ NameScore in HIGH RISK zone: {namescore}/100")
+                
+                # Test 2: Check verdict is REJECT or HIGH RISK
+                verdict = brand.get("verdict", "")
+                if verdict not in ["REJECT", "HIGH RISK"]:
+                    deep_trace_issues.append(f"Expected REJECT or HIGH RISK verdict, got: {verdict}")
+                else:
+                    print(f"✅ Correct verdict: {verdict}")
+                
+                # Test 3: Check for Rapido conflict detection in summary/analysis
+                summary = brand.get("summary", "")
+                executive_summary = data.get("executive_summary", "")
+                full_text = f"{summary} {executive_summary}".lower()
+                
+                if "rapido" not in full_text:
+                    deep_trace_issues.append("Rapido conflict not detected in summary or executive summary")
+                else:
+                    print(f"✅ Rapido conflict detected in analysis")
+                
+                # Test 4: Check for Deep-Trace Analysis indicators
+                deep_trace_indicators = [
+                    "deep-trace", "deep trace", "category king", "root extraction", 
+                    "rapid", "rapidoy", "phonetic similarity"
+                ]
+                
+                found_indicators = []
+                for indicator in deep_trace_indicators:
+                    if indicator in full_text:
+                        found_indicators.append(indicator)
+                
+                if len(found_indicators) < 2:
+                    deep_trace_issues.append(f"Expected Deep-Trace Analysis indicators, found only: {found_indicators}")
+                else:
+                    print(f"✅ Deep-Trace indicators found: {found_indicators}")
+                
+                # Test 5: Check for early stopping or rejection reasoning
+                if "category king" in full_text or "existing brand" in full_text or "conflict" in full_text:
+                    print(f"✅ Conflict reasoning detected")
+                else:
+                    deep_trace_issues.append("No clear conflict reasoning found in response")
+                
+                # Test 6: Verify response time is reasonable (should be quick if early stopping)
+                if response_time > 60:
+                    print(f"⚠️ Response time {response_time:.2f}s > 60s (may not be early stopping)")
+                else:
+                    print(f"✅ Response time {response_time:.2f}s (good performance)")
+                
+                if deep_trace_issues:
+                    self.log_test("Deep-Trace Analysis - Rapidoy CRITICAL", False, "; ".join(deep_trace_issues))
+                    return False
+                
+                self.log_test("Deep-Trace Analysis - Rapidoy CRITICAL", True, 
+                            f"✅ PASSED: Rapidoy correctly REJECTED. Score: {namescore}/100, Verdict: {verdict}, Rapido conflict detected, Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Deep-Trace Analysis - Rapidoy JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Deep-Trace Analysis - Rapidoy Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Deep-Trace Analysis - Rapidoy Exception", False, str(e))
+            return False
+
+    def test_deep_trace_analysis_zyntrix(self):
+        """Test Deep-Trace Analysis with Zyntrix (should PASS with high score)"""
+        payload = {
+            "brand_names": ["Zyntrix"],
+            "category": "AI Platform",
+            "industry": "Technology",
+            "countries": ["USA"],
+            "positioning": "Premium"
+        }
+        
+        try:
+            print(f"\n🔍 Testing Deep-Trace Analysis - Zyntrix (should PASS)...")
+            print(f"Expected: GO verdict with score 71-100 (GREEN zone)")
+            print(f"Expected: No major conflicts detected")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120-second timeout as requested
+            )
+            response_time = time.time() - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Deep-Trace Analysis - Zyntrix HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Deep-Trace Analysis - Zyntrix Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                zyntrix_issues = []
+                
+                # Test 1: Check NameScore is in GREEN zone (71-100)
+                namescore = brand.get("namescore")
+                if namescore is None:
+                    zyntrix_issues.append("NameScore missing from response")
+                elif not (71 <= namescore <= 100):
+                    zyntrix_issues.append(f"Expected GREEN zone score (71-100), got {namescore}/100")
+                else:
+                    print(f"✅ NameScore in GREEN zone: {namescore}/100")
+                
+                # Test 2: Check verdict is GO or APPROVE
+                verdict = brand.get("verdict", "")
+                if verdict not in ["GO", "APPROVE", "CAUTION"]:  # CAUTION is acceptable for unique names
+                    zyntrix_issues.append(f"Expected GO/APPROVE/CAUTION verdict, got: {verdict}")
+                else:
+                    print(f"✅ Acceptable verdict: {verdict}")
+                
+                # Test 3: Check that no major conflicts are detected
+                summary = brand.get("summary", "")
+                executive_summary = data.get("executive_summary", "")
+                full_text = f"{summary} {executive_summary}".lower()
+                
+                # Should NOT contain major conflict indicators
+                major_conflicts = ["immediate rejection", "category king", "existing brand", "trademark conflict"]
+                found_conflicts = [conflict for conflict in major_conflicts if conflict in full_text]
+                
+                if found_conflicts:
+                    zyntrix_issues.append(f"Unexpected major conflicts detected: {found_conflicts}")
+                else:
+                    print(f"✅ No major conflicts detected (as expected for unique name)")
+                
+                # Test 4: Check for positive indicators
+                positive_indicators = [
+                    "unique", "distinctive", "available", "clear", "strong", "good"
+                ]
+                
+                found_positives = []
+                for indicator in positive_indicators:
+                    if indicator in full_text:
+                        found_positives.append(indicator)
+                
+                if len(found_positives) < 1:
+                    print(f"⚠️ Few positive indicators found: {found_positives}")
+                else:
+                    print(f"✅ Positive indicators found: {found_positives}")
+                
+                # Test 5: Verify brand name matches
+                if brand.get("brand_name") != "Zyntrix":
+                    zyntrix_issues.append(f"Brand name mismatch: expected 'Zyntrix', got '{brand.get('brand_name')}'")
+                
+                if zyntrix_issues:
+                    self.log_test("Deep-Trace Analysis - Zyntrix PASS", False, "; ".join(zyntrix_issues))
+                    return False
+                
+                self.log_test("Deep-Trace Analysis - Zyntrix PASS", True, 
+                            f"✅ PASSED: Zyntrix correctly approved. Score: {namescore}/100, Verdict: {verdict}, No major conflicts, Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Deep-Trace Analysis - Zyntrix JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Deep-Trace Analysis - Zyntrix Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Deep-Trace Analysis - Zyntrix Exception", False, str(e))
+            return False
+
+    def check_backend_logs_for_deep_trace(self):
+        """Check backend logs for Deep-Trace Analysis messages"""
+        try:
+            print(f"\n📋 Checking backend logs for Deep-Trace Analysis messages...")
+            
+            # Check supervisor backend logs
+            import subprocess
+            result = subprocess.run(
+                ["tail", "-n", "100", "/var/log/supervisor/backend.out.log"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode != 0:
+                print(f"⚠️ Could not read backend logs: {result.stderr}")
+                return False
+            
+            log_content = result.stdout
+            
+            # Expected Deep-Trace log messages
+            expected_messages = [
+                "🔍 DEEP-TRACE ANALYSIS started",
+                "ROOT EXTRACTION:",
+                "⚠️ CATEGORY KING FOUND:",
+                "🛡️ DEEP-TRACE REJECTION:",
+                "rapidoy → rapid",
+                "Rapido"
+            ]
+            
+            found_messages = []
+            for message in expected_messages:
+                if message.lower() in log_content.lower():
+                    found_messages.append(message)
+            
+            print(f"Expected Deep-Trace messages: {len(expected_messages)}")
+            print(f"Found in logs: {len(found_messages)}")
+            
+            if found_messages:
+                print(f"✅ Found Deep-Trace messages: {found_messages}")
+                self.log_test("Backend Logs - Deep-Trace Messages", True, f"Found {len(found_messages)}/{len(expected_messages)} expected messages")
+                return True
+            else:
+                print(f"❌ No Deep-Trace messages found in backend logs")
+                self.log_test("Backend Logs - Deep-Trace Messages", False, "No Deep-Trace Analysis messages found in backend logs")
+                return False
+                
+        except Exception as e:
+            print(f"⚠️ Error checking backend logs: {str(e)}")
+            self.log_test("Backend Logs - Deep-Trace Messages", False, f"Error checking logs: {str(e)}")
+            return False
+
+    def run_deep_trace_tests_only(self):
+        """Run only the Deep-Trace Analysis tests as requested in the review"""
+        print("🔍 RIGHTNAME Deep-Trace Analysis Feature Testing")
+        print("="*80)
+        print("Testing NEW Deep-Trace Analysis feature for brand conflict detection")
+        print("Focus: Rapidoy/Rapido bug fix verification")
+        print("="*80)
+        
+        # Test 1: CRITICAL - Rapidoy should be REJECTED due to Rapido conflict
+        print("\n🚨 CRITICAL TEST CASE: Rapidoy in Ride-hailing")
+        success1 = self.test_deep_trace_analysis_rapidoy()
+        
+        # Test 2: Zyntrix should PASS with high score
+        print("\n✅ POSITIVE TEST CASE: Zyntrix AI Platform")
+        success2 = self.test_deep_trace_analysis_zyntrix()
+        
+        # Test 3: Check backend logs for Deep-Trace messages
+        print("\n📋 BACKEND LOG VERIFICATION")
+        success3 = self.check_backend_logs_for_deep_trace()
+        
+        # Print summary
+        success = self.print_summary()
+        
+        # Save detailed results to JSON file
+        with open('/app/deep_trace_test_results.json', 'w') as f:
+            json.dump({
+                "test_focus": "Deep-Trace Analysis Feature Testing",
+                "description": "Testing NEW Deep-Trace Analysis feature for RIGHTNAME brand evaluation API",
+                "critical_bug_fix": "Rapidoy/Rapido conflict detection in ride-hailing category",
+                "test_cases": [
+                    {
+                        "name": "Rapidoy in Ride-hailing",
+                        "type": "CRITICAL - Should REJECT",
+                        "expected_score": "0-40 (HIGH RISK)",
+                        "expected_verdict": "REJECT",
+                        "expected_conflict": "Rapido ($5B ride-hailing company)"
+                    },
+                    {
+                        "name": "Zyntrix AI Platform", 
+                        "type": "POSITIVE - Should PASS",
+                        "expected_score": "71-100 (GREEN zone)",
+                        "expected_verdict": "GO/APPROVE",
+                        "expected_conflict": "None"
+                    }
+                ],
+                "backend_log_verification": [
+                    "🔍 DEEP-TRACE ANALYSIS started for 'Rapidoy'",
+                    "ROOT EXTRACTION: rapidoy → rapid",
+                    "⚠️ CATEGORY KING FOUND: Rapido",
+                    "🛡️ DEEP-TRACE REJECTION: Rapidoy → Score X/100"
+                ],
+                "test_results": self.test_results,
+                "summary": {
+                    "total_tests": self.tests_run,
+                    "passed_tests": self.tests_passed,
+                    "failed_tests": self.tests_run - self.tests_passed,
+                    "success_rate": f"{(self.tests_passed/self.tests_run)*100:.1f}%" if self.tests_run > 0 else "0%"
+                }
+            }, f, indent=2)
+        
+        print(f"\n📄 Detailed results saved to: /app/deep_trace_test_results.json")
+        
+        return success
+
 def main():
     """Main function to run Admin Panel API tests as requested in review"""
     tester = BrandEvaluationTester()
