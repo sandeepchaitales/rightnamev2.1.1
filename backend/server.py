@@ -3974,13 +3974,16 @@ def generate_strategic_strengths(
     
     strengths = []
     
-    # Legal strength
+    # Legal strength - based on trademark classification
     if legal_category == "FANCIFUL":
         strengths.append(f"**Strongest Trademark Class:** Coined term receives maximum legal protection under TMEP §1209")
     elif legal_category == "ARBITRARY":
         strengths.append(f"**Strong Trademark Position:** Arbitrary usage provides inherent distinctiveness")
     elif legal_category == "SUGGESTIVE":
         strengths.append(f"**Registrable Without Proof:** Suggestive mark is inherently distinctive; no Secondary Meaning required")
+    elif legal_category == "DESCRIPTIVE":
+        # DESCRIPTIVE names have functional strengths, NOT IP strengths
+        strengths.append(f"**High Functional Clarity:** Users immediately understand the product's value proposition without explanation")
     
     # Linguistic strengths
     if linguistic_eval.get("pronunciation_ease") == "HIGH":
@@ -3990,7 +3993,7 @@ def generate_strategic_strengths(
     if not linguistic_eval.get("cultural_flags"):
         strengths.append(f"**Cultural Neutrality:** No adverse connotations detected across target markets")
     
-    # Positioning strengths
+    # Positioning strengths - ONLY for strong/adequate alignment
     if positioning_alignment.get("alignment") == "STRONG":
         strengths.append(f"**Positioning Fit:** Name architecture supports {positioning_alignment.get('positioning', 'Premium')} market positioning")
     if positioning_alignment.get("pricing_power") == "HIGH":
@@ -4000,20 +4003,23 @@ def generate_strategic_strengths(
     if imitability_risk.get("imitability_level") == "LOW":
         strengths.append(f"**Defensible Moat:** Low clone-ability provides competitive barrier")
     
-    # Asset strengths
+    # Asset strengths - ONLY for FANCIFUL/ARBITRARY with actual high ceiling
+    # NOTE: DESCRIPTIVE names should NEVER show "Investment Grade" - that's a contradiction
     if asset_ceiling.get("expansion_potential") == "HIGH":
         strengths.append(f"**Expansion Runway:** Name supports multi-category and geographic expansion")
-    if asset_ceiling.get("acquisition_attractiveness") == "HIGH":
+    if asset_ceiling.get("acquisition_attractiveness") == "HIGH" and legal_category in ["FANCIFUL", "ARBITRARY"]:
         strengths.append(f"**Investment Grade:** Strong IP asset suitable for premium acquisition valuation")
     
     # Digital strengths
     if domain_available:
         strengths.append(f"**Domain Available:** Primary .com domain securable")
     
-    # Ensure at least one strength for descriptive names
-    if not strengths and legal_category == "DESCRIPTIVE":
-        strengths.append(f"**Immediate Comprehension:** Name clearly communicates product function - low customer education cost")
-        strengths.append(f"**SEO Potential:** Descriptive terms may benefit from search query matching")
+    # Additional strengths for DESCRIPTIVE names (marketing value, not IP value)
+    if legal_category == "DESCRIPTIVE":
+        if len(strengths) < 3:
+            strengths.append(f"**Low Marketing Education Cost:** Name self-explains product category")
+        if len(strengths) < 4:
+            strengths.append(f"**SEO Potential:** Descriptive terms may align with user search queries")
     
     return strengths[:6]  # Limit to 6
 
