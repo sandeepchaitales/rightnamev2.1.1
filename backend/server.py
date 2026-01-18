@@ -6433,8 +6433,9 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                     "secondary_classes": [],
                     "filing_strategy": f"File in Class {nice_class.get('class_number', 3)} ({nice_class.get('class_description', category)})"
                 },
+                # Use actual classification for dimensions reasoning
                 "dimensions": [
-                    {"name": "Brand Distinctiveness & Memorability", "score": 7.5, "reasoning": f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' demonstrates {'strong' if len(brand_name) <= 10 else 'moderate'} memorability characteristics.\n\n**COMPETITIVE ISOLATION:**\nAs a coined term, offers high distinctiveness in the {category} market."},
+                    {"name": "Brand Distinctiveness & Memorability", "score": get_distinctiveness_score(classification), "reasoning": f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' demonstrates {'strong' if len(brand_name) <= 10 else 'moderate'} memorability characteristics.\n\n**COMPETITIVE ISOLATION:**\nAs a {classification.get('category', 'DESCRIPTIVE').lower()} term, offers {classification.get('distinctiveness', 'MODERATE').lower()} distinctiveness in the {category} market."},
                     {"name": "Cultural & Linguistic Resonance", "score": 7.2, "reasoning": f"**GLOBAL LINGUISTIC AUDIT:**\nNo negative connotations detected across major languages.\n\n**CULTURAL SEMIOTICS:**\nNeutral-positive associations suitable for international branding."},
                     {"name": "Premiumisation & Trust Curve", "score": 7.0, "reasoning": f"**PRICING POWER:**\nName structure supports {'premium' if overall_score >= 70 else 'mid-tier'} positioning.\n\n**TRUST SIGNALS:**\nProfessional presentation suitable for {category} sector."},
                     {"name": "Scalability & Brand Architecture", "score": 7.3, "reasoning": f"**CATEGORY STRETCH:**\nFlexible foundation for product line extensions.\n\n**ARCHITECTURE FIT:**\nWorks as standalone brand or master brand."},
