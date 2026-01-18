@@ -2502,7 +2502,8 @@ async def llm_first_country_analysis(
     category: str, 
     brand_name: str,
     use_llm_research: bool = True,
-    positioning: str = "Mid-Range"
+    positioning: str = "Mid-Range",
+    classification: dict = None  # NEW: Accept pre-calculated classification
 ) -> tuple:
     """
     LLM-First approach to country analysis with POSITIONING-AWARE search.
@@ -2513,14 +2514,20 @@ async def llm_first_country_analysis(
     
     Uses real-time web search + LLM for accuracy, with hardcoded fallback if research fails.
     
+    NEW: Accepts pre-calculated classification to avoid duplicate computation.
+    
     Returns: (country_competitor_analysis, cultural_analysis)
     """
+    # Use passed classification or calculate if not provided
+    if classification is None:
+        classification = classify_brand_with_industry(brand_name, category)
+    
     if not use_llm_research:
         # Use hardcoded fallback directly
         logging.info(f"⚡ Using hardcoded data (LLM research disabled)")
         return (
             generate_country_competitor_analysis(countries, category, brand_name),
-            generate_cultural_analysis(countries, brand_name, category)
+            generate_cultural_analysis(countries, brand_name, category, classification)
         )
     
     logging.info(f"🔬 LLM-FIRST RESEARCH: Starting {positioning} research for {len(countries)} countries...")
