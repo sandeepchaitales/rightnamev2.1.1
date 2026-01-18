@@ -167,6 +167,10 @@ class CountryAnalysis(BaseModel):
     cultural_resonance_score: float
     cultural_notes: str
     linguistic_check: str
+    country_flag: Optional[str] = Field(default="🌍", description="Country flag emoji")
+    # NEW: Formula-based score breakdown
+    score_breakdown: Optional[dict] = Field(default=None, description="Cultural score breakdown: Safety, Fluency, Vibe")
+    linguistic_analysis: Optional[dict] = Field(default=None, description="Linguistic decomposition analysis")
 
 class Competitor(BaseModel):
     name: str
