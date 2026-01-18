@@ -1781,6 +1781,13 @@ def calculate_fallback_cultural_score(
     
     # === VIBE SCORE (Market Fit) ===
     vibe_score = 6  # Default: average
+    vibe_issues = []
+    
+    # GATE 2: Check for category mismatch
+    category_mismatch = check_category_mismatch(brand_name, category)
+    if category_mismatch.get("has_mismatch"):
+        vibe_score -= 3  # Significant penalty for category mismatch
+        vibe_issues.append(category_mismatch.get("warning", "Category mismatch detected"))
     
     # Category-based vibe assessment
     PREMIUM_INDICATORS = ["health", "care", "med", "clinic", "pro", "prime", "elite", "lux"]
@@ -1794,11 +1801,13 @@ def calculate_fallback_cultural_score(
         if indicator in brand_lower:
             vibe_score -= 1
     
-    # Invented/coined names get bonus (more distinctive)
-    if not any(word in brand_lower for word in ["the", "my", "our", "best", "top", "super"]):
-        vibe_score += 1
+    # Descriptive names get penalty (weaker trademark)
+    brand_type = classify_brand_name_type(brand_name, {"morphemes": []})
+    if brand_type == "Descriptive/Composite":
+        vibe_score -= 1
+        vibe_issues.append("Descriptive name - weaker trademark protection")
     
-    vibe_score = max(3, min(10, vibe_score))
+    vibe_score = max(2, min(10, vibe_score))
     
     # === CALCULATE FINAL SCORE ===
     final_score = (safety_score * 0.4) + (fluency_score * 0.3) + (vibe_score * 0.3)
