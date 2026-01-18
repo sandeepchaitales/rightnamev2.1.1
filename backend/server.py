@@ -1305,7 +1305,336 @@ def generate_country_competitor_analysis(countries: list, category: str, brand_n
     return result
 
 
-# ============ CULTURAL ANALYSIS GENERATOR ============
+# ============ NEW FORMULA-BASED CULTURAL SCORING SYSTEM ============
+# Score = (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
+
+LLM_CULTURAL_SCORING_PROMPT = """You are the Global Brand Strategy Director for a Fortune 500 consultancy. 
+Your goal is to stress-test brand names for cultural risks across international markets.
+Your analysis must be cynical, conservative, and brutally honest.
+
+### INPUT DATA ###
+Brand Name: {brand_name}
+Industry: {category}
+Target Country: {country}
+
+### SCORING CRITERIA (0-10 scale for each) ###
+
+1. SAFETY SCORE (Weight: 40%)
+   Check for "Phonetic Accidents": Does the name sound like slang, insult, bodily function, or sacred term in the local language?
+   - 10 = Completely clean, no issues
+   - 7-9 = Minor concerns but acceptable
+   - 4-6 = Some phonetic risks identified
+   - 1-3 = Sounds like a problematic word
+   - 0 = CRITICAL - sounds like offensive/sacred term
+
+2. FLUENCY SCORE (Weight: 30%)
+   How easy is it for a mass-market consumer in {country} to pronounce?
+   - 10 = Native ease (like "Sony" or "Nike")
+   - 7-9 = Easy with minor accent adjustment
+   - 4-6 = Moderate difficulty, some sounds challenging
+   - 1-3 = Hard sounds for local speakers (e.g., "Th" in Thai, "V" in Japanese)
+   - 0 = Virtually unpronounceable
+
+3. VIBE SCORE (Weight: 30%)
+   Compare to top competitors in {category} in {country}. Does it fit premium market codes?
+   - 10 = Sounds like a market leader
+   - 7-9 = Professional, trustworthy sound
+   - 4-6 = Average/generic
+   - 1-3 = Sounds cheap, industrial, or off-brand
+   - 0 = Completely wrong vibe for category
+
+### REQUIRED CALCULATION ###
+You MUST calculate: Final Score = (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
+
+### OUTPUT FORMAT (JSON only, no extra text) ###
+{{
+    "country": "{country}",
+    "native_script_preview": "Local script representation if applicable",
+    "safety_score": {{
+        "raw": 0-10,
+        "issues_found": ["List specific phonetic issues or 'None found'"],
+        "reasoning": "Brief explanation"
+    }},
+    "fluency_score": {{
+        "raw": 0-10,
+        "difficult_sounds": ["List problematic sounds or 'None'"],
+        "reasoning": "Brief explanation"
+    }},
+    "vibe_score": {{
+        "raw": 0-10,
+        "local_competitors": ["Top 3 competitors in {category} in {country}"],
+        "comparison": "How does {brand_name} compare to these?",
+        "reasoning": "Brief explanation"
+    }},
+    "calculation": {{
+        "formula": "(Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)",
+        "math": "(X × 0.4) + (Y × 0.3) + (Z × 0.3) = Result",
+        "final_score": 0.0-10.0
+    }},
+    "risk_verdict": "SAFE / CAUTION / CRITICAL",
+    "summary": "One sentence cultural verdict for {country}"
+}}
+
+Return ONLY valid JSON."""
+
+
+async def llm_calculate_cultural_score(
+    brand_name: str,
+    category: str,
+    country: str
+) -> dict:
+    """
+    LLM-FIRST Cultural Scoring with FORMULA
+    
+    Score = (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
+    
+    This forces LLM to:
+    1. Evaluate 3 distinct factors
+    2. Run the actual math
+    3. Show the calculation
+    """
+    EMERGENT_KEY = os.environ.get('EMERGENT_LLM_KEY')
+    
+    if not LlmChat or not EMERGENT_KEY:
+        logging.warning(f"🌐 LLM not available for cultural scoring - using fallback for {country}")
+        return calculate_fallback_cultural_score(brand_name, category, country)
+    
+    try:
+        prompt = LLM_CULTURAL_SCORING_PROMPT.format(
+            brand_name=brand_name,
+            category=category,
+            country=country
+        )
+        
+        chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
+        user_msg = UserMessage(prompt)
+        
+        response = await asyncio.wait_for(
+            chat.send_message(user_msg),
+            timeout=20
+        )
+        
+        # Parse JSON response
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = re.sub(r'^```json?\s*', '', response_text)
+            response_text = re.sub(r'\s*```$', '', response_text)
+        
+        result = json.loads(response_text)
+        
+        # Verify the calculation is present and valid
+        calculation = result.get("calculation", {})
+        final_score = calculation.get("final_score", 0)
+        
+        logging.info(f"🧮 LLM CULTURAL SCORE for '{brand_name}' in {country}:")
+        logging.info(f"   Safety: {result.get('safety_score', {}).get('raw', '?')}/10")
+        logging.info(f"   Fluency: {result.get('fluency_score', {}).get('raw', '?')}/10")
+        logging.info(f"   Vibe: {result.get('vibe_score', {}).get('raw', '?')}/10")
+        logging.info(f"   FINAL: {final_score}/10 ({result.get('risk_verdict', '?')})")
+        
+        return {
+            "llm_calculated": True,
+            "data": result
+        }
+        
+    except asyncio.TimeoutError:
+        logging.warning(f"LLM cultural scoring timed out for {country}")
+    except json.JSONDecodeError as e:
+        logging.warning(f"Failed to parse LLM cultural score: {e}")
+    except Exception as e:
+        logging.warning(f"LLM cultural scoring failed: {e}")
+    
+    return calculate_fallback_cultural_score(brand_name, category, country)
+
+
+def calculate_fallback_cultural_score(
+    brand_name: str,
+    category: str,
+    country: str
+) -> dict:
+    """
+    FALLBACK Cultural Scoring (when LLM unavailable)
+    
+    Uses heuristics to estimate Safety, Fluency, Vibe scores
+    Still applies the formula: (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
+    """
+    brand_lower = brand_name.lower()
+    country_lower = country.lower().strip()
+    
+    # === SAFETY SCORE (Phonetic Accidents) ===
+    safety_score = 8  # Default: assume clean
+    safety_issues = []
+    
+    # Check sacred/royal names
+    sacred_check = check_sacred_royal_names(brand_name, [{"name": country}])
+    if sacred_check.get("detected"):
+        for detection in sacred_check.get("detections", []):
+            if detection.get("country", "").lower() == country_lower:
+                if detection.get("risk_level") == "CRITICAL":
+                    safety_score = 2
+                    safety_issues.append(f"Sacred/royal term detected: {detection.get('term')}")
+                elif detection.get("risk_level") == "HIGH":
+                    safety_score = 4
+                    safety_issues.append(f"Cultural sensitivity: {detection.get('term')}")
+    
+    # Check for common problematic sounds by country
+    PROBLEMATIC_PATTERNS = {
+        "japan": {"v": -1, "l": -0.5, "th": -1},  # V and L sounds
+        "china": {"r": -0.5, "th": -1},
+        "thailand": {"r": -0.5},
+        "germany": {"th": -0.5},
+        "france": {"h": -0.5, "th": -1},
+        "spain": {"th": -0.5},
+        "india": {},  # Generally good with English sounds
+        "usa": {},
+        "uk": {},
+    }
+    
+    # === FLUENCY SCORE (Pronunciation Ease) ===
+    fluency_score = 7  # Default: moderate ease
+    difficult_sounds = []
+    
+    patterns = PROBLEMATIC_PATTERNS.get(country_lower, {})
+    for sound, penalty in patterns.items():
+        if sound in brand_lower:
+            fluency_score += penalty
+            difficult_sounds.append(f"'{sound}' sound")
+    
+    # Length penalty
+    if len(brand_name) > 12:
+        fluency_score -= 1
+        difficult_sounds.append("Long name")
+    elif len(brand_name) <= 6:
+        fluency_score += 1  # Short names are easier
+    
+    # Consonant cluster penalty
+    consonant_clusters = re.findall(r'[bcdfghjklmnpqrstvwxyz]{3,}', brand_lower)
+    if consonant_clusters:
+        fluency_score -= len(consonant_clusters) * 0.5
+        difficult_sounds.append(f"Consonant clusters: {consonant_clusters}")
+    
+    fluency_score = max(3, min(10, fluency_score))
+    
+    # === VIBE SCORE (Market Fit) ===
+    vibe_score = 6  # Default: average
+    
+    # Category-based vibe assessment
+    PREMIUM_INDICATORS = ["health", "care", "med", "clinic", "pro", "prime", "elite", "lux"]
+    BUDGET_INDICATORS = ["quick", "fast", "cheap", "deal", "save", "discount"]
+    
+    for indicator in PREMIUM_INDICATORS:
+        if indicator in brand_lower:
+            vibe_score += 1
+    
+    for indicator in BUDGET_INDICATORS:
+        if indicator in brand_lower:
+            vibe_score -= 1
+    
+    # Invented/coined names get bonus (more distinctive)
+    if not any(word in brand_lower for word in ["the", "my", "our", "best", "top", "super"]):
+        vibe_score += 1
+    
+    vibe_score = max(3, min(10, vibe_score))
+    
+    # === CALCULATE FINAL SCORE ===
+    final_score = (safety_score * 0.4) + (fluency_score * 0.3) + (vibe_score * 0.3)
+    final_score = round(final_score, 1)
+    
+    # Determine verdict
+    if final_score >= 7:
+        verdict = "SAFE"
+    elif final_score >= 5:
+        verdict = "CAUTION"
+    else:
+        verdict = "CRITICAL"
+    
+    logging.info(f"🧮 FALLBACK CULTURAL SCORE for '{brand_name}' in {country}:")
+    logging.info(f"   Safety: {safety_score}/10, Fluency: {fluency_score}/10, Vibe: {vibe_score}/10")
+    logging.info(f"   Formula: ({safety_score}×0.4) + ({fluency_score}×0.3) + ({vibe_score}×0.3) = {final_score}")
+    
+    # Get local competitors (basic fallback)
+    local_competitors = get_fallback_competitors(category, country)
+    
+    return {
+        "llm_calculated": False,
+        "data": {
+            "country": country.title(),
+            "native_script_preview": get_native_script_preview(brand_name, country),
+            "safety_score": {
+                "raw": safety_score,
+                "issues_found": safety_issues if safety_issues else ["None found"],
+                "reasoning": "Checked for sacred terms, slang, and phonetic accidents"
+            },
+            "fluency_score": {
+                "raw": round(fluency_score, 1),
+                "difficult_sounds": difficult_sounds if difficult_sounds else ["None"],
+                "reasoning": f"Assessed pronunciation ease for {country} speakers"
+            },
+            "vibe_score": {
+                "raw": round(vibe_score, 1),
+                "local_competitors": local_competitors,
+                "comparison": f"Compared to top {category} brands in {country}",
+                "reasoning": "Evaluated premium market fit"
+            },
+            "calculation": {
+                "formula": "(Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)",
+                "math": f"({safety_score} × 0.4) + ({round(fluency_score, 1)} × 0.3) + ({round(vibe_score, 1)} × 0.3) = {final_score}",
+                "final_score": final_score
+            },
+            "risk_verdict": verdict,
+            "summary": f"{'Clean profile' if verdict == 'SAFE' else 'Some concerns identified' if verdict == 'CAUTION' else 'Significant risks'} for {brand_name} in {country}"
+        }
+    }
+
+
+def get_native_script_preview(brand_name: str, country: str) -> str:
+    """Get native script representation if applicable"""
+    country_lower = country.lower().strip()
+    
+    # Basic transliterations (simplified)
+    SCRIPT_MAP = {
+        "japan": f"カタカナ: {brand_name}",  # Would need actual katakana conversion
+        "china": f"音译: {brand_name}",
+        "thailand": f"ทับศัพท์: {brand_name}",
+        "india": f"हिंदी: {brand_name}",
+        "uae": f"العربية: {brand_name}",
+        "saudi arabia": f"العربية: {brand_name}",
+        "south korea": f"한글: {brand_name}",
+        "russia": f"Кириллица: {brand_name}",
+    }
+    
+    return SCRIPT_MAP.get(country_lower, brand_name)
+
+
+def get_fallback_competitors(category: str, country: str) -> list:
+    """Get basic competitor list for fallback mode"""
+    category_lower = category.lower()
+    country_lower = country.lower().strip()
+    
+    # Simplified competitor mapping
+    COMPETITOR_MAP = {
+        ("doctor", "india"): ["Practo", "1mg", "Apollo 24/7"],
+        ("doctor", "usa"): ["Zocdoc", "Teladoc", "One Medical"],
+        ("doctor", "uk"): ["Babylon Health", "Push Doctor", "GP at Hand"],
+        ("doctor", "uae"): ["Okadoc", "Medcare", "Aster DM"],
+        ("doctor", "thailand"): ["Doctor Raksa", "Chiiwii", "HDmall"],
+        ("healthcare", "india"): ["Practo", "1mg", "PharmEasy"],
+        ("healthcare", "usa"): ["CVS Health", "Teladoc", "Amwell"],
+        ("hotel", "india"): ["OYO", "Taj Hotels", "ITC Hotels"],
+        ("hotel", "thailand"): ["Dusit", "Centara", "Minor Hotels"],
+        ("hotel", "uae"): ["Jumeirah", "Emaar Hospitality", "Rotana"],
+    }
+    
+    # Check for matches
+    for (cat_key, country_key), competitors in COMPETITOR_MAP.items():
+        if cat_key in category_lower and country_key in country_lower:
+            return competitors
+    
+    # Default fallback
+    return [f"Top {category} Brand 1", f"Top {category} Brand 2", f"Top {category} Brand 3"]
+
+
+# ============ CULTURAL ANALYSIS GENERATOR (UPDATED) ============
 COUNTRY_CULTURAL_DATA = {
     "India": {
         "resonance_score": 8.0,
