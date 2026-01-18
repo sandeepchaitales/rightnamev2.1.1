@@ -5787,6 +5787,16 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     for brand in request.brand_names:
         logging.info(f"Running parallel checks for brand: {brand}")
         
+        # ==================== MASTER CLASSIFICATION (CALLED ONCE) ====================
+        # This classification is passed to ALL sections that need it
+        brand_classification = classify_brand_with_industry(brand, request.category or "Business")
+        logging.info(f"🏷️ MASTER CLASSIFICATION for '{brand}':")
+        logging.info(f"   Category: {brand_classification['category']}")
+        logging.info(f"   Tokens: {brand_classification['tokens']}")
+        logging.info(f"   Distinctiveness: {brand_classification['distinctiveness']}")
+        logging.info(f"   Protectability: {brand_classification['protectability']}")
+        # ==================== END MASTER CLASSIFICATION ====================
+        
         # Create all tasks for this brand
         tasks = [
             gather_domain_data(brand),
@@ -5815,7 +5825,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             "trademark": processed_results[2],
             "visibility": processed_results[3],
             "multi_domain": processed_results[4],
-            "social": processed_results[5]
+            "social": processed_results[5],
+            "classification": brand_classification  # Store classification for later use
         }
     
     parallel_time = time_module.time() - parallel_start
