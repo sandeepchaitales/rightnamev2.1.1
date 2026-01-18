@@ -6010,6 +6010,23 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             social_data.append(f"BRAND: {brand}\nSocial check failed\n---")
     social_context = "\n".join(social_data)
     
+    # ==================== PRE-COMPUTED BRAND CLASSIFICATION CONTEXT ====================
+    # Build classification context to pass to LLM so it respects our 5-step spectrum classification
+    classification_context_parts = []
+    for brand in request.brand_names:
+        brand_classification = all_brand_data[brand].get("classification", {})
+        if brand_classification:
+            classification_context_parts.append(f"""
+BRAND: {brand}
+├─ Classification: {brand_classification.get('category', 'UNKNOWN')}
+├─ Distinctiveness: {brand_classification.get('distinctiveness', 'UNKNOWN')}
+├─ Protectability: {brand_classification.get('protectability', 'UNKNOWN')}
+├─ Dictionary Tokens: {brand_classification.get('dictionary_tokens', [])}
+├─ Invented Tokens: {brand_classification.get('invented_tokens', [])}
+└─ Reasoning: {brand_classification.get('reasoning', 'N/A')[:200]}""")
+    classification_context = "\n".join(classification_context_parts)
+    # ==================== END CLASSIFICATION CONTEXT ====================
+    
     # ==================== IMPROVEMENT #2 & #3: INCLUDE USER-PROVIDED COMPETITORS & KEYWORDS IN PROMPT ====================
     competitors_context = ""
     if request.known_competitors:
