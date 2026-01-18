@@ -1000,20 +1000,1292 @@ def format_similarity_report(similarity_data: Dict) -> str:
     return "\n".join(lines)
 
 
+# ============================================================================
+# DEEP-TRACE ANALYSIS - Rightname.ai Core Engine
+# Protects entrepreneurs from legal suicide by stress-testing brand names
+# ============================================================================
+
+# Common startup suffixes to strip for root extraction
+STARTUP_SUFFIXES = [
+    # Tech/Startup common suffixes (ordered by length - longest first)
+    "ify", "ly", "ai", "io", "oy", "ey", "ie", "y",
+    "app", "hub", "lab", "labs", "ware", "soft", "tech",
+    "ity", "ery", "ary", "ory", "ment", "ness", "tion", "sion",
+    "able", "ible", "ful", "less", "ous", "ive", "al", "ic",
+    "er", "or", "ist", "ism", "ize", "ise", "en", "fy",
+    "co", "go", "do", "to", "no", "so", "ro", "lo", "mo", "po",
+    "ex", "ox", "ix", "ax", "ux",
+    "a", "e", "i", "o", "u"
+]
+
+# CATEGORY KINGS - Famous brands indexed by ROOT WORD + INDUSTRY
+# This is the core of Deep-Trace Analysis
+CATEGORY_KINGS = {
+    # ==================== RIDE-HAILING / TRANSPORT ====================
+    "rapid": {
+        "industries": ["transport", "ride", "taxi", "bike", "delivery", "logistics", "mobility"],
+        "king": "Rapido",
+        "valuation": "$5B+",
+        "market": "India",
+        "description": "India's largest bike taxi platform"
+    },
+    "uber": {
+        "industries": ["transport", "ride", "taxi", "delivery", "food", "logistics", "mobility"],
+        "king": "Uber",
+        "valuation": "$150B+",
+        "market": "Global",
+        "description": "Global ride-hailing and delivery giant"
+    },
+    "ola": {
+        "industries": ["transport", "ride", "taxi", "electric", "ev", "mobility", "cab"],
+        "king": "Ola",
+        "valuation": "$7B+",
+        "market": "India",
+        "description": "India's largest cab aggregator"
+    },
+    "grab": {
+        "industries": ["transport", "ride", "taxi", "delivery", "food", "fintech", "superapp"],
+        "king": "Grab",
+        "valuation": "$40B+",
+        "market": "Southeast Asia",
+        "description": "SEA's leading superapp"
+    },
+    "lyft": {
+        "industries": ["transport", "ride", "taxi", "mobility"],
+        "king": "Lyft",
+        "valuation": "$5B+",
+        "market": "USA",
+        "description": "US ride-hailing company"
+    },
+    "gojek": {
+        "industries": ["transport", "ride", "delivery", "food", "fintech", "superapp"],
+        "king": "Gojek",
+        "valuation": "$10B+",
+        "market": "Indonesia",
+        "description": "Indonesia's leading superapp"
+    },
+    "didi": {
+        "industries": ["transport", "ride", "taxi", "mobility"],
+        "king": "Didi",
+        "valuation": "$20B+",
+        "market": "China",
+        "description": "China's largest ride-hailing platform"
+    },
+    
+    # ==================== FOOD DELIVERY ====================
+    "swiggy": {
+        "industries": ["food", "delivery", "restaurant", "quick commerce", "grocery"],
+        "king": "Swiggy",
+        "valuation": "$10B+",
+        "market": "India",
+        "description": "India's leading food delivery platform"
+    },
+    "zomato": {
+        "industries": ["food", "delivery", "restaurant", "dining", "quick commerce"],
+        "king": "Zomato",
+        "valuation": "$12B+",
+        "market": "India",
+        "description": "India's food delivery and restaurant discovery platform"
+    },
+    "door": {
+        "industries": ["food", "delivery", "restaurant"],
+        "king": "DoorDash",
+        "valuation": "$50B+",
+        "market": "USA",
+        "description": "US's largest food delivery platform"
+    },
+    "grub": {
+        "industries": ["food", "delivery", "restaurant"],
+        "king": "GrubHub",
+        "valuation": "$5B+",
+        "market": "USA",
+        "description": "US food delivery platform"
+    },
+    "deliveroo": {
+        "industries": ["food", "delivery", "restaurant"],
+        "king": "Deliveroo",
+        "valuation": "$7B+",
+        "market": "UK/Europe",
+        "description": "European food delivery platform"
+    },
+    
+    # ==================== QUICK COMMERCE / GROCERY ====================
+    "blink": {
+        "industries": ["grocery", "quick commerce", "delivery", "retail"],
+        "king": "Blinkit",
+        "valuation": "$2B+",
+        "market": "India",
+        "description": "India's leading quick commerce platform (Zomato subsidiary)"
+    },
+    "zepto": {
+        "industries": ["grocery", "quick commerce", "delivery", "retail"],
+        "king": "Zepto",
+        "valuation": "$5B+",
+        "market": "India",
+        "description": "India's fastest-growing quick commerce platform"
+    },
+    "insta": {
+        "industries": ["grocery", "delivery", "quick commerce", "social", "photo"],
+        "king": "Instagram / Instacart / Instamart",
+        "valuation": "$100B+ / $10B+",
+        "market": "Global",
+        "description": "Multiple mega-brands share this root"
+    },
+    "dunzo": {
+        "industries": ["delivery", "quick commerce", "hyperlocal", "errands"],
+        "king": "Dunzo",
+        "valuation": "$500M+",
+        "market": "India",
+        "description": "India's hyperlocal delivery platform"
+    },
+    
+    # ==================== E-COMMERCE ====================
+    "flip": {
+        "industries": ["ecommerce", "retail", "shopping", "marketplace"],
+        "king": "Flipkart",
+        "valuation": "$37B+",
+        "market": "India",
+        "description": "India's largest e-commerce platform (Walmart subsidiary)"
+    },
+    "amazon": {
+        "industries": ["ecommerce", "retail", "cloud", "streaming", "everything"],
+        "king": "Amazon",
+        "valuation": "$1.5T+",
+        "market": "Global",
+        "description": "The everything store"
+    },
+    "shop": {
+        "industries": ["ecommerce", "retail", "shopping", "marketplace"],
+        "king": "Shopify / Shopee",
+        "valuation": "$70B+ / $50B+",
+        "market": "Global / SEA",
+        "description": "E-commerce platform giants"
+    },
+    "meesho": {
+        "industries": ["ecommerce", "social commerce", "reselling"],
+        "king": "Meesho",
+        "valuation": "$5B+",
+        "market": "India",
+        "description": "India's leading social commerce platform"
+    },
+    "myntra": {
+        "industries": ["fashion", "ecommerce", "apparel", "lifestyle"],
+        "king": "Myntra",
+        "valuation": "$3B+",
+        "market": "India",
+        "description": "India's leading fashion e-commerce platform"
+    },
+    
+    # ==================== FINTECH / PAYMENTS ====================
+    "phone": {
+        "industries": ["payments", "fintech", "upi", "wallet", "mobile"],
+        "king": "PhonePe",
+        "valuation": "$12B+",
+        "market": "India",
+        "description": "India's largest UPI payments app"
+    },
+    "paytm": {
+        "industries": ["payments", "fintech", "wallet", "banking"],
+        "king": "Paytm",
+        "valuation": "$5B+",
+        "market": "India",
+        "description": "India's digital payments pioneer"
+    },
+    "razor": {
+        "industries": ["payments", "fintech", "gateway", "b2b"],
+        "king": "Razorpay",
+        "valuation": "$7.5B+",
+        "market": "India",
+        "description": "India's leading payment gateway"
+    },
+    "cred": {
+        "industries": ["fintech", "credit", "rewards", "payments"],
+        "king": "CRED",
+        "valuation": "$6.4B+",
+        "market": "India",
+        "description": "Credit card bill payments platform"
+    },
+    "stripe": {
+        "industries": ["payments", "fintech", "gateway", "infrastructure"],
+        "king": "Stripe",
+        "valuation": "$50B+",
+        "market": "Global",
+        "description": "Global payments infrastructure"
+    },
+    "paypal": {
+        "industries": ["payments", "fintech", "wallet", "transfer"],
+        "king": "PayPal",
+        "valuation": "$70B+",
+        "market": "Global",
+        "description": "Global digital payments leader"
+    },
+    "venmo": {
+        "industries": ["payments", "p2p", "social payments"],
+        "king": "Venmo",
+        "valuation": "PayPal subsidiary",
+        "market": "USA",
+        "description": "Social payments app"
+    },
+    "groww": {
+        "industries": ["investing", "stocks", "mutual funds", "fintech"],
+        "king": "Groww",
+        "valuation": "$3B+",
+        "market": "India",
+        "description": "India's leading investment app"
+    },
+    "zerodha": {
+        "industries": ["trading", "stocks", "broker", "fintech"],
+        "king": "Zerodha",
+        "valuation": "$2B+",
+        "market": "India",
+        "description": "India's largest stock broker"
+    },
+    
+    # ==================== SOCIAL MEDIA ====================
+    "face": {
+        "industries": ["social", "media", "networking", "messaging"],
+        "king": "Facebook",
+        "valuation": "$1T+ (Meta)",
+        "market": "Global",
+        "description": "World's largest social network"
+    },
+    "whats": {
+        "industries": ["messaging", "chat", "communication"],
+        "king": "WhatsApp",
+        "valuation": "Meta subsidiary",
+        "market": "Global",
+        "description": "World's largest messaging app"
+    },
+    "snap": {
+        "industries": ["social", "messaging", "photo", "ar"],
+        "king": "Snapchat",
+        "valuation": "$15B+",
+        "market": "Global",
+        "description": "Ephemeral messaging and AR platform"
+    },
+    "tik": {
+        "industries": ["social", "video", "entertainment", "short video"],
+        "king": "TikTok",
+        "valuation": "$200B+ (ByteDance)",
+        "market": "Global",
+        "description": "World's largest short video platform"
+    },
+    "linked": {
+        "industries": ["professional", "networking", "jobs", "social"],
+        "king": "LinkedIn",
+        "valuation": "Microsoft subsidiary",
+        "market": "Global",
+        "description": "World's largest professional network"
+    },
+    "twit": {
+        "industries": ["social", "microblogging", "news"],
+        "king": "Twitter/X",
+        "valuation": "$44B (acquired)",
+        "market": "Global",
+        "description": "Microblogging platform"
+    },
+    "pin": {
+        "industries": ["social", "visual", "discovery", "inspiration"],
+        "king": "Pinterest",
+        "valuation": "$15B+",
+        "market": "Global",
+        "description": "Visual discovery platform"
+    },
+    "discord": {
+        "industries": ["communication", "gaming", "community", "voice"],
+        "king": "Discord",
+        "valuation": "$15B+",
+        "market": "Global",
+        "description": "Community communication platform"
+    },
+    "reddit": {
+        "industries": ["social", "forum", "community", "discussion"],
+        "king": "Reddit",
+        "valuation": "$10B+",
+        "market": "Global",
+        "description": "Front page of the internet"
+    },
+    
+    # ==================== STREAMING / ENTERTAINMENT ====================
+    "net": {
+        "industries": ["streaming", "video", "entertainment", "ott"],
+        "king": "Netflix",
+        "valuation": "$200B+",
+        "market": "Global",
+        "description": "World's largest streaming service"
+    },
+    "spot": {
+        "industries": ["music", "streaming", "audio", "podcast"],
+        "king": "Spotify",
+        "valuation": "$60B+",
+        "market": "Global",
+        "description": "World's largest music streaming service"
+    },
+    "hot": {
+        "industries": ["streaming", "video", "entertainment", "ott", "cricket"],
+        "king": "Hotstar",
+        "valuation": "Disney subsidiary",
+        "market": "India",
+        "description": "India's largest streaming platform"
+    },
+    "prime": {
+        "industries": ["streaming", "video", "entertainment", "ecommerce"],
+        "king": "Amazon Prime",
+        "valuation": "Amazon subsidiary",
+        "market": "Global",
+        "description": "Amazon's streaming and membership service"
+    },
+    "disney": {
+        "industries": ["entertainment", "streaming", "media", "animation"],
+        "king": "Disney",
+        "valuation": "$170B+",
+        "market": "Global",
+        "description": "Entertainment giant"
+    },
+    "youtube": {
+        "industries": ["video", "streaming", "ugc", "entertainment"],
+        "king": "YouTube",
+        "valuation": "Google subsidiary",
+        "market": "Global",
+        "description": "World's largest video platform"
+    },
+    
+    # ==================== TRAVEL / HOSPITALITY ====================
+    "air": {
+        "industries": ["travel", "accommodation", "hospitality", "vacation"],
+        "king": "Airbnb",
+        "valuation": "$80B+",
+        "market": "Global",
+        "description": "World's largest vacation rental platform"
+    },
+    "booking": {
+        "industries": ["travel", "hotel", "accommodation"],
+        "king": "Booking.com",
+        "valuation": "$100B+",
+        "market": "Global",
+        "description": "World's largest hotel booking platform"
+    },
+    "make": {
+        "industries": ["travel", "booking", "flights", "hotels"],
+        "king": "MakeMyTrip",
+        "valuation": "$3B+",
+        "market": "India",
+        "description": "India's largest travel booking platform"
+    },
+    "trip": {
+        "industries": ["travel", "reviews", "booking"],
+        "king": "TripAdvisor",
+        "valuation": "$5B+",
+        "market": "Global",
+        "description": "World's largest travel review platform"
+    },
+    "oyo": {
+        "industries": ["hospitality", "hotel", "accommodation", "budget"],
+        "king": "OYO",
+        "valuation": "$9B+",
+        "market": "Global",
+        "description": "World's largest budget hotel chain"
+    },
+    
+    # ==================== TECH GIANTS ====================
+    "google": {
+        "industries": ["search", "tech", "cloud", "ai", "advertising", "everything"],
+        "king": "Google",
+        "valuation": "$1.8T+ (Alphabet)",
+        "market": "Global",
+        "description": "World's largest search and advertising company"
+    },
+    "apple": {
+        "industries": ["tech", "hardware", "software", "mobile", "ecosystem"],
+        "king": "Apple",
+        "valuation": "$3T+",
+        "market": "Global",
+        "description": "World's most valuable company"
+    },
+    "micro": {
+        "industries": ["tech", "software", "cloud", "enterprise"],
+        "king": "Microsoft",
+        "valuation": "$2.8T+",
+        "market": "Global",
+        "description": "Enterprise software giant"
+    },
+    "meta": {
+        "industries": ["social", "vr", "ar", "metaverse"],
+        "king": "Meta",
+        "valuation": "$1T+",
+        "market": "Global",
+        "description": "Social media and metaverse company"
+    },
+    "nvidia": {
+        "industries": ["gpu", "ai", "chips", "gaming", "datacenter"],
+        "king": "Nvidia",
+        "valuation": "$3T+",
+        "market": "Global",
+        "description": "World's most valuable chip company"
+    },
+    "open": {
+        "industries": ["ai", "llm", "chatbot", "research"],
+        "king": "OpenAI",
+        "valuation": "$150B+",
+        "market": "Global",
+        "description": "AI research company behind ChatGPT"
+    },
+    "zoom": {
+        "industries": ["video", "conferencing", "communication", "remote work"],
+        "king": "Zoom",
+        "valuation": "$20B+",
+        "market": "Global",
+        "description": "Video conferencing leader"
+    },
+    "slack": {
+        "industries": ["communication", "workplace", "collaboration", "messaging"],
+        "king": "Slack",
+        "valuation": "Salesforce subsidiary",
+        "market": "Global",
+        "description": "Workplace communication platform"
+    },
+    
+    # ==================== EDTECH ====================
+    "byju": {
+        "industries": ["edtech", "education", "learning", "tutoring"],
+        "king": "BYJU'S",
+        "valuation": "$22B+ (peak)",
+        "market": "India",
+        "description": "India's largest edtech company"
+    },
+    "unacademy": {
+        "industries": ["edtech", "education", "test prep", "learning"],
+        "king": "Unacademy",
+        "valuation": "$3.4B+",
+        "market": "India",
+        "description": "India's leading test prep platform"
+    },
+    "vedantu": {
+        "industries": ["edtech", "tutoring", "live classes"],
+        "king": "Vedantu",
+        "valuation": "$1B+",
+        "market": "India",
+        "description": "Live online tutoring platform"
+    },
+    "coursera": {
+        "industries": ["edtech", "mooc", "courses", "certification"],
+        "king": "Coursera",
+        "valuation": "$3B+",
+        "market": "Global",
+        "description": "Online learning platform"
+    },
+    "udemy": {
+        "industries": ["edtech", "courses", "skills", "learning"],
+        "king": "Udemy",
+        "valuation": "$3.5B+",
+        "market": "Global",
+        "description": "Online course marketplace"
+    },
+    
+    # ==================== GAMING ====================
+    "ludo": {
+        "industries": ["gaming", "casual", "board game", "mobile game"],
+        "king": "Ludo King",
+        "valuation": "$500M+",
+        "market": "India",
+        "description": "India's most downloaded board game"
+    },
+    "dream": {
+        "industries": ["gaming", "fantasy sports", "cricket"],
+        "king": "Dream11",
+        "valuation": "$8B+",
+        "market": "India",
+        "description": "India's largest fantasy sports platform"
+    },
+    "mpl": {
+        "industries": ["gaming", "esports", "mobile gaming"],
+        "king": "MPL",
+        "valuation": "$2.3B+",
+        "market": "India",
+        "description": "Mobile gaming and esports platform"
+    },
+    
+    # ==================== BEAUTY / WELLNESS ====================
+    "nykaa": {
+        "industries": ["beauty", "cosmetics", "ecommerce", "fashion"],
+        "king": "Nykaa",
+        "valuation": "$7B+",
+        "market": "India",
+        "description": "India's leading beauty e-commerce platform"
+    },
+    "mama": {
+        "industries": ["beauty", "personal care", "natural", "d2c"],
+        "king": "Mamaearth",
+        "valuation": "$1.2B+",
+        "market": "India",
+        "description": "India's leading natural personal care brand"
+    },
+    "sugar": {
+        "industries": ["beauty", "cosmetics", "makeup"],
+        "king": "Sugar Cosmetics",
+        "valuation": "$500M+",
+        "market": "India",
+        "description": "India's leading makeup brand"
+    },
+    "plum": {
+        "industries": ["beauty", "skincare", "vegan"],
+        "king": "Plum",
+        "valuation": "$200M+",
+        "market": "India",
+        "description": "India's vegan beauty brand"
+    },
+    
+    # ==================== HEALTHTECH ====================
+    "practo": {
+        "industries": ["health", "doctor", "appointment", "telemedicine"],
+        "king": "Practo",
+        "valuation": "$600M+",
+        "market": "India",
+        "description": "India's largest healthcare platform"
+    },
+    "pharmeasy": {
+        "industries": ["pharmacy", "medicine", "health", "ecommerce"],
+        "king": "PharmEasy",
+        "valuation": "$5.6B+",
+        "market": "India",
+        "description": "India's largest e-pharmacy"
+    },
+    "netmeds": {
+        "industries": ["pharmacy", "medicine", "health"],
+        "king": "Netmeds",
+        "valuation": "Reliance subsidiary",
+        "market": "India",
+        "description": "Online pharmacy platform"
+    },
+    "cult": {
+        "industries": ["fitness", "gym", "wellness", "health"],
+        "king": "Cult.fit",
+        "valuation": "$1.5B+",
+        "market": "India",
+        "description": "India's leading fitness platform"
+    },
+    
+    # ==================== REAL ESTATE ====================
+    "magic": {
+        "industries": ["real estate", "property", "housing"],
+        "king": "MagicBricks",
+        "valuation": "$500M+",
+        "market": "India",
+        "description": "India's leading real estate portal"
+    },
+    "housing": {
+        "industries": ["real estate", "property", "rental"],
+        "king": "Housing.com",
+        "valuation": "$300M+",
+        "market": "India",
+        "description": "Real estate search platform"
+    },
+    "nobroker": {
+        "industries": ["real estate", "rental", "property"],
+        "king": "NoBroker",
+        "valuation": "$1B+",
+        "market": "India",
+        "description": "Brokerage-free real estate platform"
+    },
+    
+    # ==================== HR / JOBS ====================
+    "naukri": {
+        "industries": ["jobs", "recruitment", "hr", "career"],
+        "king": "Naukri",
+        "valuation": "$6B+ (Info Edge)",
+        "market": "India",
+        "description": "India's largest job portal"
+    },
+    "indeed": {
+        "industries": ["jobs", "recruitment", "hr"],
+        "king": "Indeed",
+        "valuation": "Recruit Holdings subsidiary",
+        "market": "Global",
+        "description": "World's largest job site"
+    },
+    
+    # ==================== NEWS / MEDIA ====================
+    "times": {
+        "industries": ["news", "media", "publishing"],
+        "king": "Times of India / NY Times",
+        "valuation": "$5B+ / $8B+",
+        "market": "India / Global",
+        "description": "Major news publications"
+    },
+    "news": {
+        "industries": ["news", "media", "publishing"],
+        "king": "NewsBreak / News18 / etc",
+        "valuation": "Various",
+        "market": "Global",
+        "description": "News platforms"
+    },
+    "money": {
+        "industries": ["finance", "news", "stock market", "investing"],
+        "king": "Moneycontrol",
+        "valuation": "$500M+",
+        "market": "India",
+        "description": "India's largest financial news platform"
+    },
+    
+    # ==================== AUTOMOTIVE / EV ====================
+    "tesla": {
+        "industries": ["ev", "electric", "automotive", "energy"],
+        "king": "Tesla",
+        "valuation": "$700B+",
+        "market": "Global",
+        "description": "World's most valuable automaker"
+    },
+    "ather": {
+        "industries": ["ev", "electric scooter", "mobility"],
+        "king": "Ather",
+        "valuation": "$1B+",
+        "market": "India",
+        "description": "India's leading electric scooter brand"
+    },
+    
+    # ==================== DATING ====================
+    "tinder": {
+        "industries": ["dating", "social", "matchmaking"],
+        "king": "Tinder",
+        "valuation": "Match Group subsidiary",
+        "market": "Global",
+        "description": "World's most popular dating app"
+    },
+    "bumble": {
+        "industries": ["dating", "social", "matchmaking"],
+        "king": "Bumble",
+        "valuation": "$5B+",
+        "market": "Global",
+        "description": "Women-first dating app"
+    },
+    "hinge": {
+        "industries": ["dating", "social", "matchmaking"],
+        "king": "Hinge",
+        "valuation": "Match Group subsidiary",
+        "market": "Global",
+        "description": "Dating app designed to be deleted"
+    },
+}
+
+
+def extract_root_morpheme(brand_name: str) -> Dict:
+    """
+    THREAD 1 - DECONSTRUCTION: Extract the root morpheme from a brand name.
+    
+    Steps:
+    1. Strip common startup suffixes (-ly, -ify, -ai, -io, -oy, etc.)
+    2. Isolate the root word
+    3. Return both root and stripped suffixes
+    """
+    name = brand_name.lower().strip()
+    original = name
+    stripped_suffixes = []
+    
+    # Try stripping suffixes (longest first, only strip if something remains)
+    for suffix in sorted(STARTUP_SUFFIXES, key=len, reverse=True):
+        if name.endswith(suffix) and len(name) > len(suffix) + 2:  # Keep at least 3 chars
+            root_candidate = name[:-len(suffix)]
+            # Verify root has at least 3 consonants/vowels and isn't just noise
+            if len(root_candidate) >= 3:
+                stripped_suffixes.append(suffix)
+                name = root_candidate
+                break  # Only strip one suffix
+    
+    # Also try common prefixes that might obscure the root
+    common_prefixes = ["my", "the", "get", "go", "i", "e", "u", "a"]
+    for prefix in common_prefixes:
+        if name.startswith(prefix) and len(name) > len(prefix) + 2:
+            potential_root = name[len(prefix):]
+            # Check if the remaining part is a known root
+            if potential_root in CATEGORY_KINGS:
+                name = potential_root
+                stripped_suffixes.insert(0, f"{prefix}-")
+                break
+    
+    return {
+        "original": original,
+        "root": name,
+        "stripped_suffixes": stripped_suffixes,
+        "transformation": f"{original} → {name}" if name != original else "No transformation"
+    }
+
+
+def find_category_king(root: str, industry: str, category: str) -> Optional[Dict]:
+    """
+    THREAD 1 - CATEGORY KING DETECTION: Check if root word has a dominant player in the industry.
+    
+    Returns the Category King info if found, None otherwise.
+    """
+    # Normalize inputs
+    root_lower = root.lower().strip()
+    industry_lower = industry.lower() if industry else ""
+    category_lower = category.lower() if category else ""
+    combined_context = f"{industry_lower} {category_lower}"
+    
+    # Direct root match
+    if root_lower in CATEGORY_KINGS:
+        king_data = CATEGORY_KINGS[root_lower]
+        # Check if any industry keywords match
+        for king_industry in king_data["industries"]:
+            if king_industry in combined_context or combined_context in king_industry:
+                return {
+                    "matched_root": root_lower,
+                    "king": king_data["king"],
+                    "valuation": king_data["valuation"],
+                    "market": king_data["market"],
+                    "description": king_data["description"],
+                    "match_type": "DIRECT_ROOT_MATCH",
+                    "industry_match": True
+                }
+        
+        # Even if industry doesn't match exactly, still a concern for famous roots
+        return {
+            "matched_root": root_lower,
+            "king": king_data["king"],
+            "valuation": king_data["valuation"],
+            "market": king_data["market"],
+            "description": king_data["description"],
+            "match_type": "ROOT_MATCH_DIFFERENT_INDUSTRY",
+            "industry_match": False
+        }
+    
+    # Partial root match (root is contained in a king's root)
+    for king_root, king_data in CATEGORY_KINGS.items():
+        if len(root_lower) >= 4 and (root_lower in king_root or king_root in root_lower):
+            lev_distance = Levenshtein.distance(root_lower, king_root)
+            if lev_distance <= 2:  # Very close match
+                for king_industry in king_data["industries"]:
+                    if king_industry in combined_context:
+                        return {
+                            "matched_root": king_root,
+                            "king": king_data["king"],
+                            "valuation": king_data["valuation"],
+                            "market": king_data["market"],
+                            "description": king_data["description"],
+                            "match_type": "PARTIAL_ROOT_MATCH",
+                            "industry_match": True,
+                            "levenshtein_distance": lev_distance
+                        }
+    
+    return None
+
+
+def calculate_algorithmic_scores(brand_name: str, competitor_name: str) -> Dict:
+    """
+    THREAD 2 - ALGORITHMIC MATCHING: Simulate Trademark Office Logic.
+    
+    Returns:
+    - Levenshtein Distance (Risk if < 3)
+    - Soundex/Phonetic codes (Risk if match)
+    - Jaro-Winkler score (Risk if first 4 letters identical)
+    """
+    brand_lower = brand_name.lower().strip()
+    competitor_lower = competitor_name.lower().strip()
+    
+    # 1. Levenshtein Distance
+    lev_distance = Levenshtein.distance(brand_lower, competitor_lower)
+    lev_risk = lev_distance < 3
+    
+    # 2. Soundex/Phonetic codes
+    brand_soundex = jellyfish.soundex(brand_lower)
+    competitor_soundex = jellyfish.soundex(competitor_lower)
+    soundex_match = brand_soundex == competitor_soundex
+    
+    brand_metaphone = jellyfish.metaphone(brand_lower)
+    competitor_metaphone = jellyfish.metaphone(competitor_lower)
+    metaphone_match = brand_metaphone == competitor_metaphone
+    
+    phonetic_risk = soundex_match or metaphone_match
+    
+    # 3. Jaro-Winkler (prefix focus)
+    jw_score = jellyfish.jaro_winkler_similarity(brand_lower, competitor_lower) * 100
+    
+    # Check first 4 letters
+    prefix_match = brand_lower[:4] == competitor_lower[:4] if len(brand_lower) >= 4 and len(competitor_lower) >= 4 else False
+    prefix_risk = prefix_match or jw_score >= 85
+    
+    return {
+        "levenshtein": {
+            "distance": lev_distance,
+            "risk": lev_risk,
+            "assessment": "NEAR" if lev_risk else "FAR"
+        },
+        "phonetic": {
+            "brand_soundex": brand_soundex,
+            "competitor_soundex": competitor_soundex,
+            "soundex_match": soundex_match,
+            "brand_metaphone": brand_metaphone,
+            "competitor_metaphone": competitor_metaphone,
+            "metaphone_match": metaphone_match,
+            "risk": phonetic_risk,
+            "assessment": "Yes" if phonetic_risk else "No"
+        },
+        "jaro_winkler": {
+            "score": round(jw_score, 2),
+            "prefix_match": prefix_match,
+            "risk": prefix_risk,
+            "assessment": "NEAR" if prefix_risk else "FAR"
+        },
+        "overall_algorithmic_risk": lev_risk or phonetic_risk or prefix_risk
+    }
+
+
+def check_linguistic_distinctiveness(brand_name: str, category: str) -> Dict:
+    """
+    THREAD 3 - LINGUISTICS: Global Sanity Check.
+    
+    Checks:
+    1. Does the name describe the product (Descriptive)?
+    2. Is it arbitrary/suggestive/fanciful?
+    3. Any problematic translations?
+    """
+    brand_lower = brand_name.lower()
+    category_lower = category.lower() if category else ""
+    
+    # Common descriptive words by industry
+    DESCRIPTIVE_INDICATORS = {
+        "fast": ["delivery", "food", "transport", "logistics"],
+        "quick": ["delivery", "food", "commerce", "service"],
+        "easy": ["service", "app", "booking", "payment"],
+        "smart": ["tech", "app", "device", "home"],
+        "best": ["any industry"],
+        "top": ["any industry"],
+        "super": ["any industry"],
+        "mega": ["any industry"],
+        "ultra": ["any industry"],
+        "pro": ["any industry"],
+        "prime": ["any industry"],
+        "express": ["delivery", "logistics", "transport"],
+        "instant": ["delivery", "payment", "service"],
+        "direct": ["service", "sales", "commerce"],
+        "fresh": ["food", "grocery", "produce"],
+        "clean": ["cleaning", "laundry", "hygiene"],
+        "safe": ["security", "finance", "insurance"],
+        "care": ["health", "beauty", "wellness"],
+        "fit": ["fitness", "health", "wellness"],
+        "pay": ["payment", "finance", "banking"],
+        "shop": ["retail", "ecommerce", "shopping"],
+        "book": ["booking", "reservation", "travel"],
+        "ride": ["transport", "taxi", "mobility"],
+        "cab": ["transport", "taxi"],
+        "taxi": ["transport"],
+        "food": ["food", "restaurant", "delivery"],
+        "meal": ["food", "restaurant"],
+        "health": ["health", "medical", "wellness"],
+        "med": ["medical", "health", "pharma"],
+        "tech": ["technology", "software"],
+        "cloud": ["technology", "software", "storage"],
+        "data": ["technology", "analytics"],
+        "learn": ["education", "edtech"],
+        "edu": ["education", "edtech"],
+        "home": ["real estate", "interior", "services"],
+        "money": ["finance", "payment", "investment"],
+        "cash": ["finance", "payment"],
+        "stock": ["trading", "investment"],
+        "trade": ["trading", "commerce"],
+        "travel": ["travel", "tourism"],
+        "hotel": ["hospitality", "accommodation"],
+        "stay": ["hospitality", "accommodation"],
+        "rent": ["rental", "real estate"],
+        "job": ["recruitment", "career"],
+        "work": ["employment", "productivity"],
+    }
+    
+    # Check for descriptive words
+    is_descriptive = False
+    descriptive_words_found = []
+    
+    for word, industries in DESCRIPTIVE_INDICATORS.items():
+        if word in brand_lower:
+            if "any industry" in industries or any(ind in category_lower for ind in industries):
+                is_descriptive = True
+                descriptive_words_found.append(word)
+    
+    # Determine distinctiveness level
+    if is_descriptive and len(descriptive_words_found) >= 2:
+        distinctiveness = "GENERIC"
+        strength = "Unregistrable - Too generic"
+    elif is_descriptive:
+        distinctiveness = "DESCRIPTIVE"
+        strength = "Weak - Hard to trademark, requires secondary meaning"
+    elif any(brand_lower.startswith(prefix) for prefix in ["my", "the", "get", "go"]):
+        distinctiveness = "SUGGESTIVE"
+        strength = "Moderate - May require explanation of connection"
+    elif len(brand_lower) <= 4 or not any(c in brand_lower for c in 'aeiou'):
+        distinctiveness = "ARBITRARY"
+        strength = "Strong - Unrelated to product, good protection"
+    else:
+        distinctiveness = "FANCIFUL"
+        strength = "Strongest - Invented word, maximum protection"
+    
+    # Problematic translations (common issues)
+    TRANSLATION_ISSUES = {
+        "nova": "Means 'doesn't go' in Spanish (famous Chevy Nova case)",
+        "mist": "Means 'manure' in German",
+        "gift": "Means 'poison' in German",
+        "bite": "Sounds like 'bitte' (please) in German",
+        "pet": "Means 'fart' in French",
+        "con": "Vulgar in Spanish",
+        "fart": "Means 'speed' in Swedish but vulgar in English",
+        "puff": "Slang for brothel in German",
+        "sin": "Religious implications in multiple languages",
+        "kaka": "Means 'poop' in several languages",
+        "baka": "Means 'stupid' in Japanese",
+        "culo": "Vulgar in Spanish/Italian",
+        "ass": "Universal English issue",
+    }
+    
+    translation_issues = []
+    for word, issue in TRANSLATION_ISSUES.items():
+        if word in brand_lower:
+            translation_issues.append({"word": word, "issue": issue})
+    
+    return {
+        "distinctiveness": distinctiveness,
+        "strength": strength,
+        "descriptive_words_found": descriptive_words_found,
+        "is_descriptive": is_descriptive,
+        "translation_issues": translation_issues,
+        "meaning_check": translation_issues[0]["issue"] if translation_issues else "No known issues"
+    }
+
+
+def calculate_rightname_score(
+    category_king_result: Optional[Dict],
+    algorithmic_result: Optional[Dict],
+    linguistic_result: Dict
+) -> Dict:
+    """
+    THREAD 4 - SCORING ALGORITHM: Calculate the Rightname Availability Score (0-100).
+    
+    Scoring Bands:
+    - 0-40 (Red): Direct Conflict or Generic Term
+    - 41-70 (Yellow): Partial overlap, crowded namespace, weak distinctiveness
+    - 71-100 (Green): Unique, arbitrary, distinct root, low phonetic conflict
+    """
+    score = 100  # Start with perfect score
+    deductions = []
+    
+    # ===== CATEGORY KING DEDUCTIONS (Heaviest) =====
+    if category_king_result:
+        if category_king_result.get("industry_match"):
+            # Same root + Same industry = FATAL
+            score -= 70
+            deductions.append({
+                "reason": f"Direct root conflict with {category_king_result['king']}",
+                "points": -70,
+                "severity": "CRITICAL"
+            })
+        else:
+            # Same root + Different industry = Still risky
+            score -= 40
+            deductions.append({
+                "reason": f"Root word associated with {category_king_result['king']} (different industry)",
+                "points": -40,
+                "severity": "HIGH"
+            })
+    
+    # ===== ALGORITHMIC DEDUCTIONS =====
+    if algorithmic_result:
+        if algorithmic_result["levenshtein"]["risk"]:
+            score -= 25
+            deductions.append({
+                "reason": f"Levenshtein distance < 3 (too similar spelling)",
+                "points": -25,
+                "severity": "HIGH"
+            })
+        
+        if algorithmic_result["phonetic"]["risk"]:
+            score -= 20
+            deductions.append({
+                "reason": "Phonetic match (sounds like competitor)",
+                "points": -20,
+                "severity": "HIGH"
+            })
+        
+        if algorithmic_result["jaro_winkler"]["prefix_match"]:
+            score -= 15
+            deductions.append({
+                "reason": "First 4 letters identical to competitor",
+                "points": -15,
+                "severity": "MEDIUM"
+            })
+    
+    # ===== LINGUISTIC DEDUCTIONS =====
+    if linguistic_result["distinctiveness"] == "GENERIC":
+        score -= 50
+        deductions.append({
+            "reason": "Generic term - cannot be trademarked",
+            "points": -50,
+            "severity": "CRITICAL"
+        })
+    elif linguistic_result["distinctiveness"] == "DESCRIPTIVE":
+        score -= 25
+        deductions.append({
+            "reason": "Descriptive name - weak trademark protection",
+            "points": -25,
+            "severity": "MEDIUM"
+        })
+    elif linguistic_result["distinctiveness"] == "SUGGESTIVE":
+        score -= 10
+        deductions.append({
+            "reason": "Suggestive name - moderate protection",
+            "points": -10,
+            "severity": "LOW"
+        })
+    
+    if linguistic_result["translation_issues"]:
+        score -= 15
+        deductions.append({
+            "reason": f"Translation issue: {linguistic_result['translation_issues'][0]['issue']}",
+            "points": -15,
+            "severity": "MEDIUM"
+        })
+    
+    # Ensure score is within bounds
+    score = max(0, min(100, score))
+    
+    # Determine verdict
+    if score <= 40:
+        verdict = "HIGH RISK"
+        color = "RED"
+    elif score <= 70:
+        verdict = "CAUTION"
+        color = "YELLOW"
+    else:
+        verdict = "AVAILABLE"
+        color = "GREEN"
+    
+    return {
+        "score": score,
+        "verdict": verdict,
+        "color": color,
+        "deductions": deductions,
+        "total_deductions": sum(d["points"] for d in deductions)
+    }
+
+
+def deep_trace_analysis(brand_name: str, industry: str, category: str) -> Dict:
+    """
+    MASTER FUNCTION: Rightname.ai Deep-Trace Analysis
+    
+    Executes 4 simultaneous logic threads:
+    1. DECONSTRUCTION - Root extraction & Category King detection
+    2. ALGORITHMIC MATCHING - Levenshtein, Soundex, Jaro-Winkler
+    3. LINGUISTICS - Distinctiveness & translation checks
+    4. SCORING - Calculate final Rightname Score
+    
+    Returns comprehensive brand safety analysis.
+    """
+    logger.info(f"🔍 DEEP-TRACE ANALYSIS started for '{brand_name}' in {category}")
+    
+    # ===== THREAD 1: DECONSTRUCTION =====
+    root_analysis = extract_root_morpheme(brand_name)
+    logger.info(f"   ROOT EXTRACTION: {root_analysis['transformation']}")
+    
+    category_king = find_category_king(root_analysis["root"], industry, category)
+    if category_king:
+        logger.info(f"   ⚠️ CATEGORY KING FOUND: {category_king['king']} ({category_king['match_type']})")
+    else:
+        logger.info(f"   ✅ No Category King conflict for root '{root_analysis['root']}'")
+    
+    # ===== THREAD 2: ALGORITHMIC MATCHING =====
+    algorithmic_result = None
+    competitor_name = None
+    if category_king:
+        competitor_name = category_king["king"].split("/")[0].split("(")[0].strip()  # Get first/primary name
+        algorithmic_result = calculate_algorithmic_scores(brand_name, competitor_name)
+        logger.info(f"   ALGORITHMIC: Lev={algorithmic_result['levenshtein']['distance']}, " +
+                   f"Phonetic={algorithmic_result['phonetic']['assessment']}, " +
+                   f"JW={algorithmic_result['jaro_winkler']['score']}%")
+    
+    # ===== THREAD 3: LINGUISTICS =====
+    linguistic_result = check_linguistic_distinctiveness(brand_name, category)
+    logger.info(f"   LINGUISTICS: {linguistic_result['distinctiveness']} - {linguistic_result['strength']}")
+    
+    # ===== THREAD 4: SCORING =====
+    score_result = calculate_rightname_score(category_king, algorithmic_result, linguistic_result)
+    logger.info(f"   📊 FINAL SCORE: {score_result['score']}/100 - {score_result['verdict']} ({score_result['color']})")
+    
+    # Build comprehensive result
+    result = {
+        "brand_name": brand_name,
+        "industry": industry,
+        "category": category,
+        
+        # Thread 1: Deconstruction
+        "root_analysis": root_analysis,
+        "category_king": category_king,
+        
+        # Thread 2: Algorithmic
+        "algorithmic_analysis": algorithmic_result,
+        "nearest_competitor": competitor_name,
+        
+        # Thread 3: Linguistics
+        "linguistic_analysis": linguistic_result,
+        
+        # Thread 4: Scoring
+        "score": score_result["score"],
+        "verdict": score_result["verdict"],
+        "color": score_result["color"],
+        "deductions": score_result["deductions"],
+        
+        # Summary
+        "critical_conflict": category_king["king"] if category_king and category_king.get("industry_match") else None,
+        "should_reject": score_result["score"] <= 40,
+        "analysis_summary": generate_analysis_summary(brand_name, category_king, algorithmic_result, linguistic_result, score_result)
+    }
+    
+    return result
+
+
+def generate_analysis_summary(
+    brand_name: str,
+    category_king: Optional[Dict],
+    algorithmic_result: Optional[Dict],
+    linguistic_result: Dict,
+    score_result: Dict
+) -> str:
+    """Generate a human-readable summary of the Deep-Trace Analysis."""
+    
+    if category_king and category_king.get("industry_match"):
+        return (f"🚨 CRITICAL: '{brand_name}' shares the root word with {category_king['king']} "
+               f"({category_king['valuation']} valuation). In the same industry, this creates "
+               f"unacceptable confusion and legal risk. Recommendation: ABANDON NAME.")
+    
+    if category_king and not category_king.get("industry_match"):
+        return (f"⚠️ WARNING: '{brand_name}' shares root with {category_king['king']} but in different industry. "
+               f"Cross-industry confusion risk exists. Proceed with caution and legal review.")
+    
+    if linguistic_result["distinctiveness"] == "GENERIC":
+        return (f"🚨 CRITICAL: '{brand_name}' is too generic and cannot be trademarked. "
+               f"Descriptive words found: {', '.join(linguistic_result['descriptive_words_found'])}. "
+               f"Recommendation: Choose a more distinctive name.")
+    
+    if linguistic_result["distinctiveness"] == "DESCRIPTIVE":
+        return (f"⚠️ WARNING: '{brand_name}' is descriptive and will have weak trademark protection. "
+               f"Consider adding distinctive elements or choosing a more arbitrary name.")
+    
+    if score_result["score"] >= 71:
+        return (f"✅ AVAILABLE: '{brand_name}' appears to be distinctive with no major conflicts detected. "
+               f"Recommended to proceed with trademark search and registration.")
+    
+    return f"'{brand_name}' has some concerns. Review the detailed analysis before proceeding."
+
+
+def format_deep_trace_report(analysis: Dict) -> str:
+    """Format Deep-Trace Analysis as a Rightname.ai Report."""
+    
+    lines = [
+        "",
+        "=" * 70,
+        "🛡️ RIGHTNAME.AI DEEP-TRACE ANALYSIS REPORT",
+        "=" * 70,
+        f"Brand Name: {analysis['brand_name']}",
+        f"Category: {analysis['category']}",
+        "",
+        f"📊 THE SCORE: {analysis['score']}/100",
+        f"🎯 VERDICT: {analysis['verdict']} ({analysis['color']})",
+        "",
+        "-" * 70,
+        "1. 🚨 CRITICAL CONFLICT CHECK",
+        "-" * 70,
+    ]
+    
+    if analysis["critical_conflict"]:
+        lines.extend([
+            f"   Direct Competitor Match: {analysis['critical_conflict']}",
+            f"   Conflict Type: Root Word + Same Industry",
+            f"   Analysis: {analysis['analysis_summary']}"
+        ])
+    elif analysis["category_king"]:
+        lines.extend([
+            f"   Potential Conflict: {analysis['category_king']['king']}",
+            f"   Conflict Type: {analysis['category_king']['match_type']}",
+            f"   Analysis: {analysis['analysis_summary']}"
+        ])
+    else:
+        lines.append("   ✅ No direct competitor match detected")
+    
+    lines.extend([
+        "",
+        "-" * 70,
+        "2. 🧮 ALGORITHMIC STRESS TEST",
+        "-" * 70,
+    ])
+    
+    root = analysis["root_analysis"]
+    lines.append(f"   Root Word: {root['root']} ({root['transformation']})")
+    
+    if analysis["algorithmic_analysis"]:
+        alg = analysis["algorithmic_analysis"]
+        lines.extend([
+            f"   Spelling Distance: {alg['levenshtein']['assessment']} (Edit distance: {alg['levenshtein']['distance']})",
+            f"   Phonetic Match: {alg['phonetic']['assessment']}",
+            f"   Jaro-Winkler: {alg['jaro_winkler']['score']}%"
+        ])
+    else:
+        lines.append("   No competitor found for algorithmic comparison")
+    
+    lines.extend([
+        "",
+        "-" * 70,
+        "3. 🧠 LINGUISTIC & BRAND STRENGTH",
+        "-" * 70,
+    ])
+    
+    ling = analysis["linguistic_analysis"]
+    lines.extend([
+        f"   Distinctiveness: {ling['distinctiveness']}",
+        f"   Strength: {ling['strength']}",
+        f"   Meaning Check: {ling['meaning_check']}"
+    ])
+    
+    if ling["descriptive_words_found"]:
+        lines.append(f"   Descriptive Words: {', '.join(ling['descriptive_words_found'])}")
+    
+    lines.extend([
+        "",
+        "-" * 70,
+        "4. 💡 RECOMMENDATION",
+        "-" * 70,
+    ])
+    
+    if analysis["score"] <= 40:
+        lines.append("   🚫 ABANDON NAME - High legal risk detected")
+    elif analysis["score"] <= 70:
+        lines.append("   ⚠️ PROCEED WITH CAUTION - Address identified concerns")
+    else:
+        lines.append("   ✅ GREAT NAME - Proceed with trademark registration")
+    
+    lines.append(f"   {analysis['analysis_summary']}")
+    
+    lines.extend([
+        "",
+        "=" * 70,
+        "Disclaimer: Rightname.ai provides AI-driven analysis, not legal advice.",
+        "Consult a trademark attorney for final clearance.",
+        "=" * 70,
+        ""
+    ])
+    
+    return "\n".join(lines)
+
+
 # Test function
 if __name__ == "__main__":
-    # Test cases
+    # Test cases including the Rapidoy case
     test_cases = [
-        ("Taata", "Food & Beverage", "Salt"),
-        ("Tata", "Food & Beverage", "Salt"),
-        ("Nikee", "Fashion & Apparel", "Sportswear"),
-        ("Googl", "Technology & Software", "Search Engine"),
-        ("Unqueue", "Salon Booking", "Appointment App"),
-        ("Lumina", "Technology & Software", "AI Platform"),
+        ("Rapidoy", "Transport", "Ride-hailing"),
+        ("Uberify", "Transport", "Ride-hailing"),
+        ("Swiggify", "Food", "Food Delivery"),
+        ("QuickCab", "Transport", "Taxi Service"),
+        ("Zyntrix", "Technology", "AI Platform"),
+        ("FastFood", "Food", "Restaurant"),
     ]
     
     for name, industry, category in test_cases:
-        print(f"\n{'='*60}")
+        print(f"\n{'='*70}")
         print(f"Testing: {name} ({industry} / {category})")
-        result = check_brand_similarity(name, industry, category)
-        print(format_similarity_report(result))
+        result = deep_trace_analysis(name, industry, category)
+        print(format_deep_trace_report(result))
