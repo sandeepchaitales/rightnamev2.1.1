@@ -913,6 +913,154 @@ def classify_brand_name_type(brand_name: str, decomposition: dict) -> str:
     return classification
 
 
+# ============ GATE 2: CATEGORY MISMATCH CHECK ============
+# Detect when brand name semantics don't match the industry category
+
+CATEGORY_SEMANTIC_KEYWORDS = {
+    # Healthcare/Medical
+    "doctor": ["medical", "health", "clinic", "physician", "care", "patient", "appointment", "consultation"],
+    "healthcare": ["medical", "health", "wellness", "care", "hospital", "clinic", "treatment"],
+    "pharmacy": ["medicine", "drug", "prescription", "health", "wellness"],
+    
+    # Food/Restaurant
+    "food": ["meal", "eat", "dine", "cook", "taste", "recipe", "kitchen", "restaurant", "cafe"],
+    "restaurant": ["meal", "eat", "dine", "food", "taste", "cuisine", "chef"],
+    
+    # Finance/Fintech
+    "finance": ["money", "payment", "bank", "invest", "fund", "credit", "loan", "wallet"],
+    "fintech": ["payment", "money", "transaction", "banking", "transfer", "wallet"],
+    "payment": ["pay", "money", "transaction", "transfer", "wallet", "checkout"],
+    
+    # Travel/Hospitality
+    "hotel": ["stay", "room", "accommodation", "hospitality", "resort", "lodge", "inn"],
+    "travel": ["trip", "journey", "tour", "vacation", "flight", "booking"],
+    
+    # Technology/Software
+    "technology": ["tech", "software", "digital", "code", "app", "platform", "system"],
+    "saas": ["software", "platform", "cloud", "service", "subscription"],
+    
+    # E-commerce/Retail
+    "ecommerce": ["shop", "buy", "sell", "store", "cart", "order", "delivery"],
+    "retail": ["shop", "store", "buy", "product", "sale", "deal"],
+}
+
+# Keywords that STRONGLY signal a specific domain
+DOMAIN_SIGNAL_WORDS = {
+    "meal": "food",
+    "food": "food",
+    "eat": "food",
+    "dine": "food",
+    "cook": "food",
+    "recipe": "food",
+    "kitchen": "food",
+    "restaurant": "food",
+    
+    "pay": "finance",
+    "money": "finance",
+    "bank": "finance",
+    "cash": "finance",
+    "wallet": "finance",
+    "coin": "finance",
+    "fund": "finance",
+    
+    "doctor": "healthcare",
+    "med": "healthcare",
+    "health": "healthcare",
+    "clinic": "healthcare",
+    "patient": "healthcare",
+    "steth": "healthcare",
+    
+    "hotel": "hospitality",
+    "stay": "hospitality",
+    "room": "hospitality",
+    "resort": "hospitality",
+    
+    "travel": "travel",
+    "trip": "travel",
+    "tour": "travel",
+    "flight": "travel",
+    
+    "shop": "retail",
+    "store": "retail",
+    "buy": "retail",
+    "cart": "retail",
+}
+
+
+def check_category_mismatch(brand_name: str, category: str) -> dict:
+    """
+    GATE 2: Check if brand name semantics match the industry category
+    
+    Example: "Check My Meal" for "Doctor Appointment App" = MISMATCH
+    - "Meal" signals Food domain
+    - Category is Healthcare domain
+    - This is a strategic risk
+    """
+    brand_lower = brand_name.lower()
+    category_lower = category.lower()
+    
+    # Step 1: Detect what domain the brand NAME signals
+    name_signals_domain = None
+    signaling_word = None
+    
+    for word, domain in DOMAIN_SIGNAL_WORDS.items():
+        if word in brand_lower:
+            name_signals_domain = domain
+            signaling_word = word
+            break
+    
+    # Step 2: Detect what domain the CATEGORY is
+    category_domain = None
+    for cat_key, keywords in CATEGORY_SEMANTIC_KEYWORDS.items():
+        if cat_key in category_lower:
+            category_domain = cat_key
+            break
+    
+    # Also check if category contains domain keywords
+    if not category_domain:
+        for word, domain in DOMAIN_SIGNAL_WORDS.items():
+            if word in category_lower:
+                category_domain = domain
+                break
+    
+    # Step 3: Check for mismatch
+    result = {
+        "has_mismatch": False,
+        "name_signals": name_signals_domain,
+        "signaling_word": signaling_word,
+        "category_domain": category_domain,
+        "warning": None,
+        "score_penalty": 0
+    }
+    
+    if name_signals_domain and category_domain:
+        # Check if they're different domains
+        if name_signals_domain != category_domain:
+            # Special case: healthcare and wellness are related
+            related_domains = [
+                {"healthcare", "wellness"},
+                {"finance", "fintech"},
+                {"food", "restaurant"},
+                {"retail", "ecommerce"},
+                {"hotel", "hospitality", "travel"},
+            ]
+            
+            is_related = False
+            for related_set in related_domains:
+                if name_signals_domain in related_set and category_domain in related_set:
+                    is_related = True
+                    break
+            
+            if not is_related:
+                result["has_mismatch"] = True
+                result["warning"] = f"⚠️ **Category Mismatch Risk:** The name contains '{signaling_word}' which signals {name_signals_domain.upper()} domain, but the category is {category.title()} ({category_domain.upper()} domain). This may confuse consumers and limit market perception."
+                result["score_penalty"] = 15  # Reduce score by 15 points
+                
+                logging.warning(f"🚨 GATE 2 CATEGORY MISMATCH: '{brand_name}' signals {name_signals_domain} but category is {category_domain}")
+    
+    return result
+
+
 def check_sacred_royal_names(brand_name: str, countries: list) -> dict:
     """Check if brand name contains sacred, royal, or culturally sensitive terms for target markets"""
     brand_lower = brand_name.lower()
