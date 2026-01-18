@@ -4140,6 +4140,408 @@ def generate_final_verdict(
     return f"'{brand_name}' requires trademark attorney consultation before proceeding. Classification ambiguity suggests registration risk."
 
 
+# ============================================================================
+# THREE-PILLAR BRAND ASSESSMENT (McKinsey-Style Analysis)
+# ============================================================================
+# Connected to pre-computed classification for consistency
+# ============================================================================
+
+def generate_mckinsey_analysis(
+    brand_name: str,
+    classification: dict,
+    category: str,
+    positioning: str,
+    verdict: str,
+    trademark_risk: int,
+    imitability_risk: dict = None,
+    positioning_alignment: dict = None
+) -> dict:
+    """
+    Generate Three-Pillar Brand Assessment connected to our classification system.
+    
+    Pillars:
+    1. Benefits & Experiences - What does the name PROMISE?
+    2. Distinctiveness - How UNIQUE is the name?
+    3. Brand Architecture - Can this name SCALE?
+    """
+    
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    tokens = classification.get("tokens", [])
+    dictionary_tokens = classification.get("dictionary_tokens", [])
+    invented_tokens = classification.get("invented_tokens", [])
+    distinctiveness = classification.get("distinctiveness", "LOW")
+    protectability = classification.get("protectability", "WEAK")
+    reasoning = classification.get("reasoning", "")
+    
+    # ========== MODULE 1: BENEFITS & EXPERIENCES ==========
+    benefits_experiences = generate_benefits_experiences(
+        brand_name, legal_category, dictionary_tokens, invented_tokens, category, positioning
+    )
+    
+    # ========== MODULE 2: DISTINCTIVENESS ==========
+    distinctiveness_analysis = generate_distinctiveness_module(
+        brand_name, legal_category, distinctiveness, category, 
+        imitability_risk, dictionary_tokens
+    )
+    
+    # ========== MODULE 3: BRAND ARCHITECTURE ==========
+    brand_architecture = generate_brand_architecture_module(
+        brand_name, legal_category, distinctiveness, category, positioning
+    )
+    
+    # ========== EXECUTIVE RECOMMENDATION ==========
+    # Based on legal category + positioning alignment
+    if legal_category == "GENERIC":
+        exec_recommendation = "PIVOT"
+        rationale = f"'{brand_name}' is legally unprotectable as a generic term. Fundamental rename required before any brand investment."
+        critical = f"**CRITICAL FAILURE:** Generic terms cannot be trademarked under USPTO, EUIPO, or any major jurisdiction. This name will provide ZERO legal protection regardless of marketing spend."
+    elif legal_category == "DESCRIPTIVE":
+        if positioning and ("luxury" in positioning.lower() or "premium" in positioning.lower()):
+            exec_recommendation = "PIVOT"
+            rationale = f"'{brand_name}' is descriptive ({', '.join(dictionary_tokens)}), fundamentally misaligned with {positioning} positioning. Descriptive names commoditize premium offerings."
+            critical = f"**STRATEGIC MISMATCH:** Descriptive names signal utility, not prestige. Luxury/Premium brands require abstract, coined, or arbitrary names (Hermès, Tesla, Apple) to command price premiums."
+        else:
+            exec_recommendation = "REFINE"
+            rationale = f"'{brand_name}' is descriptive, offering clarity but weak trademark protection. Consider if brand defensibility is critical to your strategy."
+            critical = f"**TRADEMARK WARNING:** Descriptive marks require 5+ years of exclusive use to prove Secondary Meaning. Competitors can legally use similar descriptive terms. Budget for legal monitoring."
+    elif legal_category == "SUGGESTIVE":
+        if positioning_alignment and positioning_alignment.get("alignment") == "MISALIGNED":
+            exec_recommendation = "REFINE"
+            rationale = f"'{brand_name}' is suggestive (registrable) but may not optimally support {positioning} positioning. Consider whether the suggestion aligns with brand values."
+            critical = f"**POSITIONING GAP:** While legally protectable, the suggestive meaning may create perception issues for your target market segment."
+        else:
+            exec_recommendation = "PROCEED"
+            rationale = f"'{brand_name}' is suggestive - inherently distinctive and registrable without Secondary Meaning proof. Good balance of meaning and protection."
+            critical = f"**SOLID FOUNDATION:** Suggestive marks are the 'sweet spot' - memorable enough to hint at benefits, distinctive enough for trademark protection."
+    elif legal_category in ["ARBITRARY", "FANCIFUL"]:
+        exec_recommendation = "PROCEED"
+        rationale = f"'{brand_name}' is {'an arbitrary term (common word in unrelated context)' if legal_category == 'ARBITRARY' else 'a coined/fanciful term (invented word)'} - strongest trademark class with maximum legal protection."
+        critical = f"**INVESTMENT-GRADE IP:** {'Arbitrary' if legal_category == 'ARBITRARY' else 'Fanciful'} marks receive the {'strong' if legal_category == 'ARBITRARY' else 'strongest'} trademark protection. High enforcement power across jurisdictions."
+    else:
+        exec_recommendation = "REFINE"
+        rationale = f"'{brand_name}' classification is ambiguous. Recommend trademark attorney consultation before proceeding."
+        critical = f"**CLASSIFICATION UNCLEAR:** Unable to definitively classify. Professional legal opinion recommended."
+    
+    # Override to PIVOT if verdict is REJECT (existing brand conflict)
+    if verdict == "REJECT":
+        exec_recommendation = "PIVOT"
+        critical = f"**EXISTING CONFLICT:** {critical} Additionally, trademark conflicts detected require alternative naming approach."
+    
+    # ========== ALTERNATIVE DIRECTIONS ==========
+    alternative_directions = []
+    if exec_recommendation in ["REFINE", "PIVOT"]:
+        alternative_directions = generate_alternative_directions(brand_name, legal_category, category)
+    
+    return {
+        "benefits_experiences": benefits_experiences,
+        "distinctiveness": distinctiveness_analysis,
+        "brand_architecture": brand_architecture,
+        "executive_recommendation": exec_recommendation,
+        "recommendation_rationale": rationale,
+        "critical_assessment": critical,
+        "alternative_directions": alternative_directions
+    }
+
+
+def generate_benefits_experiences(
+    brand_name: str, 
+    legal_category: str, 
+    dictionary_tokens: list,
+    invented_tokens: list,
+    category: str,
+    positioning: str
+) -> dict:
+    """Generate Module 1: Benefits & Experiences based on classification."""
+    
+    # Linguistic roots analysis based on actual classification
+    if legal_category == "FANCIFUL":
+        linguistic_roots = f"**Coined/Invented Term:** '{brand_name}' has no dictionary origin - a pure neologism. This provides maximum trademark distinctiveness and allows the brand to define its own meaning through marketing."
+        emotional_promises = ["Innovation", "Pioneering", "Exclusivity", "Modernity"]
+        functional_benefits = ["Unique Identity", "No Competing Associations", "Global Flexibility"]
+    elif legal_category == "ARBITRARY":
+        linguistic_roots = f"**Arbitrary Usage:** '{brand_name}' uses {'a common word' if dictionary_tokens else 'familiar elements'} in an unrelated context to {category}. Like 'Apple' for computers, this creates memorable disconnect."
+        emotional_promises = ["Familiarity", "Approachability", "Confidence", "Trust"]
+        functional_benefits = ["Easy Recall", "Built-in Recognition", "Conversation Starter"]
+    elif legal_category == "SUGGESTIVE":
+        linguistic_roots = f"**Suggestive Construction:** '{brand_name}' hints at product benefits through {', '.join(dictionary_tokens) if dictionary_tokens else 'sound symbolism'} without directly describing them. Requires imagination to connect."
+        emotional_promises = ["Aspiration", "Discovery", "Intrigue", "Promise"]
+        functional_benefits = ["Benefit Suggestion", "Memorable Hook", "Marketing Leverage"]
+    elif legal_category == "DESCRIPTIVE":
+        linguistic_roots = f"**Descriptive Composition:** '{brand_name}' directly communicates product attributes through dictionary words: {', '.join(dictionary_tokens) if dictionary_tokens else 'common terms'}. High clarity but weak differentiation."
+        emotional_promises = ["Clarity", "Reliability", "Straightforwardness"]
+        functional_benefits = ["Instant Understanding", "Low Education Cost", "SEO Potential"]
+    else:  # GENERIC
+        linguistic_roots = f"**Generic Term:** '{brand_name}' names the product category itself. Cannot function as a trademark - legally unprotectable."
+        emotional_promises = ["None - Generic terms lack emotional distinctiveness"]
+        functional_benefits = ["Category Recognition Only"]
+    
+    # Phonetic analysis
+    syllables = max(1, sum(1 for c in brand_name.lower() if c in 'aeiou'))
+    phonetic_analysis = f"**Sound Architecture:** {len(brand_name)} characters, ~{syllables} syllables. "
+    if syllables <= 2:
+        phonetic_analysis += "Optimal brevity for recall and word-of-mouth."
+    elif syllables <= 3:
+        phonetic_analysis += "Good length for brand building."
+    else:
+        phonetic_analysis += "Extended length may challenge memorability."
+    
+    # Benefit map based on classification
+    benefit_map = []
+    if legal_category == "FANCIFUL":
+        benefit_map = [
+            {"name_trait": "Coined structure", "user_perception": "Innovative, cutting-edge brand", "benefit_type": "Emotional"},
+            {"name_trait": "No dictionary meaning", "user_perception": "Exclusive, premium feel", "benefit_type": "Emotional"},
+            {"name_trait": "Unique phonetics", "user_perception": "Memorable, distinctive", "benefit_type": "Functional"}
+        ]
+    elif legal_category == "ARBITRARY":
+        benefit_map = [
+            {"name_trait": "Familiar word", "user_perception": "Approachable, trustworthy", "benefit_type": "Emotional"},
+            {"name_trait": "Unexpected context", "user_perception": "Creative, bold choice", "benefit_type": "Emotional"},
+            {"name_trait": "Easy pronunciation", "user_perception": "Accessible, shareable", "benefit_type": "Functional"}
+        ]
+    elif legal_category == "SUGGESTIVE":
+        benefit_map = [
+            {"name_trait": "Suggestive meaning", "user_perception": "Clever, intriguing", "benefit_type": "Emotional"},
+            {"name_trait": "Implied benefits", "user_perception": "Product promise", "benefit_type": "Functional"},
+            {"name_trait": "Requires imagination", "user_perception": "Engaging, memorable", "benefit_type": "Emotional"}
+        ]
+    elif legal_category == "DESCRIPTIVE":
+        benefit_map = [
+            {"name_trait": "Clear meaning", "user_perception": "Honest, straightforward", "benefit_type": "Functional"},
+            {"name_trait": "Category words", "user_perception": "Easy to find/search", "benefit_type": "Functional"},
+            {"name_trait": "Direct description", "user_perception": "Commodity perception risk", "benefit_type": "Emotional"}
+        ]
+    else:
+        benefit_map = [
+            {"name_trait": "Generic term", "user_perception": "No brand differentiation", "benefit_type": "Functional"}
+        ]
+    
+    # Target persona fit based on positioning
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        if "luxury" in positioning_lower or "premium" in positioning_lower:
+            persona_fit = f"**STRONG FIT:** Abstract naming aligns with {positioning} expectations. Target audience associates invented/arbitrary names with prestige and exclusivity."
+        else:
+            persona_fit = f"**GOOD FIT:** Distinctive name supports brand building across {positioning} segment."
+    elif legal_category == "SUGGESTIVE":
+        persona_fit = f"**ADEQUATE FIT:** Suggestive meaning can support {positioning} positioning with proper brand storytelling."
+    elif legal_category == "DESCRIPTIVE":
+        if "budget" in positioning_lower or "mass" in positioning_lower:
+            persona_fit = f"**ADEQUATE FIT:** Descriptive names work for {positioning} where clarity outweighs distinctiveness."
+        else:
+            persona_fit = f"**WEAK FIT:** Descriptive names signal utility, not prestige. May undermine {positioning} positioning."
+    else:
+        persona_fit = f"**NO FIT:** Generic terms cannot build brand equity."
+    
+    return {
+        "linguistic_roots": linguistic_roots,
+        "phonetic_analysis": phonetic_analysis,
+        "emotional_promises": emotional_promises,
+        "functional_benefits": functional_benefits,
+        "benefit_map": benefit_map,
+        "target_persona_fit": persona_fit
+    }
+
+
+def generate_distinctiveness_module(
+    brand_name: str,
+    legal_category: str,
+    distinctiveness_level: str,
+    category: str,
+    imitability_risk: dict,
+    dictionary_tokens: list
+) -> dict:
+    """Generate Module 2: Distinctiveness based on classification."""
+    
+    # Distinctiveness score based on legal category (1-10 scale)
+    distinctiveness_scores = {
+        "FANCIFUL": 9,
+        "ARBITRARY": 8,
+        "SUGGESTIVE": 6,
+        "DESCRIPTIVE": 3,
+        "GENERIC": 1
+    }
+    score = distinctiveness_scores.get(legal_category, 5)
+    
+    # Category noise level
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        noise_level = "LOW"
+        industry_comparison = f"'{brand_name}' stands apart from {category} competitors through its {'coined' if legal_category == 'FANCIFUL' else 'arbitrary'} nature. No direct naming conflicts expected."
+    elif legal_category == "SUGGESTIVE":
+        noise_level = "MEDIUM"
+        industry_comparison = f"'{brand_name}' differentiates from direct competitors but may face similar suggestive names in the {category} space."
+    else:
+        noise_level = "HIGH"
+        industry_comparison = f"'{brand_name}' competes directly with other descriptive names in {category}. High likelihood of similar-sounding competitors."
+    
+    # Naming tropes analysis
+    if legal_category == "FANCIFUL":
+        tropes_analysis = f"Avoids all common naming tropes. Purely invented terms are rare in {category}, creating maximum differentiation."
+    elif legal_category == "ARBITRARY":
+        tropes_analysis = f"Uses unexpected word association rather than industry clichés. Bold departure from typical {category} naming conventions."
+    elif legal_category == "SUGGESTIVE":
+        tropes_analysis = f"Employs suggestive meaning - a common but effective naming approach. Ensure the suggestion is unique within {category}."
+    elif legal_category == "DESCRIPTIVE":
+        tropes_analysis = f"Falls into descriptive naming pattern - the most common and least distinctive approach. Competitors can legally use similar terms."
+    else:
+        tropes_analysis = f"Generic term that defines the category. Cannot differentiate - legally free for all to use."
+    
+    # Similar competitors risk
+    similar_competitors = []
+    if imitability_risk and imitability_risk.get("clone_examples"):
+        for clone in imitability_risk.get("clone_examples", [])[:3]:
+            similar_competitors.append({
+                "name": clone.split(":")[0] if ":" in clone else clone,
+                "similarity_aspect": clone.split(":")[1].strip() if ":" in clone else "Structural variation",
+                "risk_level": "HIGH" if legal_category in ["DESCRIPTIVE", "GENERIC"] else "MEDIUM" if legal_category == "SUGGESTIVE" else "LOW"
+            })
+    
+    # Differentiation opportunities
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        diff_opportunities = [
+            "Leverage unique name for brand storytelling",
+            "Build proprietary visual identity around invented term",
+            "Create 'meaning ownership' through consistent messaging"
+        ]
+    elif legal_category == "SUGGESTIVE":
+        diff_opportunities = [
+            "Strengthen suggestion through tagline and visuals",
+            "Differentiate through brand personality, not just name",
+            "Build stronger trademark through design marks"
+        ]
+    else:
+        diff_opportunities = [
+            "Add distinctive visual branding to compensate",
+            "Develop strong tagline to differentiate",
+            "Consider name modification for stronger protection"
+        ]
+    
+    return {
+        "distinctiveness_score": score,
+        "category_noise_level": noise_level,
+        "industry_comparison": industry_comparison,
+        "naming_tropes_analysis": tropes_analysis,
+        "similar_competitors": similar_competitors,
+        "differentiation_opportunities": diff_opportunities
+    }
+
+
+def generate_brand_architecture_module(
+    brand_name: str,
+    legal_category: str,
+    distinctiveness_level: str,
+    category: str,
+    positioning: str
+) -> dict:
+    """Generate Module 3: Brand Architecture based on classification."""
+    
+    # Elasticity score (Apple=10, CarPhoneWarehouse=2)
+    elasticity_scores = {
+        "FANCIFUL": 9,  # Can stretch anywhere
+        "ARBITRARY": 8,  # High flexibility
+        "SUGGESTIVE": 6,  # Some category constraints
+        "DESCRIPTIVE": 3,  # Category-locked
+        "GENERIC": 1  # Cannot stretch at all
+    }
+    elasticity_score = elasticity_scores.get(legal_category, 5)
+    
+    # Elasticity analysis
+    if legal_category == "FANCIFUL":
+        elasticity_analysis = f"'{brand_name}' has maximum elasticity - can expand into any product category or geography without semantic conflict. Like 'Google' or 'Kodak', invented names define their own boundaries."
+    elif legal_category == "ARBITRARY":
+        elasticity_analysis = f"'{brand_name}' offers high elasticity. The arbitrary usage disconnects from original meaning, allowing expansion beyond {category}. Like 'Amazon' expanding from books to everything."
+    elif legal_category == "SUGGESTIVE":
+        elasticity_analysis = f"'{brand_name}' has moderate elasticity. The suggestive meaning creates some category association that may constrain extreme pivots but allows related expansion."
+    elif legal_category == "DESCRIPTIVE":
+        elasticity_analysis = f"'{brand_name}' is category-locked. Descriptive names strongly associate with specific products, making expansion into unrelated categories confusing or impossible."
+    else:
+        elasticity_analysis = f"'{brand_name}' has zero elasticity as a generic term. Cannot build brand architecture on a name everyone can use."
+    
+    # Recommended architecture
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        architecture = "Branded House"
+        architecture_rationale = "Strong master brand with sub-products. Name strength supports unified brand architecture (e.g., Google Search, Google Maps, Google Cloud)."
+    elif legal_category == "SUGGESTIVE":
+        architecture = "Endorsed Brand"
+        architecture_rationale = "Master brand endorses product brands. The suggestive meaning works as quality seal while products can have distinct identities."
+    else:
+        architecture = "House of Brands"
+        architecture_rationale = "Separate product brands under corporate umbrella. Weak master brand name requires independent product branding."
+    
+    # Memorability index
+    length_factor = 10 - min(5, max(0, len(brand_name) - 6))  # Optimal at 6 chars
+    uniqueness_factor = {"FANCIFUL": 3, "ARBITRARY": 2, "SUGGESTIVE": 1, "DESCRIPTIVE": 0, "GENERIC": -1}.get(legal_category, 0)
+    memorability_index = min(10, max(1, length_factor + uniqueness_factor))
+    
+    # Memorability factors
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        memorability_factors = ["Unique sound pattern", "No competing associations", "Distinctive visual signature"]
+    elif legal_category == "SUGGESTIVE":
+        memorability_factors = ["Meaning hook aids recall", "Moderate uniqueness", "Conceptual connection"]
+    else:
+        memorability_factors = ["Clarity aids initial recall", "Competes with similar names", "Low long-term retention"]
+    
+    # Global scalability
+    if legal_category == "FANCIFUL":
+        global_scalability = f"**EXCELLENT:** Invented terms have no linguistic baggage. '{brand_name}' can launch globally without translation issues or cultural conflicts."
+    elif legal_category == "ARBITRARY":
+        global_scalability = f"**GOOD:** Check that the word doesn't have negative meanings in target markets, but generally arbitrary names travel well internationally."
+    elif legal_category == "SUGGESTIVE":
+        global_scalability = f"**MODERATE:** The suggestion may not translate across languages. Validate meaning in each target market before launch."
+    else:
+        global_scalability = f"**LIMITED:** Descriptive/generic terms require translation or localization for each market, fragmenting global brand equity."
+    
+    return {
+        "elasticity_score": elasticity_score,
+        "elasticity_analysis": elasticity_analysis,
+        "recommended_architecture": architecture,
+        "architecture_rationale": architecture_rationale,
+        "memorability_index": memorability_index,
+        "memorability_factors": memorability_factors,
+        "global_scalability": global_scalability
+    }
+
+
+def generate_alternative_directions(brand_name: str, legal_category: str, category: str) -> list:
+    """Generate alternative naming directions for REFINE/PIVOT recommendations."""
+    
+    directions = []
+    
+    # Always suggest moving UP the distinctiveness spectrum
+    if legal_category in ["DESCRIPTIVE", "GENERIC"]:
+        directions.append({
+            "direction_name": "Coined/Fanciful Approach",
+            "example_names": [f"{brand_name[:3]}ora", f"{brand_name[:4]}ix", f"Zyn{brand_name[:3]}"],
+            "rationale": "Invented names offer maximum trademark protection and brand asset value. Zero competitors can legally use identical names.",
+            "mckinsey_principle": "Distinctiveness"
+        })
+        
+        directions.append({
+            "direction_name": "Arbitrary Word Strategy",
+            "example_names": ["Spark", "Nova", "Prism", "Atlas"],
+            "rationale": "Common words in unrelated contexts create memorable brands with strong protection (Apple, Amazon, Uber).",
+            "mckinsey_principle": "Benefits"
+        })
+    
+    if legal_category in ["DESCRIPTIVE", "SUGGESTIVE"]:
+        directions.append({
+            "direction_name": "Suggestive Enhancement",
+            "example_names": [f"{brand_name[:4]}ify", f"True{category.split()[0][:4]}", f"{category.split()[0][:4]}ly"],
+            "rationale": "Transform descriptive elements into suggestive construction for improved protection while retaining meaning.",
+            "mckinsey_principle": "Architecture"
+        })
+    
+    # Category-specific alternatives
+    directions.append({
+        "direction_name": "Metaphorical Approach",
+        "example_names": ["Horizon", "Pinnacle", "Summit", "Meridian"],
+        "rationale": f"Metaphors communicate aspiration without describing {category} directly. Strong emotional resonance.",
+        "mckinsey_principle": "Benefits"
+    })
+    
+    return directions[:3]  # Limit to 3
+
+
 def generate_risk_cons(brand_name: str, countries: list, category: str, domain_available: bool, verdict: str) -> list:
     """
     Generate KEY RISKS section that aligns with the Executive Summary.
