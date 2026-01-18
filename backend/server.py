@@ -1141,8 +1141,7 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
         result["warning"] = None
         result["reasoning"] = f"'{brand_name}' is a completely invented word with no prior dictionary meaning. Like 'Xerox' or 'Kodak', fanciful marks receive the strongest trademark protection."
         
-        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → FANCIFUL/COINED (invented word)")
-        return result
+        return cache_and_return(result, f"🏷️ CLASSIFICATION: '{brand_name}' → FANCIFUL/COINED (invented word)")
     
     # ========== DEFAULT: CONSERVATIVE RULE ==========
     # If we can't clearly classify, default to DESCRIPTIVE (safer for user)
