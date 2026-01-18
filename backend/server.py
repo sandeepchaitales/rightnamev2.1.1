@@ -1706,12 +1706,12 @@ COUNTRY_CULTURAL_DATA = {
 def generate_cultural_analysis(countries: list, brand_name: str, category: str = "Business") -> list:
     """Generate cultural analysis for ALL user-selected countries (max 4)
     
-    NOW INCLUDES:
-    - Linguistic decomposition (morpheme analysis)
-    - Cultural resonance per country based on morphemes
-    - Industry-suffix fit analysis
-    - Phonetic risk detection
-    - Sacred/royal name warnings
+    NEW FORMULA-BASED SCORING:
+    Score = (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
+    
+    - Safety: Phonetic accidents, slang, sacred terms
+    - Fluency: Pronunciation ease for local speakers  
+    - Vibe: Premium market fit vs local competitors
     """
     result = []
     
@@ -1745,11 +1745,45 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         # Get linguistic analysis for this country
         country_linguistic = linguistic_analysis.get("country_analysis", {}).get(display_name, {})
         
-        # Build comprehensive cultural notes using linguistic decomposition
+        # ========== NEW: FORMULA-BASED CULTURAL SCORING ==========
+        # Calculate using: Score = (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
+        cultural_score_result = calculate_fallback_cultural_score(brand_name, category, display_name)
+        score_data = cultural_score_result.get("data", {})
+        
+        safety_score = score_data.get("safety_score", {}).get("raw", 7)
+        fluency_score = score_data.get("fluency_score", {}).get("raw", 7)
+        vibe_score = score_data.get("vibe_score", {}).get("raw", 6)
+        calculated_final = score_data.get("calculation", {}).get("final_score", 7.0)
+        risk_verdict = score_data.get("risk_verdict", "CAUTION")
+        
+        # Build comprehensive cultural notes using linguistic decomposition + new scoring
         cultural_notes_parts = []
         
+        # Part 0: NEW FORMULA SCORING HEADER
+        cultural_notes_parts.append(f"**📊 CULTURAL FIT SCORE: {calculated_final}/10**\n")
+        cultural_notes_parts.append(f"**Formula:** (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)\n")
+        cultural_notes_parts.append(f"**Calculation:** ({safety_score} × 0.4) + ({fluency_score} × 0.3) + ({vibe_score} × 0.3) = **{calculated_final}**\n")
+        cultural_notes_parts.append(f"**Verdict:** {risk_verdict}\n")
+        
+        cultural_notes_parts.append("---")
+        cultural_notes_parts.append(f"**🛡️ SAFETY SCORE: {safety_score}/10** - {score_data.get('safety_score', {}).get('reasoning', 'Checked for phonetic issues')}")
+        if score_data.get("safety_score", {}).get("issues_found", ["None"])[0] != "None found":
+            cultural_notes_parts.append(f"  Issues: {', '.join(score_data.get('safety_score', {}).get('issues_found', []))}")
+        
+        cultural_notes_parts.append(f"**🗣️ FLUENCY SCORE: {fluency_score}/10** - {score_data.get('fluency_score', {}).get('reasoning', 'Assessed pronunciation ease')}")
+        difficult_sounds = score_data.get("fluency_score", {}).get("difficult_sounds", [])
+        if difficult_sounds and difficult_sounds[0] != "None":
+            cultural_notes_parts.append(f"  Difficult sounds: {', '.join(difficult_sounds)}")
+        
+        cultural_notes_parts.append(f"**✨ VIBE SCORE: {vibe_score}/10** - {score_data.get('vibe_score', {}).get('reasoning', 'Evaluated market fit')}")
+        local_competitors = score_data.get("vibe_score", {}).get("local_competitors", [])
+        if local_competitors:
+            cultural_notes_parts.append(f"  Local competitors: {', '.join(local_competitors)}")
+        
+        cultural_notes_parts.append("---")
+        
         # Part 1: Linguistic Decomposition Header
-        cultural_notes_parts.append(f"**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
+        cultural_notes_parts.append(f"\n**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
         
         # Part 2: Morpheme Breakdown
         decomposition = linguistic_analysis.get("decomposition", {})
@@ -1786,14 +1820,13 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         # Part 5: Brand Classification
         cultural_notes_parts.append(f"\n**BRAND TYPE:** {linguistic_analysis.get('brand_type', 'Modern/Coined')}")
         
-        # Part 6: Country-Specific Recommendation
-        overall_resonance = country_linguistic.get("overall_resonance", "NEUTRAL")
-        if overall_resonance == "CRITICAL":
-            cultural_notes_parts.append("\n**RECOMMENDATION:** 🔴 CONSULT LOCAL LEGAL COUNSEL before market entry. Name contains culturally/legally sensitive elements that may face regulatory challenges.")
-        elif overall_resonance == "HIGH":
-            cultural_notes_parts.append("\n**RECOMMENDATION:** 🟡 Strong cultural resonance detected. Leverage this connection in local marketing while verifying no IP/trademark conflicts.")
+        # Part 6: Country-Specific Recommendation based on CALCULATED score
+        if calculated_final < 5:
+            cultural_notes_parts.append("\n**RECOMMENDATION:** 🔴 CRITICAL - Significant cultural/linguistic barriers identified. Consult local experts before market entry.")
+        elif calculated_final < 7:
+            cultural_notes_parts.append("\n**RECOMMENDATION:** 🟡 CAUTION - Some concerns identified. Local linguistic validation strongly advised.")
         else:
-            cultural_notes_parts.append("\n**RECOMMENDATION:** 🟢 Name appears suitable for this market. Proceed with standard trademark clearance and local linguistic validation.")
+            cultural_notes_parts.append("\n**RECOMMENDATION:** 🟢 SAFE - Name appears suitable for this market. Proceed with standard clearance.")
         
         # Part 7: Original base cultural notes
         cultural_notes_parts.append(f"\n---\n**LOCAL MARKET CONTEXT:**\n{base_cultural_data['cultural_notes']}")
@@ -1801,26 +1834,17 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         # Join all parts
         cultural_notes = "\n".join(cultural_notes_parts)
         
-        # Calculate resonance score based on linguistic analysis
-        base_score = base_cultural_data["resonance_score"]
-        if overall_resonance == "CRITICAL":
-            resonance_score = max(2.0, base_score - 4.0)  # Significant penalty
-        elif overall_resonance == "HIGH" and not risk_flags:
-            resonance_score = min(9.5, base_score + 1.0)  # Boost for positive resonance
-        elif overall_resonance == "HIGH" and risk_flags:
-            resonance_score = max(4.0, base_score - 2.0)  # Some penalty for risks
-        else:
-            resonance_score = base_score
+        # Use the NEW calculated score (×10 for 0-100 scale compatibility)
+        resonance_score = calculated_final
         
-        # Generate linguistic check status
-        if overall_resonance == "CRITICAL":
-            linguistic_check = f"⚠️ CRITICAL RISK - {len(risk_flags)} issue(s) detected"
-        elif risk_flags:
-            linguistic_check = f"⚠️ CAUTION - {len(risk_flags)} potential concern(s)"
-        elif overall_resonance == "HIGH":
-            linguistic_check = f"✅ POSITIVE - High cultural resonance"
+        # Generate linguistic check status based on calculated score
+        overall_resonance = country_linguistic.get("overall_resonance", "NEUTRAL")
+        if calculated_final < 5:
+            linguistic_check = f"⚠️ CRITICAL - Score {calculated_final}/10"
+        elif calculated_final < 7:
+            linguistic_check = f"⚠️ CAUTION - Score {calculated_final}/10"
         else:
-            linguistic_check = base_cultural_data.get("linguistic_check", "PASS - No issues detected")
+            linguistic_check = f"✅ SAFE - Score {calculated_final}/10"
         
         result.append({
             "country": display_name,
@@ -1828,6 +1852,16 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
             "cultural_resonance_score": round(resonance_score, 1),
             "cultural_notes": cultural_notes,
             "linguistic_check": linguistic_check,
+            # NEW: Include sub-scores for transparency
+            "score_breakdown": {
+                "safety_score": safety_score,
+                "fluency_score": fluency_score,
+                "vibe_score": vibe_score,
+                "formula": "(Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)",
+                "calculation": f"({safety_score} × 0.4) + ({fluency_score} × 0.3) + ({vibe_score} × 0.3) = {calculated_final}",
+                "final_score": calculated_final,
+                "risk_verdict": risk_verdict
+            },
             "linguistic_analysis": {
                 "morphemes": [m["text"] for m in decomposition.get("morphemes", [])],
                 "brand_type": linguistic_analysis.get("brand_type"),
@@ -1837,7 +1871,7 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
             }
         })
         
-        logging.info(f"📊 Cultural analysis for {display_name}: Resonance={overall_resonance}, Score={resonance_score}, Risks={len(risk_flags)}")
+        logging.info(f"📊 Cultural analysis for {display_name}: Safety={safety_score}, Fluency={fluency_score}, Vibe={vibe_score} → FINAL={calculated_final}/10 ({risk_verdict})")
     
     return result
 
