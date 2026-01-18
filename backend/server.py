@@ -6366,9 +6366,10 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 "cons": generate_risk_cons(brand_name, request.countries, category, domain_available, verdict),
                 # CRITICAL FIX: Always use generate_cultural_analysis for sacred name detection
                 # If market_intelligence has data, merge it, but always run local analysis
+                # NEW: Pass classification to avoid duplicate computation
                 "cultural_analysis": merge_cultural_analysis_with_sacred_names(
                     fallback_cultural,
-                    generate_cultural_analysis(request.countries, brand_name, category),
+                    generate_cultural_analysis(request.countries, brand_name, category, classification),
                     brand_name,
                     request.countries
                 ),
