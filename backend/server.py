@@ -7445,21 +7445,23 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     for brand in request.brand_names:
         logging.info(f"Running parallel checks for brand: {brand}")
         
-        # ==================== MASTER CLASSIFICATION (CALLED ONCE) ====================
+        # ==================== MASTER CLASSIFICATION (CALLED ONCE, FIRST) ====================
         # This classification is passed to ALL sections that need it
+        # MUST be computed BEFORE parallel tasks to pass to trademark research
         brand_classification = classify_brand_with_industry(brand, request.category or "Business")
+        classification_category = brand_classification.get("category", "DESCRIPTIVE")
         logging.info(f"🏷️ MASTER CLASSIFICATION for '{brand}':")
-        logging.info(f"   Category: {brand_classification['category']}")
+        logging.info(f"   Category: {classification_category}")
         logging.info(f"   Tokens: {brand_classification['tokens']}")
         logging.info(f"   Distinctiveness: {brand_classification['distinctiveness']}")
         logging.info(f"   Protectability: {brand_classification['protectability']}")
         # ==================== END MASTER CLASSIFICATION ====================
         
-        # Create all tasks for this brand
+        # Create all tasks for this brand (pass classification to trademark research)
         tasks = [
             gather_domain_data(brand),
             gather_similarity_data(brand),
-            gather_trademark_data(brand),
+            gather_trademark_data(brand, classification_category),  # Pass classification for hybrid model
             gather_visibility_data(brand),
             gather_multi_domain_data(brand),
             gather_social_data(brand)
