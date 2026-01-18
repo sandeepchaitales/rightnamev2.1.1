@@ -7264,8 +7264,55 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             all_rejections[brand] = dynamic_result
             logging.warning(f"🔍 CONFLICT DETECTED: {brand} ~ {dynamic_result['matched_brand']} ({dynamic_result['reason']})")
     
+    # ==================== NEW: DEEP-TRACE ANALYSIS (RIGHTNAME.AI CORE) ====================
+    # This catches root word conflicts like Rapidoy → Rapido
+    # Runs BEFORE expensive LLM calls to save time and money
+    deep_trace_rejections = {}
+    deep_trace_results = {}  # Store all results for later use
+    
+    for brand in request.brand_names:
+        if brand not in all_rejections:  # Skip if already rejected by dynamic search
+            try:
+                # Run Deep-Trace Analysis
+                trace_result = await asyncio.to_thread(
+                    deep_trace_analysis, 
+                    brand, 
+                    request.industry or "", 
+                    request.category
+                )
+                deep_trace_results[brand] = trace_result
+                
+                # Log the report
+                logging.info(format_deep_trace_report(trace_result))
+                
+                # Check if should be rejected (score <= 40 = HIGH RISK)
+                if trace_result["should_reject"]:
+                    deep_trace_rejections[brand] = trace_result
+                    logging.warning(f"🛡️ DEEP-TRACE REJECTION: {brand} → Score {trace_result['score']}/100 ({trace_result['verdict']})")
+                    if trace_result["critical_conflict"]:
+                        logging.warning(f"   CATEGORY KING CONFLICT: {trace_result['critical_conflict']}")
+                else:
+                    logging.info(f"✅ DEEP-TRACE PASSED: {brand} → Score {trace_result['score']}/100 ({trace_result['verdict']})")
+                    
+            except Exception as e:
+                logging.error(f"Deep-Trace Analysis failed for {brand}: {e}")
+                # Don't block on failure - continue with other checks
+    
+    # Merge Deep-Trace rejections into all_rejections
+    for brand, trace_result in deep_trace_rejections.items():
+        all_rejections[brand] = {
+            "exists": True,
+            "confidence": "HIGH" if trace_result["score"] <= 20 else "MEDIUM",
+            "matched_brand": trace_result["critical_conflict"] or trace_result.get("nearest_competitor", "Unknown"),
+            "reason": trace_result["analysis_summary"],
+            "detection_method": "deep_trace_analysis",
+            "deep_trace_score": trace_result["score"],
+            "deep_trace_verdict": trace_result["verdict"]
+        }
+    # ==================== END DEEP-TRACE ANALYSIS ====================
+    
     # ==================== EARLY STOPPING FOR DETECTED BRANDS ====================
-    # If ALL brand names are detected (either by dynamic search or static list), skip expensive processing
+    # If ALL brand names are detected (either by dynamic search or Deep-Trace), skip expensive processing
     if len(all_rejections) == len(request.brand_names):
         logging.info(f"EARLY STOPPING: All {len(request.brand_names)} brand(s) detected as existing brands. Skipping LLM call.")
         
@@ -7284,14 +7331,27 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 reason = rejection_info.get("reason", "Existing brand detected")
             
             # Determine detection method
-            detection_method = "Dynamic Competitor Search"
+            detection_method = rejection_info.get("detection_method", "Dynamic Competitor Search")
+            if detection_method == "deep_trace_analysis":
+                detection_method = "Deep-Trace Analysis (Root Word Conflict)"
+                deep_trace_score = rejection_info.get("deep_trace_score", 0)
+                deep_trace_verdict = rejection_info.get("deep_trace_verdict", "HIGH RISK")
+            else:
+                deep_trace_score = None
+                deep_trace_verdict = None
+            
+            # Build summary
+            if deep_trace_score is not None:
+                summary = f"⛔ FATAL CONFLICT: '{brand}' has root word conflict with '{matched_brand}'. Rightname Score: {deep_trace_score}/100 ({deep_trace_verdict}). {reason}"
+            else:
+                summary = f"⛔ FATAL CONFLICT: '{brand}' is an EXISTING BRAND. Detected via {detection_method}. {reason}"
             
             brand_scores.append(BrandScore(
                 brand_name=brand,
-                namescore=5.0,
+                namescore=deep_trace_score if deep_trace_score is not None else 5.0,
                 verdict="REJECT",
-                summary=f"⛔ FATAL CONFLICT: '{brand}' is an EXISTING BRAND. Detected via {detection_method}. {reason}",
-                strategic_classification="BLOCKED - Existing Brand Conflict",
+                summary=summary,
+                strategic_classification="BLOCKED - Existing Brand Conflict" if deep_trace_score is None else f"BLOCKED - Category King Conflict (Score: {deep_trace_score}/100)",
                 pros=[],
                 cons=[f"Brand '{matched_brand}' already exists", "Trademark infringement likely", "Legal action possible"],
                 dimensions=[
@@ -7311,7 +7371,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         # Generate report ID and save
         report_id = f"report_{uuid.uuid4().hex[:16]}"
         response_data = BrandEvaluationResponse(
-            executive_summary=f"⛔ IMMEDIATE REJECTION: The brand name(s) submitted ({', '.join(request.brand_names)}) match existing brands found via web search. These names cannot be used due to trademark conflicts.",
+            executive_summary=f"⛔ IMMEDIATE REJECTION: The brand name(s) submitted ({', '.join(request.brand_names)}) match existing brands found via web search or Deep-Trace Analysis. These names cannot be used due to trademark conflicts.",
             brand_scores=brand_scores,
             comparison_verdict="All submitted names are blocked due to existing brand conflicts.",
             report_id=report_id
@@ -7323,7 +7383,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         doc['created_at'] = datetime.now(timezone.utc).isoformat()
         doc['request'] = request.model_dump()
         doc['early_stopped'] = True
-        doc['detection_method'] = "dynamic_competitor_search"
+        doc['detection_method'] = "dynamic_competitor_search_and_deep_trace"
+        doc['deep_trace_results'] = {k: v for k, v in deep_trace_results.items()} if deep_trace_results else None
         doc['processing_time_seconds'] = time_module.time() - start_time
         await db.evaluations.insert_one(doc)
         
