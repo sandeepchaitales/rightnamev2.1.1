@@ -8323,7 +8323,8 @@ class BrandEvaluationTester:
             "category": "AI Platform",
             "industry": "Technology",
             "countries": ["USA"],
-            "positioning": "Premium"
+            "positioning": "Premium",
+            "market_scope": "Single Country"
         }
         
         try:
