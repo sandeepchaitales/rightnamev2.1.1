@@ -32,7 +32,7 @@ from brand_audit_prompt import BRAND_AUDIT_SYSTEM_PROMPT, build_brand_audit_prom
 from brand_audit_prompt_compact import BRAND_AUDIT_SYSTEM_PROMPT_COMPACT, build_brand_audit_prompt_compact
 from visibility import check_visibility
 from availability import check_full_availability, check_multi_domain_availability, check_social_availability, check_full_availability_with_llm, llm_analyze_domain_strategy
-from similarity import check_brand_similarity, format_similarity_report
+from similarity import check_brand_similarity, format_similarity_report, deep_trace_analysis, format_deep_trace_report
 from trademark_research import conduct_trademark_research, format_research_for_prompt
 
 # Import LLM-First Market Intelligence Research Module
