@@ -8025,12 +8025,27 @@ BRAND: {brand}
         vis_data = all_brand_data[brand].get("visibility")
         trace_data = deep_trace_results.get(brand)
         
+        # Convert trademark data to dict properly (handles nested dataclasses)
+        tm_data_dict = {}
+        if tm_data:
+            if hasattr(tm_data, 'to_dict'):
+                tm_data_dict = tm_data.to_dict()
+            elif hasattr(tm_data, '__dict__'):
+                # Manual conversion for dataclass with nested objects
+                from dataclasses import asdict, is_dataclass
+                if is_dataclass(tm_data):
+                    tm_data_dict = asdict(tm_data)
+                else:
+                    tm_data_dict = tm_data.__dict__
+            elif isinstance(tm_data, dict):
+                tm_data_dict = tm_data
+        
         # Build conflict relevance from real data
         conflict_analysis = build_conflict_relevance_analysis(
             brand_name=brand,
             category=request.category,
             industry=request.industry or "",
-            trademark_data=tm_data.__dict__ if tm_data and hasattr(tm_data, '__dict__') else (tm_data if isinstance(tm_data, dict) else {}),
+            trademark_data=tm_data_dict,
             visibility_data=vis_data,
             deep_trace_result=trace_data,
             positioning=request.positioning
