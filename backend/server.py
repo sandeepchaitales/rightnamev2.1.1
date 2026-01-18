@@ -1154,8 +1154,7 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
     result["warning"] = "⚠️ Classification unclear - defaulting to DESCRIPTIVE (conservative approach). Consult a trademark attorney."
     result["reasoning"] = f"'{brand_name}' could not be clearly classified. Following the Conservative Rule, we default to DESCRIPTIVE to protect against legal risk."
     
-    logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → DESCRIPTIVE (conservative default)")
-    return result
+    return cache_and_return(result, f"🏷️ CLASSIFICATION: '{brand_name}' → DESCRIPTIVE (conservative default)")
 
 
 # Legacy function for backward compatibility
