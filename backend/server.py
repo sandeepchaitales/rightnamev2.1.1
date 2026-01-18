@@ -8154,10 +8154,19 @@ BRAND: {brand}
 
     REAL-TIME SEARCH & APP STORE VISIBILITY DATA:
     {visibility_context}
-    INSTRUCTION: Use the above visibility data to populate 'visibility_analysis'.
-    - Apply INTENT MATCHING: Compare found apps against user's business context (Industry: {request.industry}, Category: {request.category}, Product Type: {request.product_type})
-    - If intents are DIFFERENT, classify as "name_twins" not "direct_competitors"
-    - Only flag as fatal conflict if SAME intent + SAME customers
+    
+    🎯 PRE-COMPUTED CONFLICT RELEVANCE ANALYSIS (USE THIS DATA DIRECTLY):
+    {conflict_relevance_context}
+    
+    ⚠️ CRITICAL INSTRUCTION FOR visibility_analysis:
+    The conflict relevance analysis above is COMPUTED FROM REAL DATA (Trademark Registry, Company Registry, App Stores, Google Search, Deep-Trace Analysis).
+    You MUST use this pre-computed data to populate 'visibility_analysis' field:
+    - Copy direct_competitors exactly as shown above (these are REAL conflicts from trademark/company registry)
+    - Copy phonetic_conflicts exactly as shown above (these are REAL phonetic matches from app stores)
+    - Copy name_twins exactly as shown above (these are REAL but low-risk matches)
+    - If pre-computed shows "⚠️ DIRECT COMPETITORS FOUND: X" where X > 0, set warning_triggered=true
+    - DO NOT generate fictional conflicts - USE ONLY the pre-computed data
+    - The conflict_summary should match the pre-computed summary
 
     ⚠️ MANDATORY COUNTRY-SPECIFIC COMPETITOR ANALYSIS ⚠️
     Target Countries Selected: {request.countries}
