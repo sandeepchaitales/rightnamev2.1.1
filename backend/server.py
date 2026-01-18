@@ -8001,6 +8001,55 @@ BRAND: {brand}
     classification_context = "\n".join(classification_context_parts)
     # ==================== END CLASSIFICATION CONTEXT ====================
     
+    # ==================== PRE-COMPUTED CONFLICT RELEVANCE ANALYSIS ====================
+    # Build conflict analysis from REAL DATA (Trademark, App Store, Deep-Trace)
+    # This ensures the visibility_analysis section reflects actual findings
+    conflict_relevance_data = {}
+    conflict_relevance_context_parts = []
+    
+    for brand in request.brand_names:
+        tm_data = trademark_research_data.get(brand)
+        vis_data = all_brand_data[brand].get("visibility")
+        trace_data = deep_trace_results.get(brand)
+        
+        # Build conflict relevance from real data
+        conflict_analysis = build_conflict_relevance_analysis(
+            brand_name=brand,
+            category=request.category,
+            industry=request.industry or "",
+            trademark_data=tm_data.__dict__ if tm_data and hasattr(tm_data, '__dict__') else (tm_data if isinstance(tm_data, dict) else {}),
+            visibility_data=vis_data,
+            deep_trace_result=trace_data,
+            positioning=request.positioning
+        )
+        conflict_relevance_data[brand] = conflict_analysis
+        
+        # Format for LLM context
+        direct_count = len(conflict_analysis.get('direct_competitors', []))
+        phonetic_count = len(conflict_analysis.get('phonetic_conflicts', []))
+        twins_count = len(conflict_analysis.get('name_twins', []))
+        
+        conflict_relevance_context_parts.append(f"""
+📋 PRE-COMPUTED CONFLICT RELEVANCE ANALYSIS FOR: {brand}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ DIRECT COMPETITORS FOUND: {direct_count}
+{chr(10).join([f"   • {c['name']} - {c['risk_level']} RISK - {c['reason']}" for c in conflict_analysis.get('direct_competitors', [])[:5]]) if direct_count > 0 else "   ✅ No direct competitors found in same NICE class/industry"}
+
+🔊 PHONETIC CONFLICTS: {phonetic_count}
+{chr(10).join([f"   • {c.get('found_conflict', {}).get('name', 'Unknown')} - {c.get('conflict_type', 'PHONETIC')}" for c in conflict_analysis.get('phonetic_conflicts', [])[:3]]) if phonetic_count > 0 else "   ✅ No phonetic conflicts detected"}
+
+👥 NAME TWINS (Different Intent - LOW RISK): {twins_count}
+{chr(10).join([f"   • {c['name']} - {c['category']} ({c['risk_level']} risk)" for c in conflict_analysis.get('name_twins', [])[:5]]) if twins_count > 0 else "   ✅ No name twins found"}
+
+📊 SUMMARY: {conflict_analysis.get('conflict_summary', 'No conflicts detected')}
+⚠️ WARNING: {conflict_analysis.get('warning_reason', 'None')}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+""")
+    
+    conflict_relevance_context = "\n".join(conflict_relevance_context_parts)
+    logging.info(f"✅ Built Conflict Relevance Analysis from real data for {len(request.brand_names)} brand(s)")
+    # ==================== END CONFLICT RELEVANCE ANALYSIS ====================
+    
     # ==================== IMPROVEMENT #2 & #3: INCLUDE USER-PROVIDED COMPETITORS & KEYWORDS IN PROMPT ====================
     competitors_context = ""
     if request.known_competitors:
