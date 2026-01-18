@@ -7327,6 +7327,12 @@ class BrandEvaluationTester:
             print("❌ API health check failed, stopping tests")
             return False
         
+        # PRIORITY: NEW LOGIC GATES TESTING (as requested in review)
+        print("\n🔥 PRIORITY TEST: NEW LOGIC GATES (Brand Classification & Category Mismatch)")
+        self.test_logic_gates_category_mismatch()  # Test Case 1: Check My Meal (MISMATCH)
+        self.test_logic_gates_category_match()     # Test Case 2: StethWorks (MATCH)
+        self.test_logic_gates_comparison_summary() # Summary comparison
+        
         # PRIORITY: NEW FORMULA-BASED CULTURAL SCORING (as requested in review)
         print("\n🧮 PRIORITY TEST: NEW FORMULA-BASED CULTURAL SCORING")
         self.test_formula_based_cultural_scoring()
