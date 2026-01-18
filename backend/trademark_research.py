@@ -1784,11 +1784,16 @@ async def conduct_trademark_research(
             key_principle=p.get("key_principle")
         ))
     
-    # Step 5: Calculate risk scores
+    # Step 5: Calculate risk scores using HYBRID MODEL with classification
+    # Default classification to DESCRIPTIVE if not provided (conservative approach)
+    effective_classification = classification or "DESCRIPTIVE"
+    
     risk_scores = calculate_risk_scores(
         result.trademark_conflicts,
         result.company_conflicts,
-        result.common_law_conflicts
+        result.common_law_conflicts,
+        classification=effective_classification,
+        countries=countries
     )
     
     result.overall_risk_score = risk_scores["overall_risk_score"]
@@ -1798,8 +1803,21 @@ async def conduct_trademark_research(
     result.high_risk_conflicts_count = risk_scores["high_risk_conflicts_count"]
     result.total_conflicts_found = risk_scores["total_conflicts_found"]
     
-    logger.info(f"Trademark research complete. Risk score: {result.overall_risk_score}/10, "
-                f"Conflicts found: {result.total_conflicts_found}")
+    # Store hybrid model analysis in search_results_summary for display
+    result.search_results_summary = json.dumps({
+        "hybrid_risk_model": {
+            "verdict": risk_scores.get("verdict"),
+            "verdict_detail": risk_scores.get("verdict_detail"),
+            "absolute_grounds": risk_scores.get("absolute_grounds"),
+            "relative_grounds": risk_scores.get("relative_grounds"),
+            "country_analyses": risk_scores.get("country_analyses"),
+            "strategic_recommendation": risk_scores.get("strategic_recommendation")
+        }
+    }, indent=2)
+    
+    logger.info(f"Trademark research complete. Verdict: {risk_scores.get('verdict')} | "
+                f"Risk: {result.overall_risk_score}/10 | Success: {result.registration_success_probability}% | "
+                f"Classification: {effective_classification} | Conflicts: {result.total_conflicts_found}")
     
     return result
 
