@@ -7374,17 +7374,19 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             logging.error(f"Similarity check failed for {brand}: {e}")
             return {"report": f"Similarity check failed: {str(e)}", "should_reject": False, "result": {}}
     
-    async def gather_trademark_data(brand):
-        """Run trademark research"""
+    async def gather_trademark_data(brand, classification_category: str = "DESCRIPTIVE"):
+        """Run trademark research with hybrid risk model"""
         try:
             # Include user-provided competitors and keywords for better search
+            # Pass classification for hybrid risk model
             research_result = await conduct_trademark_research(
                 brand_name=brand,
                 industry=request.industry or "",
                 category=request.category,
                 countries=request.countries,
                 known_competitors=request.known_competitors or [],
-                product_keywords=request.product_keywords or []
+                product_keywords=request.product_keywords or [],
+                classification=classification_category  # NEW: Pass classification for hybrid model
             )
             return {
                 "prompt_data": format_research_for_prompt(research_result),
