@@ -8205,7 +8205,8 @@ class BrandEvaluationTester:
             "category": "Ride-hailing",
             "industry": "Transport",
             "countries": ["India"],
-            "positioning": "Mid-Range"
+            "positioning": "Mid-Range",
+            "market_scope": "Single Country"
         }
         
         try:
