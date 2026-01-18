@@ -703,18 +703,16 @@ def generate_linguistic_decomposition(brand_name: str, countries: list, category
             "risk_count": len(risk_flags)
         }
     
-    # Step 6: Determine brand type classification
-    brand_type = "Modern/Coined"
-    heritage_origins = ["Sanskrit", "Latin", "Greek", "Japanese", "Chinese", "Arabic"]
-    for morpheme in decomposition["morphemes"]:
-        if morpheme.get("origin") in heritage_origins:
-            brand_type = "Heritage"
-            break
+    # Step 6: GATE 1 - Determine brand type classification (DICTIONARY CHECK)
+    # CRITICAL: Do NOT call descriptive names "Coined/Invented"
+    brand_type = classify_brand_name_type(brand_name, decomposition)
     
-    # Check for category mismatch
+    # Check for category mismatch (GATE 2)
     category_mismatch = False
+    category_mismatch_warning = None
     if industry_fit["fit_level"] == "LOW":
         category_mismatch = True
+        category_mismatch_warning = f"⚠️ **Category Mismatch Risk:** Name contains '{industry_fit.get('matched_suffix', 'term')}' which may limit consumer perception in the '{category}' market."
     
     # Step 7: Generate recommendations
     recommendations = []
@@ -726,7 +724,9 @@ def generate_linguistic_decomposition(brand_name: str, countries: list, category
     if medium_risk_countries:
         recommendations.append(f"📋 HIGH RESONANCE in {', '.join(medium_risk_countries)}: Leverage cultural connection in marketing")
     if category_mismatch:
-        recommendations.append(f"⚠️ CATEGORY MISMATCH: '{industry_fit['matched_suffix']}' suffix may not align with {category} positioning")
+        recommendations.append(f"⚠️ CATEGORY MISMATCH: '{industry_fit.get('matched_suffix', 'term')}' may not align with {category} positioning")
+    if brand_type == "Descriptive/Composite":
+        recommendations.append(f"⚠️ TRADEMARK WARNING: Descriptive names have weaker legal protection than coined terms")
     if not recommendations:
         recommendations.append(f"✅ Name appears suitable for target markets. Proceed with standard trademark clearance.")
     
@@ -739,6 +739,7 @@ def generate_linguistic_decomposition(brand_name: str, countries: list, category
         "country_analysis": country_analysis,
         "brand_type": brand_type,
         "category_mismatch": category_mismatch,
+        "category_mismatch_warning": category_mismatch_warning,
         "recommendations": recommendations
     }
 
