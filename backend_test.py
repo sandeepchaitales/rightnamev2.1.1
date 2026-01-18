@@ -1175,6 +1175,281 @@ class BrandEvaluationTester:
             self.log_test("ACTUAL USPTO Costs - Exception", False, str(e))
             return False
 
+    def test_new_classification_system_check_my_meal(self):
+        """Test Case 1: NEW SINGLE CLASSIFICATION SYSTEM - Check My Meal for Doctor Appointment App"""
+        payload = {
+            "brand_names": ["Check My Meal"],
+            "category": "Doctor Appointment App",
+            "positioning": "Mid-Range",
+            "market_scope": "Multi-Country",
+            "countries": ["India", "USA"]
+        }
+        
+        try:
+            print(f"\n🏷️ Testing NEW CLASSIFICATION SYSTEM - Check My Meal...")
+            print(f"Expected: DESCRIPTIVE classification (NOT COINED)")
+            print(f"Expected: Tokens ['check', 'my', 'meal']")
+            print(f"Expected: Secondary Meaning warning")
+            
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=150  # Extended timeout as specified
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("NEW Classification - Check My Meal HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("NEW Classification - Check My Meal Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                classification_issues = []
+                
+                # Test 1: Check classification is DESCRIPTIVE (NOT COINED)
+                if "trademark_classification" in brand:
+                    classification = brand["trademark_classification"]
+                    if isinstance(classification, dict):
+                        category = classification.get("category", "")
+                        if category != "DESCRIPTIVE":
+                            classification_issues.append(f"Expected DESCRIPTIVE classification, got: {category}")
+                        
+                        # Test 2: Check tokens are ["check", "my", "meal"]
+                        tokens = classification.get("tokens", [])
+                        expected_tokens = ["check", "my", "meal"]
+                        if tokens != expected_tokens:
+                            classification_issues.append(f"Expected tokens {expected_tokens}, got: {tokens}")
+                        
+                        # Test 3: Check for Secondary Meaning warning
+                        warning = classification.get("warning", "")
+                        if "Secondary Meaning" not in warning:
+                            classification_issues.append(f"Expected 'Secondary Meaning' warning, got: {warning}")
+                    else:
+                        classification_issues.append(f"trademark_classification should be dict, got: {type(classification)}")
+                else:
+                    classification_issues.append("trademark_classification field missing")
+                
+                # Test 4: Check cultural analysis includes trademark_classification field
+                cultural_analysis = brand.get("cultural_analysis", {})
+                if not cultural_analysis:
+                    classification_issues.append("cultural_analysis field missing or empty")
+                
+                # Test 5: Verify brand name matches
+                if brand.get("brand_name") != "Check My Meal":
+                    classification_issues.append(f"Expected brand name 'Check My Meal', got: {brand.get('brand_name')}")
+                
+                if classification_issues:
+                    self.log_test("NEW Classification - Check My Meal", False, "; ".join(classification_issues))
+                    return False
+                
+                self.log_test("NEW Classification - Check My Meal", True, 
+                            f"DESCRIPTIVE classification correct, tokens verified, Secondary Meaning warning present")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("NEW Classification - Check My Meal JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("NEW Classification - Check My Meal Timeout", False, "Request timed out after 150 seconds")
+            return False
+        except Exception as e:
+            self.log_test("NEW Classification - Check My Meal Exception", False, str(e))
+            return False
+
+    def test_new_classification_system_zomato(self):
+        """Test Case 2: NEW SINGLE CLASSIFICATION SYSTEM - Zomato for Food Delivery"""
+        payload = {
+            "brand_names": ["Zomato"],
+            "category": "Food Delivery App",
+            "positioning": "Mid-Range",
+            "market_scope": "Single Country",
+            "countries": ["India"]
+        }
+        
+        try:
+            print(f"\n🏷️ Testing NEW CLASSIFICATION SYSTEM - Zomato...")
+            print(f"Expected: FANCIFUL classification (truly invented word)")
+            print(f"Expected: HIGHEST distinctiveness")
+            print(f"Expected: STRONGEST protectability")
+            print(f"Expected: NO Secondary Meaning warning")
+            
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=150  # Extended timeout as specified
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("NEW Classification - Zomato HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("NEW Classification - Zomato Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                classification_issues = []
+                
+                # Test 1: Check classification is FANCIFUL
+                if "trademark_classification" in brand:
+                    classification = brand["trademark_classification"]
+                    if isinstance(classification, dict):
+                        category = classification.get("category", "")
+                        if category != "FANCIFUL":
+                            classification_issues.append(f"Expected FANCIFUL classification, got: {category}")
+                        
+                        # Test 2: Check distinctiveness is HIGHEST
+                        distinctiveness = classification.get("distinctiveness", "")
+                        if distinctiveness != "HIGHEST":
+                            classification_issues.append(f"Expected HIGHEST distinctiveness, got: {distinctiveness}")
+                        
+                        # Test 3: Check protectability is STRONGEST
+                        protectability = classification.get("protectability", "")
+                        if protectability != "STRONGEST":
+                            classification_issues.append(f"Expected STRONGEST protectability, got: {protectability}")
+                        
+                        # Test 4: Check NO Secondary Meaning warning
+                        warning = classification.get("warning", "")
+                        if warning and "Secondary Meaning" in warning:
+                            classification_issues.append(f"Should NOT have Secondary Meaning warning for FANCIFUL mark, got: {warning}")
+                    else:
+                        classification_issues.append(f"trademark_classification should be dict, got: {type(classification)}")
+                else:
+                    classification_issues.append("trademark_classification field missing")
+                
+                # Test 5: Verify brand name matches
+                if brand.get("brand_name") != "Zomato":
+                    classification_issues.append(f"Expected brand name 'Zomato', got: {brand.get('brand_name')}")
+                
+                if classification_issues:
+                    self.log_test("NEW Classification - Zomato", False, "; ".join(classification_issues))
+                    return False
+                
+                self.log_test("NEW Classification - Zomato", True, 
+                            f"FANCIFUL classification correct, HIGHEST distinctiveness, STRONGEST protectability, no Secondary Meaning warning")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("NEW Classification - Zomato JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("NEW Classification - Zomato Timeout", False, "Request timed out after 150 seconds")
+            return False
+        except Exception as e:
+            self.log_test("NEW Classification - Zomato Exception", False, str(e))
+            return False
+
+    def test_backend_logs_classification_called_once(self):
+        """Test that backend logs show classification called ONCE per brand"""
+        payload = {
+            "brand_names": ["LogTestBrand"],
+            "category": "Technology",
+            "positioning": "Mid-Range",
+            "market_scope": "Single Country",
+            "countries": ["USA"]
+        }
+        
+        try:
+            print(f"\n📋 Testing Backend Logs - Classification Called Once...")
+            print(f"Expected: '🏷️ MASTER CLASSIFICATION for LogTestBrand' appears ONCE")
+            
+            # Clear any existing logs first
+            import subprocess
+            subprocess.run(["sudo", "truncate", "-s", "0", "/var/log/supervisor/backend.out.log"], 
+                         capture_output=True, text=True)
+            
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=150
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Backend Logs - Classification Once HTTP", False, error_msg)
+                return False
+            
+            # Wait a moment for logs to be written
+            import time
+            time.sleep(2)
+            
+            # Check backend logs for classification messages
+            try:
+                result = subprocess.run(["sudo", "tail", "-n", "200", "/var/log/supervisor/backend.out.log"], 
+                                      capture_output=True, text=True, timeout=10)
+                
+                if result.returncode != 0:
+                    self.log_test("Backend Logs - Classification Once Log Access", False, f"Could not access backend logs: {result.stderr}")
+                    return False
+                
+                log_content = result.stdout
+                
+                # Count occurrences of MASTER CLASSIFICATION for LogTestBrand
+                classification_pattern = "🏷️ MASTER CLASSIFICATION for 'LogTestBrand'"
+                classification_count = log_content.count(classification_pattern)
+                
+                log_issues = []
+                
+                # Test 1: Should appear exactly ONCE
+                if classification_count == 0:
+                    log_issues.append(f"MASTER CLASSIFICATION log not found for LogTestBrand")
+                elif classification_count > 1:
+                    log_issues.append(f"MASTER CLASSIFICATION called {classification_count} times (should be ONCE)")
+                
+                # Test 2: Look for the specific log message format
+                if classification_count == 1:
+                    print(f"✅ Found MASTER CLASSIFICATION log exactly once")
+                
+                # Test 3: Check for any duplicate classification calls
+                general_classification_pattern = "🏷️ MASTER CLASSIFICATION"
+                general_count = log_content.count(general_classification_pattern)
+                
+                if general_count > 1:
+                    print(f"⚠️  Warning: Found {general_count} total MASTER CLASSIFICATION calls in logs")
+                
+                if log_issues:
+                    self.log_test("Backend Logs - Classification Called Once", False, "; ".join(log_issues))
+                    return False
+                
+                self.log_test("Backend Logs - Classification Called Once", True, 
+                            f"MASTER CLASSIFICATION called exactly once for LogTestBrand")
+                return True
+                
+            except subprocess.TimeoutExpired:
+                self.log_test("Backend Logs - Classification Once Log Timeout", False, "Timeout accessing backend logs")
+                return False
+            except Exception as log_e:
+                self.log_test("Backend Logs - Classification Once Log Error", False, f"Error accessing logs: {str(log_e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Backend Logs - Classification Once Timeout", False, "Request timed out after 150 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Backend Logs - Classification Once Exception", False, str(e))
+            return False
+
     def test_admin_login_valid_credentials(self):
         """Test POST /api/admin/login with correct credentials"""
         payload = {
