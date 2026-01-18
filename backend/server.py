@@ -9007,6 +9007,77 @@ BRAND: {brand}
             overall_assessment=intelligent_matrix['overall_assessment']
         )
         logging.info(f"✅ Generated intelligent trademark_matrix for '{brand_name_for_matrix}'")
+        
+        # ============ OVERRIDE VISIBILITY ANALYSIS WITH PRE-COMPUTED DATA ============
+        # Replace LLM-generated visibility_analysis with data-driven analysis from real sources
+        if brand_name_for_matrix in conflict_relevance_data:
+            pre_computed_conflicts = conflict_relevance_data[brand_name_for_matrix]
+            
+            # Convert to Pydantic models
+            from schemas import VisibilityAnalysis, ConflictItem, PhoneticConflict
+            
+            try:
+                # Convert direct_competitors
+                direct_competitors_models = []
+                for dc in pre_computed_conflicts.get('direct_competitors', [])[:10]:
+                    direct_competitors_models.append(ConflictItem(
+                        name=dc.get('name', 'Unknown'),
+                        category=dc.get('category', 'Unknown'),
+                        their_product_intent=dc.get('their_product_intent'),
+                        their_customer_avatar=dc.get('their_customer_avatar'),
+                        intent_match=dc.get('intent_match'),
+                        customer_overlap=dc.get('customer_overlap'),
+                        risk_level=dc.get('risk_level', 'MEDIUM'),
+                        reason=dc.get('reason')
+                    ))
+                
+                # Convert phonetic_conflicts
+                phonetic_conflicts_models = []
+                for pc in pre_computed_conflicts.get('phonetic_conflicts', [])[:5]:
+                    phonetic_conflicts_models.append(PhoneticConflict(
+                        input_name=pc.get('input_name'),
+                        phonetic_variants=pc.get('phonetic_variants', []),
+                        ipa_pronunciation=pc.get('ipa_pronunciation'),
+                        found_conflict=pc.get('found_conflict'),
+                        conflict_type=pc.get('conflict_type'),
+                        legal_risk=pc.get('legal_risk'),
+                        verdict_impact=pc.get('verdict_impact')
+                    ))
+                
+                # Convert name_twins
+                name_twins_models = []
+                for nt in pre_computed_conflicts.get('name_twins', [])[:10]:
+                    name_twins_models.append(ConflictItem(
+                        name=nt.get('name', 'Unknown'),
+                        category=nt.get('category', 'Unknown'),
+                        their_product_intent=nt.get('their_product_intent'),
+                        their_customer_avatar=nt.get('their_customer_avatar'),
+                        intent_match=nt.get('intent_match'),
+                        customer_overlap=nt.get('customer_overlap'),
+                        risk_level=nt.get('risk_level', 'LOW'),
+                        reason=nt.get('reason')
+                    ))
+                
+                # Override visibility_analysis
+                brand_score.visibility_analysis = VisibilityAnalysis(
+                    user_product_intent=pre_computed_conflicts.get('user_product_intent', f"{request.category}"),
+                    user_customer_avatar=pre_computed_conflicts.get('user_customer_avatar', f"{request.positioning} market customers"),
+                    phonetic_conflicts=phonetic_conflicts_models,
+                    direct_competitors=direct_competitors_models,
+                    name_twins=name_twins_models,
+                    google_presence=pre_computed_conflicts.get('google_presence', []),
+                    app_store_presence=pre_computed_conflicts.get('app_store_presence', []),
+                    warning_triggered=pre_computed_conflicts.get('warning_triggered', False),
+                    warning_reason=pre_computed_conflicts.get('warning_reason'),
+                    conflict_summary=pre_computed_conflicts.get('conflict_summary', "0 direct competitors. 0 phonetic conflicts. 0 name twins.")
+                )
+                
+                total_conflicts = len(direct_competitors_models) + len(phonetic_conflicts_models)
+                logging.info(f"✅ Injected PRE-COMPUTED visibility_analysis for '{brand_name_for_matrix}': {total_conflicts} real conflicts from data sources")
+                
+            except Exception as e:
+                logging.error(f"Failed to inject pre-computed visibility_analysis: {e}")
+        # ============ END VISIBILITY ANALYSIS OVERRIDE ============
     
     # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
     if all_rejections:
