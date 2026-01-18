@@ -1127,8 +1127,7 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
         result["warning"] = None
         result["reasoning"] = f"'{brand_name}' is a common word used in a completely unrelated context ({industry}). Like 'Apple' for computers, arbitrary marks receive strong trademark protection."
         
-        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → ARBITRARY (unrelated context)")
-        return result
+        return cache_and_return(result, f"🏷️ CLASSIFICATION: '{brand_name}' → ARBITRARY (unrelated context)")
     
     # ========== STEP 6: FANCIFUL/COINED CHECK ==========
     # Is the word completely made up?
