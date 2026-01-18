@@ -3907,7 +3907,9 @@ def assess_brand_asset_ceiling(
     # Acquisition attractiveness
     positioning_lower = positioning.lower() if positioning else "mid-range"
     
-    if legal_category in ["FANCIFUL", "ARBITRARY"] and "luxury" in positioning_lower or "premium" in positioning_lower:
+    # FIX: Operator precedence - parentheses required!
+    # Only FANCIFUL/ARBITRARY with Luxury/Premium positioning get HIGH acquisition
+    if legal_category in ["FANCIFUL", "ARBITRARY"] and ("luxury" in positioning_lower or "premium" in positioning_lower):
         acquisition = "HIGH"
         acquisition_reason = "Strong trademark + premium positioning = valuable IP asset"
     elif legal_category in ["FANCIFUL", "ARBITRARY", "SUGGESTIVE"]:
