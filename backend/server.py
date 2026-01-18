@@ -6274,9 +6274,16 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         
         return {"model": f"{model_provider}/{model_name}", "data": data}
     
-    def generate_fallback_report(brand_name: str, category: str, domain_data, social_data, trademark_data, visibility_data) -> dict:
-        """Generate a complete report WITHOUT LLM using collected data"""
+    def generate_fallback_report(brand_name: str, category: str, domain_data, social_data, trademark_data, visibility_data, classification: dict = None) -> dict:
+        """Generate a complete report WITHOUT LLM using collected data
+        
+        NEW: Accepts pre-calculated classification to avoid duplicate computation.
+        """
         logging.info(f"🔧 FALLBACK MODE: Generating report for '{brand_name}' without LLM")
+        
+        # Use passed classification or calculate if not provided
+        if classification is None:
+            classification = classify_brand_with_industry(brand_name, category)
         
         # Handle domain_data - could be string or dict
         domain_available = False
