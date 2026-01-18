@@ -1125,20 +1125,124 @@ const MarketIntelligenceSection = ({ domainAnalysis, visibilityAnalysis, cultura
                 </PrintCard>
             )}
             
-            {/* Cultural Fit */}
+            {/* Cultural Fit - UPDATED: Vertical stack, dynamic score only, no formula shown */}
             {culturalAnalysis?.length > 0 && (
                 <PrintCard>
                     <div className="bg-white rounded-2xl p-6 border border-slate-200">
-                        <SubSectionHeader icon={Globe} title="Cultural Fit" />
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <SubSectionHeader icon={Globe} title="Cultural Fit Analysis" />
+                        
+                        {/* Vertical stack - one country after another */}
+                        <div className="space-y-4">
                             {culturalAnalysis.map((c, i) => {
                                 const countryName = typeof c.country === 'object' ? c.country?.name : c.country;
+                                
+                                // Get the DYNAMIC calculated score (single source of truth)
+                                const finalScore = c.score_breakdown?.final_score || c.cultural_resonance_score || 0;
+                                const riskVerdict = c.score_breakdown?.risk_verdict || 
+                                    (finalScore >= 7 ? 'SAFE' : finalScore >= 5 ? 'CAUTION' : 'CRITICAL');
+                                
+                                // Status colors based on verdict
+                                const statusConfig = {
+                                    'SAFE': { 
+                                        bg: 'bg-emerald-50', 
+                                        border: 'border-emerald-200', 
+                                        text: 'text-emerald-700',
+                                        badge: 'bg-emerald-100 text-emerald-800',
+                                        icon: '✅'
+                                    },
+                                    'CAUTION': { 
+                                        bg: 'bg-amber-50', 
+                                        border: 'border-amber-200', 
+                                        text: 'text-amber-700',
+                                        badge: 'bg-amber-100 text-amber-800',
+                                        icon: '⚠️'
+                                    },
+                                    'CRITICAL': { 
+                                        bg: 'bg-red-50', 
+                                        border: 'border-red-200', 
+                                        text: 'text-red-700',
+                                        badge: 'bg-red-100 text-red-800',
+                                        icon: '🔴'
+                                    }
+                                };
+                                const status = statusConfig[riskVerdict] || statusConfig['CAUTION'];
+                                
+                                // Get sub-scores for display (without formula)
+                                const safetyScore = c.score_breakdown?.safety_score;
+                                const fluencyScore = c.score_breakdown?.fluency_score;
+                                const vibeScore = c.score_breakdown?.vibe_score;
+                                
+                                // Clean cultural notes - remove formula display from notes
+                                let cleanNotes = c.cultural_notes || '';
+                                // Remove the formula section from notes (keep other content)
+                                cleanNotes = cleanNotes.replace(/\*\*📊 CULTURAL FIT SCORE:.*?\*\*\n/g, '');
+                                cleanNotes = cleanNotes.replace(/\*\*Formula:\*\*.*?\n/g, '');
+                                cleanNotes = cleanNotes.replace(/\*\*Calculation:\*\*.*?\n/g, '');
+                                cleanNotes = cleanNotes.replace(/\*\*Verdict:\*\*.*?\n/g, '');
+                                cleanNotes = cleanNotes.replace(/---\n\*\*🛡️ SAFETY SCORE:.*?(?=---|\*\*🔤|$)/gs, '');
+                                cleanNotes = cleanNotes.replace(/\*\*🗣️ FLUENCY SCORE:.*?\n/g, '');
+                                cleanNotes = cleanNotes.replace(/\*\*✨ VIBE SCORE:.*?\n/g, '');
+                                cleanNotes = cleanNotes.replace(/\s*Issues:.*?\n/g, '');
+                                cleanNotes = cleanNotes.replace(/\s*Difficult sounds:.*?\n/g, '');
+                                cleanNotes = cleanNotes.replace(/\s*Local competitors:.*?\n/g, '');
+                                cleanNotes = cleanNotes.trim();
+                                
                                 return (
-                                    <div key={i} className="bg-gradient-to-br from-fuchsia-50 to-white border border-fuchsia-200 rounded-xl p-4 text-center">
-                                        <h4 className="font-bold text-slate-800 text-sm mb-2">{c.country_flag} {countryName}</h4>
-                                        <div className="text-2xl font-black text-fuchsia-600 my-2">{c.cultural_resonance_score}/10</div>
-                                        <p className="text-xs text-slate-500"><MarkdownText text={c.cultural_notes} /></p>
-                                        <p className="text-xs text-emerald-600 mt-2">{c.linguistic_check}</p>
+                                    <div key={i} className={`${status.bg} ${status.border} border rounded-xl p-5`}>
+                                        {/* Header: Country + Score + Status */}
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-3xl">{c.country_flag || '🌍'}</span>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-800 text-lg">{countryName}</h4>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status.badge}`}>
+                                                        {status.icon} {riskVerdict}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* FINAL SCORE - Single Source of Truth */}
+                                            <div className="text-right">
+                                                <div className={`text-4xl font-black ${status.text}`}>
+                                                    {finalScore.toFixed(1)}
+                                                </div>
+                                                <div className="text-xs text-slate-500 font-medium">out of 10</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Sub-scores (without formula - internal only) */}
+                                        {(safetyScore !== undefined || fluencyScore !== undefined || vibeScore !== undefined) && (
+                                            <div className="grid grid-cols-3 gap-3 mb-4">
+                                                {safetyScore !== undefined && (
+                                                    <div className="bg-white/60 rounded-lg p-3 text-center">
+                                                        <div className="text-xs text-slate-500 mb-1">Safety</div>
+                                                        <div className="text-lg font-bold text-slate-700">{safetyScore}/10</div>
+                                                        <div className="text-xs text-slate-400">Phonetic risks</div>
+                                                    </div>
+                                                )}
+                                                {fluencyScore !== undefined && (
+                                                    <div className="bg-white/60 rounded-lg p-3 text-center">
+                                                        <div className="text-xs text-slate-500 mb-1">Fluency</div>
+                                                        <div className="text-lg font-bold text-slate-700">{fluencyScore}/10</div>
+                                                        <div className="text-xs text-slate-400">Pronunciation</div>
+                                                    </div>
+                                                )}
+                                                {vibeScore !== undefined && (
+                                                    <div className="bg-white/60 rounded-lg p-3 text-center">
+                                                        <div className="text-xs text-slate-500 mb-1">Vibe</div>
+                                                        <div className="text-lg font-bold text-slate-700">{vibeScore}/10</div>
+                                                        <div className="text-xs text-slate-400">Market fit</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Cultural Notes - cleaned (no formula shown) */}
+                                        {cleanNotes && (
+                                            <div className="text-sm text-slate-600 leading-relaxed">
+                                                <MarkdownText text={cleanNotes} />
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
