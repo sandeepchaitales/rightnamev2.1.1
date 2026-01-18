@@ -6095,6 +6095,18 @@ BRAND: {brand}
     
     IMPORTANT: In trademark_research.nice_classification, you MUST use this exact class. Do NOT use Class 25 (fashion) unless the category is actually clothing/apparel.
 
+    ⚠️⚠️⚠️ PRE-COMPUTED BRAND CLASSIFICATION (MANDATORY - USE THIS!) ⚠️⚠️⚠️
+    The following brand classifications have been computed using the 5-Step Trademark Distinctiveness Spectrum:
+    {classification_context}
+    
+    INSTRUCTION FOR CLASSIFICATION:
+    - DO NOT override these classifications with your own analysis
+    - Use the EXACT classification category (GENERIC/DESCRIPTIVE/SUGGESTIVE/ARBITRARY/FANCIFUL) in your response
+    - "Check My Meal" contains dictionary words "check", "my", "meal" → DESCRIPTIVE (NOT "Coined")
+    - "Xerox", "Kodak" have NO dictionary words → FANCIFUL/Coined
+    - If classification is DESCRIPTIVE or GENERIC, include the appropriate trademark warning
+    - strategic_classification field MUST reflect this pre-computed classification
+
     ⚠️ CRITICAL: STRING SIMILARITY ANALYSIS (PRE-COMPUTED - DO NOT IGNORE!) ⚠️
     {similarity_context}
     
