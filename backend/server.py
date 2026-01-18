@@ -7123,14 +7123,38 @@ BRAND: {brand}
                     "overall_risk": "LOW" if trademark_risk <= 3 else "MEDIUM" if trademark_risk <= 6 else "HIGH",
                     "reason": f"Trademark risk assessment: {trademark_risk}/10. {'Favorable conditions for registration.' if trademark_risk <= 3 else 'Some considerations for legal review.' if trademark_risk <= 6 else 'Significant trademark concerns identified.'}"
                 },
-                "pros": [
-                    f"**Unique Identifier:** '{brand_name}' appears to be a distinctive coined term",
-                    f"**Phonetic Clarity:** {len(brand_name)}-character name with clear pronunciation",
-                    f"**Category Fit:** Suitable for {category} market positioning",
-                    f"**Trademark Potential:** {'Strong' if trademark_risk <= 3 else 'Moderate' if trademark_risk <= 6 else 'Limited'} registration prospects",
-                    f"**Digital Availability:** Multiple domain and social handle options available"
-                ],
-                "cons": generate_risk_cons(brand_name, request.countries, category, domain_available, verdict),
+                # NEW: Use Strategy Snapshot Framework for investor-grade pros/cons
+                "pros": generate_strategy_snapshot(
+                    brand_name=brand_name,
+                    classification=classification,
+                    category=category,
+                    positioning=request.positioning,
+                    countries=request.countries,
+                    domain_available=domain_available,
+                    trademark_risk=trademark_risk,
+                    social_data=social_data
+                ).get("strengths", []),
+                "cons": generate_strategy_snapshot(
+                    brand_name=brand_name,
+                    classification=classification,
+                    category=category,
+                    positioning=request.positioning,
+                    countries=request.countries,
+                    domain_available=domain_available,
+                    trademark_risk=trademark_risk,
+                    social_data=social_data
+                ).get("risks", []),
+                # Store full strategy snapshot for advanced analytics
+                "strategy_snapshot": generate_strategy_snapshot(
+                    brand_name=brand_name,
+                    classification=classification,
+                    category=category,
+                    positioning=request.positioning,
+                    countries=request.countries,
+                    domain_available=domain_available,
+                    trademark_risk=trademark_risk,
+                    social_data=social_data
+                ),
                 # CRITICAL FIX: Always use generate_cultural_analysis for sacred name detection
                 # If market_intelligence has data, merge it, but always run local analysis
                 # NEW: Pass classification to avoid duplicate computation
