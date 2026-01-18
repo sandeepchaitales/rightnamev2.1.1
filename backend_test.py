@@ -7007,6 +7007,10 @@ class BrandEvaluationTester:
             print("❌ API health check failed, stopping tests")
             return False
         
+        # PRIORITY: NEW FORMULA-BASED CULTURAL SCORING (as requested in review)
+        print("\n🧮 PRIORITY TEST: NEW FORMULA-BASED CULTURAL SCORING")
+        self.test_formula_based_cultural_scoring()
+        
         # PRIORITY: RamaRaya Hotel Chain Smoke Test (as requested in review)
         print("\n🎯 PRIORITY TEST: RamaRaya Hotel Chain Smoke Test")
         self.test_ramaraya_hotel_chain_smoke_test()
