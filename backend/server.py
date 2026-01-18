@@ -7675,57 +7675,17 @@ BRAND: {brand}
                     "recommendations": generate_smart_final_recommendations(brand_name, category, request.countries, domain_available, nice_class),
                     "alternative_path": f"If primary strategy faces obstacles, consider: 1) Modified spelling variations, 2) Adding descriptive suffix (e.g., '{brand_name}Labs'), 3) Geographic modifiers for specific markets."
                 },
-                "mckinsey_analysis": {
-                    "executive_recommendation": "PROCEED" if verdict == "GO" else "REFINE" if verdict == "CAUTION" else "PIVOT",
-                    "recommendation_rationale": f"Based on comprehensive analysis of trademark landscape, digital availability, and market positioning, '{brand_name}' {'is recommended for brand development' if verdict == 'GO' else 'requires refinement before proceeding' if verdict == 'CAUTION' else 'should be reconsidered'}.",
-                    "critical_assessment": f"**Strategic Assessment:**\n\n{'Strong candidate with favorable characteristics across all evaluation dimensions.' if verdict == 'GO' else 'Moderate concerns identified that can be addressed with proper planning.' if verdict == 'CAUTION' else 'Significant obstacles require alternative approach.'}",
-                    "benefits_experiences": {
-                        "linguistic_roots": f"**Etymology Analysis:**\n'{brand_name}' is a coined/invented term with no direct linguistic origin, providing maximum trademark distinctiveness.",
-                        "phonetic_analysis": f"**Sound Architecture:**\n{len(brand_name)}-character name with {'smooth' if len(brand_name) <= 10 else 'extended'} phonetic flow. {'Easy' if len(brand_name) <= 8 else 'Moderate'} pronunciation across language groups.",
-                        "emotional_promises": ["Innovation", "Modernity", "Trustworthiness", "Premium Quality"],
-                        "functional_benefits": ["Distinctiveness", "Memorability", "Flexibility"],
-                        "benefit_map": [
-                            {"name_trait": "Coined structure", "user_perception": "Innovative brand", "benefit_type": "Emotional"},
-                            {"name_trait": "Phonetic clarity", "user_perception": "Professional", "benefit_type": "Functional"}
-                        ],
-                        "target_persona_fit": f"Aligns with {category} consumers seeking modern, trustworthy brands."
-                    },
-                    "distinctiveness": {
-                        "distinctiveness_score": 7 if verdict == "GO" else 5,
-                        "category_noise_level": "MEDIUM",
-                        "industry_comparison": f"Compared to established {category} brands, '{brand_name}' offers fresh positioning with unique identity.",
-                        "naming_tropes_analysis": f"Avoids common {category} naming patterns (nature words, clinical terms), creating differentiation opportunity.",
-                        "similar_competitors": [],
-                        "differentiation_opportunities": [
-                            "Leverage coined nature for brand storytelling",
-                            "Build unique visual identity around name",
-                            "Create proprietary brand vocabulary"
-                        ]
-                    },
-                    "brand_architecture": {
-                        "elasticity_score": 7,
-                        "elasticity_analysis": f"'{brand_name}' provides flexible foundation for product line expansion within and beyond {category}.",
-                        "recommended_architecture": "House of Brands" if len(brand_name) > 10 else "Branded House",
-                        "architecture_rationale": f"Name structure supports {'master brand approach with sub-brands' if len(brand_name) <= 10 else 'independent product branding under corporate umbrella'}.",
-                        "memorability_index": 8 if len(brand_name) <= 8 else 6,
-                        "memorability_factors": ["Unique structure", "No competing associations", "Clean phonetics"],
-                        "global_scalability": "High - coined terms translate well across markets without linguistic conflicts."
-                    },
-                    "alternative_directions": [] if verdict == "GO" else [
-                        {
-                            "direction_name": "Simplified Variation",
-                            "example_names": [f"{brand_name[:6]}", f"{brand_name[:4]}a", f"{brand_name[:5]}o"],
-                            "rationale": "Shorter versions may improve memorability",
-                            "mckinsey_principle": "Distinctiveness"
-                        },
-                        {
-                            "direction_name": "Category Modifier",
-                            "example_names": [f"{brand_name[:5]} Beauty", f"{brand_name[:5]} Skin", f"Pure {brand_name[:5]}"],
-                            "rationale": "Adding category context aids positioning",
-                            "mckinsey_principle": "Benefits"
-                        }
-                    ]
-                }
+                # NEW: Use classification-aware McKinsey analysis
+                "mckinsey_analysis": generate_mckinsey_analysis(
+                    brand_name=brand_name,
+                    classification=classification,
+                    category=category,
+                    positioning=request.positioning,
+                    verdict=verdict,
+                    trademark_risk=trademark_risk,
+                    imitability_risk=strategy_snapshot.get("imitability_risk"),
+                    positioning_alignment=strategy_snapshot.get("positioning_alignment")
+                )
             }],
             "executive_summary": generate_rich_executive_summary(
                 brand_name=brand_name,
