@@ -2388,6 +2388,14 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
                 "final_score": calculated_final,
                 "risk_verdict": risk_verdict
             },
+            # NEW: Include classification (calculated ONCE, passed through)
+            "trademark_classification": {
+                "category": classification.get("category"),
+                "distinctiveness": classification.get("distinctiveness"),
+                "protectability": classification.get("protectability"),
+                "tokens": classification.get("tokens"),
+                "warning": classification.get("warning")
+            },
             "linguistic_analysis": {
                 "morphemes": [m["text"] for m in decomposition.get("morphemes", [])],
                 "brand_type": linguistic_analysis.get("brand_type"),
