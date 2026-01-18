@@ -798,8 +798,9 @@ def format_linguistic_analysis_for_output(analysis: dict, country: str) -> str:
     return "\n".join(output_parts)
 
 
-# ============ GATE 1: BRAND NAME CLASSIFICATION (Dictionary Check) ============
-# CRITICAL: Prevent AI from calling descriptive names "Coined/Invented"
+# ============ MASTER CLASSIFICATION SYSTEM ============
+# Single classification called ONCE, result passed to all sections
+# Implements 5-Step Spectrum of Distinctiveness
 
 COMMON_DICTIONARY_WORDS = {
     # Common English words that indicate DESCRIPTIVE names
@@ -815,23 +816,40 @@ COMMON_DICTIONARY_WORDS = {
     "news", "feed", "post", "share", "like", "view", "watch", "play", "game", "fun",
     "style", "fashion", "wear", "dress", "look", "beauty", "glow", "skin", "hair",
     "auto", "car", "bike", "wheel", "park", "fix", "repair", "service", "clean",
-    "pet", "dog", "cat", "vet", "care", "kid", "baby", "family", "parent", "mom", "dad",
-    "green", "eco", "solar", "power", "energy", "save", "smart", "easy", "simple",
+    "pet", "dog", "cat", "vet", "kid", "baby", "family", "parent", "mom", "dad",
+    "green", "eco", "solar", "power", "energy", "save", "easy", "simple",
     "pro", "plus", "max", "prime", "elite", "premium", "super", "mega", "ultra",
     "one", "first", "best", "top", "next", "new", "now", "today", "daily", "weekly",
     "local", "global", "world", "city", "urban", "rural", "metro", "zone", "area",
     "true", "real", "pure", "free", "open", "clear", "bright", "light", "dark",
-    "blue", "red", "green", "gold", "silver", "black", "white", "color", "colour",
+    "blue", "red", "gold", "silver", "black", "white", "color", "colour",
     # Medical/Healthcare
     "steth", "scope", "pulse", "heart", "blood", "test", "lab", "scan", "ray",
     "heal", "cure", "therapy", "clinic", "hospital", "pharma", "drug", "pill",
     # Finance
-    "wallet", "coin", "credit", "debit", "loan", "invest", "fund", "stock", "trade",
+    "wallet", "coin", "credit", "debit", "loan", "invest", "fund", "stock",
     # Tech
     "code", "dev", "build", "make", "create", "design", "pixel", "byte", "bit",
     # Common suffixes that indicate descriptive
     "ly", "er", "ist", "ify", "ize", "able", "ible", "ful", "less", "ment", "ness",
-    "works", "hub", "spot", "base", "point", "space", "place", "land", "world",
+    "works", "hub", "spot", "base", "point", "space", "place", "land",
+    # Additional common words
+    "air", "bus", "face", "sound", "snap", "insta", "gram", "tube", "flix",
+    "drop", "box", "door", "dash", "uber", "grab", "bolt", "zoom", "slack",
+}
+
+# Industry keywords for semantic matching
+INDUSTRY_KEYWORDS = {
+    "food": ["meal", "eat", "dine", "food", "cook", "chef", "taste", "recipe", "kitchen", "restaurant", "cafe", "dish", "menu"],
+    "healthcare": ["health", "med", "doctor", "clinic", "care", "patient", "therapy", "heal", "cure", "hospital", "pharma", "steth", "pulse"],
+    "finance": ["pay", "money", "bank", "cash", "fund", "loan", "credit", "invest", "wallet", "coin", "finance", "fintech"],
+    "technology": ["tech", "code", "dev", "app", "software", "cloud", "data", "digital", "cyber", "ai", "ml"],
+    "travel": ["travel", "trip", "tour", "fly", "flight", "hotel", "stay", "vacation", "journey", "voyage"],
+    "fitness": ["fit", "gym", "workout", "health", "body", "exercise", "train", "muscle", "yoga"],
+    "education": ["learn", "teach", "study", "edu", "school", "class", "course", "academy", "tutor"],
+    "ecommerce": ["shop", "buy", "sell", "store", "cart", "order", "delivery", "market", "retail"],
+    "social": ["social", "connect", "chat", "friend", "share", "post", "network", "community"],
+    "entertainment": ["play", "game", "fun", "watch", "stream", "video", "music", "media"],
 }
 
 MODIFIED_SPELLING_PATTERNS = [
@@ -839,78 +857,312 @@ MODIFIED_SPELLING_PATTERNS = [
     ("lyft", "lift"), ("flickr", "flicker"), ("tumblr", "tumbler"),
     ("grindr", "grinder"), ("fiverr", "fiver"), ("scribd", "scribed"),
     ("bettr", "better"), ("fastr", "faster"), ("hungr", "hungry"),
+    ("dribbble", "dribble"), ("reddit", "read it"),
 ]
 
+# Heritage language roots
+HERITAGE_ORIGINS = ["Sanskrit", "Latin", "Greek", "Japanese", "Chinese", "Arabic", "Hebrew", "Persian"]
 
-def classify_brand_name_type(brand_name: str, decomposition: dict) -> str:
+
+def tokenize_brand_name(brand_name: str) -> list:
     """
-    GATE 1: Properly classify brand names
+    STEP 1: DE-COMPOUND - Split brand name into tokens
     
-    Rules:
-    - If name contains dictionary words → "Descriptive/Composite" (NOT Coined)
-    - If name is modified spelling of real words → "Modified Descriptive"
-    - If name contains heritage language roots → "Heritage"
-    - ONLY if truly invented with no real word roots → "Coined/Invented"
-    
-    This prevents the AI hallucination of calling "Check My Meal" a "coined neologism"
+    "CheckMyMeal" → ["check", "my", "meal"]
+    "FaceBook" → ["face", "book"]
+    "Xerox" → ["xerox"]
     """
     brand_lower = brand_name.lower()
     
-    # Check 1: Does the name contain common dictionary words?
-    words_found = []
-    for word in COMMON_DICTIONARY_WORDS:
-        if word in brand_lower and len(word) >= 3:  # Minimum 3 chars to avoid false positives
-            words_found.append(word)
+    # Method 1: Split by common separators
+    tokens = []
     
-    # Check 2: Is it a modified spelling of real words?
+    # Split camelCase: "CheckMyMeal" → ["Check", "My", "Meal"]
+    import re
+    camel_split = re.sub('([A-Z])', r' \1', brand_name).split()
+    if len(camel_split) > 1:
+        tokens = [t.lower() for t in camel_split if t]
+    
+    # If no camelCase, try to find dictionary words within the string
+    if len(tokens) <= 1:
+        tokens = []
+        remaining = brand_lower
+        
+        # Sort dictionary words by length (longest first) to match greedily
+        sorted_words = sorted(COMMON_DICTIONARY_WORDS, key=len, reverse=True)
+        
+        while remaining:
+            found = False
+            for word in sorted_words:
+                if remaining.startswith(word) and len(word) >= 3:
+                    tokens.append(word)
+                    remaining = remaining[len(word):]
+                    found = True
+                    break
+            
+            if not found:
+                # No dictionary word found at start, take one character and continue
+                if remaining:
+                    # Check if remaining is itself a token
+                    if remaining in COMMON_DICTIONARY_WORDS:
+                        tokens.append(remaining)
+                        break
+                    remaining = remaining[1:]  # Skip one character
+    
+    # If still no tokens, the whole name is one token
+    if not tokens:
+        tokens = [brand_lower]
+    
+    return tokens
+
+
+def get_industry_domain(industry: str) -> tuple:
+    """Get the primary domain of an industry"""
+    industry_lower = industry.lower()
+    
+    for domain, keywords in INDUSTRY_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in industry_lower:
+                return domain, keywords
+    
+    return "general", []
+
+
+def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
+    """
+    MASTER CLASSIFICATION FUNCTION
+    
+    Called ONCE at start, result passed to all sections.
+    Implements 5-Step Spectrum of Distinctiveness:
+    
+    1. GENERIC - Names the category itself (unprotectable)
+    2. DESCRIPTIVE - Directly describes product (weak protection)
+    3. SUGGESTIVE - Hints at product, needs imagination (moderate)
+    4. ARBITRARY - Real word, unrelated context (strong)
+    5. FANCIFUL - Completely invented (strongest)
+    
+    HARD RULES:
+    - Compound Rule: FaceBook = Face + Book = NOT Coined
+    - Conservative Rule: If borderline, default to weaker category
+    - No Fluff Rule: Legal accuracy > Marketing appeal
+    """
+    brand_lower = brand_name.lower()
+    industry_lower = industry.lower()
+    
+    # ========== STEP 1: DE-COMPOUND & DICTIONARY CHECK ==========
+    tokens = tokenize_brand_name(brand_name)
+    
+    # Check which tokens are dictionary words
+    dictionary_tokens = []
+    invented_tokens = []
+    
+    for token in tokens:
+        if token in COMMON_DICTIONARY_WORDS or len(token) <= 2:
+            dictionary_tokens.append(token)
+        else:
+            # Check if it's a partial match
+            is_dict_word = False
+            for dict_word in COMMON_DICTIONARY_WORDS:
+                if dict_word in token or token in dict_word:
+                    dictionary_tokens.append(token)
+                    is_dict_word = True
+                    break
+            if not is_dict_word:
+                invented_tokens.append(token)
+    
+    # Get industry domain
+    industry_domain, industry_keywords = get_industry_domain(industry)
+    
+    # Check for modified spelling
     is_modified_spelling = False
+    original_word = None
     for modified, original in MODIFIED_SPELLING_PATTERNS:
         if modified in brand_lower:
             is_modified_spelling = True
+            original_word = original
             break
     
-    # Check 3: Check morphemes from decomposition
-    morphemes = decomposition.get("morphemes", [])
-    heritage_origins = ["Sanskrit", "Latin", "Greek", "Japanese", "Chinese", "Arabic", "Hebrew", "Persian"]
-    english_origins = ["English", "Modern English", "Old English"]
+    # ========== CLASSIFICATION DECISION TREE ==========
     
-    has_heritage_morphemes = False
-    has_english_morphemes = False
+    # Initialize result
+    result = {
+        "brand_name": brand_name,
+        "industry": industry,
+        "tokens": tokens,
+        "dictionary_tokens": dictionary_tokens,
+        "invented_tokens": invented_tokens,
+        "category": None,
+        "distinctiveness": None,
+        "protectability": None,
+        "dictionary_status": None,
+        "semantic_link": None,
+        "imagination_required": None,
+        "warning": None,
+        "reasoning": None
+    }
     
-    for morpheme in morphemes:
-        origin = morpheme.get("origin", "Unknown")
-        if origin in heritage_origins:
-            has_heritage_morphemes = True
-        if origin in english_origins:
-            has_english_morphemes = True
+    # ========== STEP 2: GENERIC CHECK ==========
+    # Does the name literally name the category?
+    is_generic = False
+    if brand_lower in industry_keywords or brand_lower == industry_domain:
+        is_generic = True
     
-    # Classification Logic
-    if len(words_found) >= 2:
-        # Multiple dictionary words found → Definitely Descriptive
-        classification = "Descriptive/Composite"
-        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Descriptive/Composite (dictionary words: {words_found[:5]})")
-    elif len(words_found) == 1:
-        # One dictionary word + something else → Suggestive/Composite
-        classification = "Suggestive/Composite"
-        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Suggestive/Composite (contains: {words_found[0]})")
-    elif is_modified_spelling:
-        # Modified spelling of real words → Modified Descriptive
-        classification = "Modified Descriptive"
-        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Modified Descriptive (modified spelling)")
-    elif has_heritage_morphemes:
-        # Heritage language roots → Heritage
-        classification = "Heritage"
-        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Heritage (classical language roots)")
-    elif has_english_morphemes and len(morphemes) > 0:
-        # Has English morphemes → Suggestive
-        classification = "Suggestive"
-        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Suggestive (English morphemes)")
-    else:
-        # Only if NO dictionary words, NO morphemes recognized → Coined
-        classification = "Coined/Invented"
-        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Coined/Invented (no dictionary words found)")
+    # Check if ALL tokens are industry keywords
+    if len(dictionary_tokens) > 0:
+        all_industry_match = all(
+            any(token in kw or kw in token for kw in industry_keywords)
+            for token in dictionary_tokens
+        )
+        if all_industry_match and len(dictionary_tokens) >= 2:
+            is_generic = True
     
-    return classification
+    if is_generic:
+        result["category"] = "GENERIC"
+        result["distinctiveness"] = "NONE"
+        result["protectability"] = "UNPROTECTABLE"
+        result["dictionary_status"] = f"All tokens are common words: {dictionary_tokens}"
+        result["semantic_link"] = f"Name directly names the product category '{industry}'"
+        result["imagination_required"] = False
+        result["warning"] = "⛔ Generic terms CANNOT be trademarked. Choose a different name."
+        result["reasoning"] = f"'{brand_name}' literally describes or names the '{industry}' category. Generic terms are free for all to use."
+        
+        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → GENERIC (names the category)")
+        return result
+    
+    # ========== STEP 3: DESCRIPTIVE CHECK ==========
+    # Do the dictionary words DIRECTLY describe the product?
+    is_descriptive = False
+    matching_industry_tokens = []
+    
+    for token in dictionary_tokens:
+        for keyword in industry_keywords:
+            if token == keyword or token in keyword or keyword in token:
+                matching_industry_tokens.append(token)
+                break
+    
+    # If 50%+ of tokens match industry keywords → DESCRIPTIVE
+    if len(dictionary_tokens) > 0:
+        match_ratio = len(matching_industry_tokens) / len(dictionary_tokens)
+        if match_ratio >= 0.5 and len(dictionary_tokens) >= 2:
+            is_descriptive = True
+    
+    # If ALL tokens are dictionary words and describe function → DESCRIPTIVE
+    if len(dictionary_tokens) >= 2 and len(invented_tokens) == 0:
+        is_descriptive = True
+    
+    if is_descriptive:
+        result["category"] = "DESCRIPTIVE"
+        result["distinctiveness"] = "LOW"
+        result["protectability"] = "WEAK"
+        result["dictionary_status"] = f"Contains dictionary words: {dictionary_tokens}"
+        result["semantic_link"] = f"Words directly describe the {industry} - {', '.join(matching_industry_tokens) if matching_industry_tokens else 'composite description'}"
+        result["imagination_required"] = False
+        result["warning"] = "⚠️ Descriptive marks require proof of 'Secondary Meaning' (acquired distinctiveness) for trademark protection. This typically requires 5+ years of exclusive use and significant marketing investment."
+        result["reasoning"] = f"'{brand_name}' is composed of dictionary words ({', '.join(dictionary_tokens)}) that describe the product/service. Under trademark law, descriptive marks receive weak protection."
+        
+        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → DESCRIPTIVE (describes the product)")
+        return result
+    
+    # ========== STEP 4: SUGGESTIVE CHECK ==========
+    # Does consumer need imagination to connect name to product?
+    is_suggestive = False
+    
+    # Has dictionary words but doesn't directly describe
+    if len(dictionary_tokens) >= 1 and not is_descriptive:
+        is_suggestive = True
+    
+    # Modified spelling of real words → Suggestive
+    if is_modified_spelling:
+        is_suggestive = True
+    
+    # Compound of real words that hints but doesn't describe
+    # e.g., "Netflix" (Net + Flicks), "Airbus" (Air + Bus)
+    if len(dictionary_tokens) >= 2 and len(matching_industry_tokens) == 0:
+        is_suggestive = True
+    
+    if is_suggestive:
+        result["category"] = "SUGGESTIVE"
+        result["distinctiveness"] = "MODERATE"
+        result["protectability"] = "MODERATE"
+        result["dictionary_status"] = f"Contains words: {dictionary_tokens}" + (f" (modified from '{original_word}')" if is_modified_spelling else "")
+        result["semantic_link"] = f"Hints at {industry} but requires imagination to connect"
+        result["imagination_required"] = True
+        result["warning"] = "Suggestive marks are protectable but may face challenges from similar suggestive marks in the same industry."
+        result["reasoning"] = f"'{brand_name}' suggests qualities of the product but requires consumer imagination to make the connection. This places it in the SUGGESTIVE category with moderate trademark protection."
+        
+        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → SUGGESTIVE (hints at product)")
+        return result
+    
+    # ========== STEP 5: ARBITRARY CHECK ==========
+    # Is it a real word in UNRELATED context?
+    is_arbitrary = False
+    
+    # Has one dictionary word that's completely unrelated to industry
+    if len(dictionary_tokens) == 1 and len(matching_industry_tokens) == 0:
+        is_arbitrary = True
+    
+    if is_arbitrary:
+        result["category"] = "ARBITRARY"
+        result["distinctiveness"] = "HIGH"
+        result["protectability"] = "STRONG"
+        result["dictionary_status"] = f"Common word '{dictionary_tokens[0]}' used in unrelated context"
+        result["semantic_link"] = f"No semantic connection to {industry}"
+        result["imagination_required"] = False
+        result["warning"] = None
+        result["reasoning"] = f"'{brand_name}' is a common word used in a completely unrelated context ({industry}). Like 'Apple' for computers, arbitrary marks receive strong trademark protection."
+        
+        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → ARBITRARY (unrelated context)")
+        return result
+    
+    # ========== STEP 6: FANCIFUL/COINED CHECK ==========
+    # Is the word completely made up?
+    if len(dictionary_tokens) == 0 and len(invented_tokens) > 0:
+        result["category"] = "FANCIFUL"
+        result["distinctiveness"] = "HIGHEST"
+        result["protectability"] = "STRONGEST"
+        result["dictionary_status"] = f"Invented term with no dictionary origin: {invented_tokens}"
+        result["semantic_link"] = "No pre-existing meaning"
+        result["imagination_required"] = False
+        result["warning"] = None
+        result["reasoning"] = f"'{brand_name}' is a completely invented word with no prior dictionary meaning. Like 'Xerox' or 'Kodak', fanciful marks receive the strongest trademark protection."
+        
+        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → FANCIFUL/COINED (invented word)")
+        return result
+    
+    # ========== DEFAULT: CONSERVATIVE RULE ==========
+    # If we can't clearly classify, default to DESCRIPTIVE (safer for user)
+    result["category"] = "DESCRIPTIVE"
+    result["distinctiveness"] = "LOW"
+    result["protectability"] = "WEAK"
+    result["dictionary_status"] = f"Tokens: {tokens}"
+    result["semantic_link"] = f"Unclear relationship to {industry}"
+    result["imagination_required"] = False
+    result["warning"] = "⚠️ Classification unclear - defaulting to DESCRIPTIVE (conservative approach). Consult a trademark attorney."
+    result["reasoning"] = f"'{brand_name}' could not be clearly classified. Following the Conservative Rule, we default to DESCRIPTIVE to protect against legal risk."
+    
+    logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → DESCRIPTIVE (conservative default)")
+    return result
+
+
+# Legacy function for backward compatibility
+def classify_brand_name_type(brand_name: str, decomposition: dict) -> str:
+    """
+    DEPRECATED: Use classify_brand_with_industry() instead.
+    Kept for backward compatibility.
+    """
+    # Call new function with empty industry (will use conservative classification)
+    result = classify_brand_with_industry(brand_name, "general")
+    
+    # Map new categories to old format
+    category_map = {
+        "GENERIC": "Generic",
+        "DESCRIPTIVE": "Descriptive/Composite",
+        "SUGGESTIVE": "Suggestive/Composite",
+        "ARBITRARY": "Arbitrary",
+        "FANCIFUL": "Coined/Invented"
+    }
+    
+    return category_map.get(result["category"], "Descriptive/Composite")
 
 
 # ============ GATE 2: CATEGORY MISMATCH CHECK ============
