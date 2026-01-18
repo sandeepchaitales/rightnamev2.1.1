@@ -1966,16 +1966,23 @@ async def llm_calculate_cultural_score(
 def calculate_fallback_cultural_score(
     brand_name: str,
     category: str,
-    country: str
+    country: str,
+    classification: dict = None  # NEW: Accept pre-calculated classification
 ) -> dict:
     """
     FALLBACK Cultural Scoring (when LLM unavailable)
     
     Uses heuristics to estimate Safety, Fluency, Vibe scores
     Still applies the formula: (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
+    
+    NEW: Accepts pre-calculated classification to avoid duplicate computation.
     """
     brand_lower = brand_name.lower()
     country_lower = country.lower().strip()
+    
+    # Use passed classification or calculate if not provided
+    if classification is None:
+        classification = classify_brand_with_industry(brand_name, category)
     
     # === SAFETY SCORE (Phonetic Accidents) ===
     safety_score = 8  # Default: assume clean
@@ -2035,7 +2042,7 @@ def calculate_fallback_cultural_score(
     vibe_score = 6  # Default: average
     vibe_issues = []
     
-    # GATE 2: Check for category mismatch
+    # GATE 2: Check for category mismatch (use classification data)
     category_mismatch = check_category_mismatch(brand_name, category)
     if category_mismatch.get("has_mismatch"):
         vibe_score -= 3  # Significant penalty for category mismatch
@@ -2053,11 +2060,14 @@ def calculate_fallback_cultural_score(
         if indicator in brand_lower:
             vibe_score -= 1
     
+    # USE PASSED CLASSIFICATION (no duplicate calculation)
     # Descriptive names get penalty (weaker trademark)
-    brand_type = classify_brand_name_type(brand_name, {"morphemes": []})
-    if brand_type == "Descriptive/Composite":
+    if classification.get("category") == "DESCRIPTIVE":
         vibe_score -= 1
-        vibe_issues.append("Descriptive name - weaker trademark protection")
+        vibe_issues.append(f"DESCRIPTIVE name - {classification.get('warning', 'weaker trademark protection')}")
+    elif classification.get("category") == "GENERIC":
+        vibe_score -= 2
+        vibe_issues.append(f"GENERIC name - {classification.get('warning', 'unprotectable')}")
     
     vibe_score = max(2, min(10, vibe_score))
     
