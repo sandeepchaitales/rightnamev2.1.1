@@ -5707,6 +5707,305 @@ def generate_intelligent_trademark_matrix(brand_name: str, category: str, tradem
     return matrix
 
 
+def build_conflict_relevance_analysis(
+    brand_name: str,
+    category: str,
+    industry: str,
+    trademark_data: dict,
+    visibility_data: dict,
+    deep_trace_result: dict = None,
+    positioning: str = ""
+) -> dict:
+    """
+    Build REAL Conflict Relevance Analysis from actual data sources:
+    - Trademark Research (trademark conflicts, company conflicts)
+    - Visibility Analysis (App Store, Play Store, Google results)
+    - Deep-Trace Analysis (Category Kings, root word conflicts)
+    
+    This replaces the LLM-generated visibility_analysis with data-driven analysis.
+    """
+    logging.info(f"🎯 Building Conflict Relevance Analysis for '{brand_name}' from real data...")
+    
+    direct_competitors = []
+    phonetic_conflicts = []
+    name_twins = []
+    
+    # ==================== SOURCE 1: TRADEMARK RESEARCH ====================
+    if trademark_data:
+        tm_conflicts = trademark_data.get('trademark_conflicts', [])
+        co_conflicts = trademark_data.get('company_conflicts', [])
+        nice_class = get_nice_classification(category)
+        user_class = nice_class.get('class_number', 35)
+        
+        for conflict in tm_conflicts:
+            conflict_class = conflict.get('class_number')
+            conflict_name = conflict.get('name', 'Unknown')
+            conflict_status = conflict.get('status', 'UNKNOWN')
+            
+            # Determine if same class = DIRECT, different class = NAME_TWIN
+            if conflict_class and str(conflict_class) == str(user_class):
+                # SAME CLASS = DIRECT COMPETITOR
+                direct_competitors.append({
+                    "name": conflict_name,
+                    "category": f"Class {conflict_class} - Same as user",
+                    "their_product_intent": f"Trademark registered in Class {conflict_class}",
+                    "their_customer_avatar": "Same customer segment (same NICE class)",
+                    "intent_match": "SAME",
+                    "customer_overlap": "HIGH",
+                    "risk_level": "HIGH",
+                    "reason": f"TRADEMARK CONFLICT: {conflict_name} is registered in Class {conflict_class} ({conflict_status}). Same class as your {category}.",
+                    "source": "Trademark Registry",
+                    "status": conflict_status
+                })
+                logging.info(f"   ⚠️ DIRECT CONFLICT (Same Class): {conflict_name} in Class {conflict_class}")
+            else:
+                # DIFFERENT CLASS = NAME TWIN (still worth noting)
+                name_twins.append({
+                    "name": conflict_name,
+                    "category": f"Class {conflict_class or 'Unknown'} - Different from user Class {user_class}",
+                    "their_product_intent": f"Different business (Class {conflict_class})",
+                    "their_customer_avatar": "Different customer segment",
+                    "intent_match": "DIFFERENT",
+                    "customer_overlap": "NONE",
+                    "risk_level": "LOW",
+                    "reason": f"Different NICE class ({conflict_class} vs {user_class}). Name exists but serves different market.",
+                    "source": "Trademark Registry",
+                    "status": conflict_status
+                })
+        
+        # Company conflicts are typically more serious (they're operating businesses)
+        for conflict in co_conflicts:
+            company_name = conflict.get('name', 'Unknown')
+            company_industry = conflict.get('industry', 'Unknown')
+            company_status = conflict.get('status', 'ACTIVE')
+            
+            # Check if industry overlaps
+            industry_lower = (industry or category or "").lower()
+            company_industry_lower = company_industry.lower()
+            
+            # Keywords to check for industry match
+            industry_match = any(kw in company_industry_lower for kw in industry_lower.split()) or \
+                           any(kw in industry_lower for kw in company_industry_lower.split())
+            
+            if industry_match or company_status == 'ACTIVE':
+                direct_competitors.append({
+                    "name": company_name,
+                    "category": company_industry,
+                    "their_product_intent": f"Active company in {company_industry}",
+                    "their_customer_avatar": "Overlapping market segment",
+                    "intent_match": "SAME" if industry_match else "RELATED",
+                    "customer_overlap": "HIGH" if industry_match else "MEDIUM",
+                    "risk_level": "HIGH" if industry_match else "MEDIUM",
+                    "reason": f"COMPANY CONFLICT: {company_name} is an active {company_status} company in {company_industry}.",
+                    "source": "Company Registry (MCA/ROC)",
+                    "status": company_status,
+                    "cin": conflict.get('cin', 'N/A')
+                })
+                logging.info(f"   ⚠️ COMPANY CONFLICT: {company_name} ({company_industry})")
+            else:
+                name_twins.append({
+                    "name": company_name,
+                    "category": company_industry,
+                    "their_product_intent": f"Company in {company_industry}",
+                    "their_customer_avatar": "Different segment",
+                    "intent_match": "DIFFERENT",
+                    "customer_overlap": "NONE",
+                    "risk_level": "LOW",
+                    "reason": f"Company exists in different industry ({company_industry}). Low conflict risk.",
+                    "source": "Company Registry"
+                })
+    
+    # ==================== SOURCE 2: VISIBILITY (APP STORE / PLAY STORE) ====================
+    if visibility_data:
+        app_search_details = visibility_data.get('app_search_details', {})
+        
+        # Process potential conflicts from app stores
+        app_conflicts = app_search_details.get('potential_conflicts', [])
+        for app in app_conflicts:
+            app_name = app.get('title', 'Unknown App')
+            app_developer = app.get('developer', 'Unknown Developer')
+            match_type = app.get('match_type', 'UNKNOWN')
+            
+            # App store conflicts are serious - same digital product space
+            direct_competitors.append({
+                "name": app_name,
+                "category": f"Mobile App ({match_type})",
+                "their_product_intent": f"App by {app_developer}",
+                "their_customer_avatar": "Mobile app users",
+                "intent_match": "SAME" if "EXACT" in match_type else "RELATED",
+                "customer_overlap": "HIGH",
+                "risk_level": "HIGH" if "EXACT" in match_type else "MEDIUM",
+                "reason": f"APP STORE CONFLICT: '{app_name}' by {app_developer} found in app stores. {match_type}.",
+                "source": "Google Play Store / Apple App Store",
+                "app_id": app.get('appId', 'N/A')
+            })
+            logging.info(f"   📱 APP CONFLICT: {app_name} ({match_type})")
+        
+        # Process phonetic matches from app stores
+        phonetic_matches = app_search_details.get('phonetic_matches', [])
+        for app in phonetic_matches:
+            app_name = app.get('title', 'Unknown')
+            variant = app.get('phonetic_variant', brand_name)
+            
+            phonetic_conflicts.append({
+                "input_name": brand_name,
+                "phonetic_variants": [variant],
+                "ipa_pronunciation": f"/{variant}/",
+                "found_conflict": {
+                    "name": app_name,
+                    "spelling_difference": f"{brand_name} vs {app_name}",
+                    "category": "Mobile App",
+                    "app_store_link": f"play.google.com/store/apps/details?id={app.get('appId', '')}",
+                    "downloads": app.get('installs', 'Unknown'),
+                    "company": app.get('developer', 'Unknown'),
+                    "is_active": True
+                },
+                "conflict_type": "PHONETIC_APP_CONFLICT",
+                "legal_risk": "MEDIUM",
+                "verdict_impact": "Consider phonetic differentiation"
+            })
+            logging.info(f"   🔊 PHONETIC CONFLICT: {brand_name} sounds like {app_name}")
+        
+        # Process exact matches
+        exact_matches = app_search_details.get('exact_matches', [])
+        for app in exact_matches:
+            if app not in app_conflicts:  # Avoid duplicates
+                app_name = app.get('title', 'Unknown App')
+                direct_competitors.append({
+                    "name": app_name,
+                    "category": "Mobile App (Exact Name Match)",
+                    "their_product_intent": f"App by {app.get('developer', 'Unknown')}",
+                    "their_customer_avatar": "Mobile app users",
+                    "intent_match": "SAME",
+                    "customer_overlap": "HIGH",
+                    "risk_level": "CRITICAL",
+                    "reason": f"EXACT NAME MATCH: '{app_name}' exists in app stores with same name.",
+                    "source": "App Store",
+                    "installs": app.get('installs', 'Unknown')
+                })
+        
+        # Process Google search results for business indicators
+        google_results = visibility_data.get('google', [])
+        for result in google_results[:5]:  # Check top 5 results
+            result_lower = result.lower() if isinstance(result, str) else ""
+            
+            # Look for indicators of existing business
+            business_indicators = ['official', 'website', 'company', 'linkedin', 'crunchbase', 
+                                   'founded', 'startup', 'brand', '.com', 'inc', 'ltd', 'pvt']
+            
+            if any(ind in result_lower for ind in business_indicators) and brand_name.lower() in result_lower:
+                # Check if this is a different business
+                name_twins.append({
+                    "name": f"Web presence: {result[:80]}...",
+                    "category": "Web/Online Business",
+                    "their_product_intent": "Existing web presence",
+                    "their_customer_avatar": "Online users",
+                    "intent_match": "UNKNOWN",
+                    "customer_overlap": "UNKNOWN",
+                    "risk_level": "MEDIUM",
+                    "reason": f"Found in Google search. Verify if this is a competing business.",
+                    "source": "Google Search"
+                })
+    
+    # ==================== SOURCE 3: DEEP-TRACE ANALYSIS (Category Kings) ====================
+    if deep_trace_result:
+        category_king = deep_trace_result.get('category_king')
+        if category_king:
+            king_name = category_king.get('king', 'Unknown')
+            king_valuation = category_king.get('valuation', 'Unknown')
+            industry_match = category_king.get('industry_match', False)
+            
+            # Category King is ALWAYS a critical conflict if industry matches
+            if industry_match:
+                direct_competitors.append({
+                    "name": king_name,
+                    "category": f"Category King ({category_king.get('market', 'Global')})",
+                    "their_product_intent": category_king.get('description', 'Market leader'),
+                    "their_customer_avatar": "Mass market in same category",
+                    "intent_match": "SAME",
+                    "customer_overlap": "HIGH",
+                    "risk_level": "CRITICAL",
+                    "reason": f"🚨 CATEGORY KING CONFLICT: Your brand root word matches {king_name} ({king_valuation}). Same industry = HIGH lawsuit risk.",
+                    "source": "Deep-Trace Analysis (Root Word Detection)",
+                    "valuation": king_valuation
+                })
+                logging.info(f"   🚨 CATEGORY KING: {king_name} ({king_valuation})")
+            else:
+                # Different industry but same root - still notable
+                name_twins.append({
+                    "name": king_name,
+                    "category": f"{category_king.get('market', 'Global')} - Different industry",
+                    "their_product_intent": category_king.get('description', 'Market leader'),
+                    "their_customer_avatar": "Different market segment",
+                    "intent_match": "DIFFERENT",
+                    "customer_overlap": "LOW",
+                    "risk_level": "MEDIUM",
+                    "reason": f"Root word associated with {king_name} but in different industry. Monitor for cross-industry expansion.",
+                    "source": "Deep-Trace Analysis"
+                })
+        
+        # Add algorithmic conflicts from Deep-Trace
+        algorithmic = deep_trace_result.get('algorithmic_analysis')
+        if algorithmic and algorithmic.get('overall_algorithmic_risk'):
+            nearest = deep_trace_result.get('nearest_competitor')
+            if nearest:
+                phonetic_conflicts.append({
+                    "input_name": brand_name,
+                    "phonetic_variants": [],
+                    "ipa_pronunciation": f"Near {nearest}",
+                    "found_conflict": {
+                        "name": nearest,
+                        "spelling_difference": f"Levenshtein distance: {algorithmic['levenshtein']['distance']}",
+                        "category": category,
+                        "is_active": True
+                    },
+                    "conflict_type": "ALGORITHMIC_SIMILARITY",
+                    "legal_risk": "HIGH" if algorithmic['levenshtein']['distance'] < 3 else "MEDIUM",
+                    "verdict_impact": f"Jaro-Winkler: {algorithmic['jaro_winkler']['score']}% similar"
+                })
+    
+    # ==================== BUILD SUMMARY ====================
+    total_direct = len(direct_competitors)
+    total_phonetic = len(phonetic_conflicts)
+    total_twins = len(name_twins)
+    
+    warning_triggered = total_direct > 0 or total_phonetic > 0
+    
+    if total_direct > 0:
+        top_conflict = direct_competitors[0]
+        warning_reason = f"CRITICAL: {total_direct} direct competitor(s) found. Top: {top_conflict['name']} ({top_conflict['risk_level']})"
+    elif total_phonetic > 0:
+        warning_reason = f"WARNING: {total_phonetic} phonetic conflict(s) detected. Review before proceeding."
+    else:
+        warning_reason = None
+    
+    conflict_summary = (
+        f"{total_direct} direct competitors. "
+        f"{total_phonetic} phonetic conflicts. "
+        f"{total_twins} name twins identified with distinct intents."
+    )
+    
+    logging.info(f"   📊 CONFLICT SUMMARY: {conflict_summary}")
+    logging.info(f"   ⚠️ WARNING TRIGGERED: {warning_triggered} ({warning_reason or 'None'})")
+    
+    return {
+        "user_product_intent": f"{category} in {industry or 'Digital'} space",
+        "user_customer_avatar": f"{positioning or 'General'} market segment customers",
+        "phonetic_conflicts": phonetic_conflicts,
+        "direct_competitors": direct_competitors,
+        "name_twins": name_twins,
+        "google_presence": visibility_data.get('google', [])[:5] if visibility_data else [],
+        "app_store_presence": visibility_data.get('apps', [])[:5] if visibility_data else [],
+        "warning_triggered": warning_triggered,
+        "warning_reason": warning_reason,
+        "conflict_summary": conflict_summary,
+        # Additional metadata
+        "_sources_used": ["Trademark Registry", "Company Registry", "App Stores", "Google Search", "Deep-Trace Analysis"],
+        "_total_conflicts": total_direct + total_phonetic,
+        "_data_driven": True  # Flag to indicate this is real data, not LLM-generated
+    }
+
+
 def fix_llm_response_types(data: dict) -> dict:
     """
     Fix common type issues in LLM responses before Pydantic validation.
