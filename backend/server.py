@@ -6287,6 +6287,49 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         
         return {"model": f"{model_provider}/{model_name}", "data": data}
     
+    # ==================== CLASSIFICATION-AWARE HELPER FUNCTIONS ====================
+    def generate_strategic_classification(classification: dict, trademark_risk: int) -> str:
+        """
+        Generate strategic_classification string based on ACTUAL 5-step spectrum classification.
+        No longer hardcodes "Coined/Invented" for all brands.
+        
+        Examples:
+        - FANCIFUL: "STRONGEST - Coined/Invented term with highest legal distinctiveness"
+        - DESCRIPTIVE: "WEAK - Descriptive term (directly describes product) with low legal distinctiveness"
+        """
+        category = classification.get("category", "DESCRIPTIVE")
+        protectability = classification.get("protectability", "WEAK")
+        distinctiveness = classification.get("distinctiveness", "LOW")
+        
+        # Map classification category to human-readable description
+        category_descriptions = {
+            "FANCIFUL": "Coined/Invented term (completely made up word)",
+            "ARBITRARY": "Arbitrary term (common word in unrelated context)",
+            "SUGGESTIVE": "Suggestive term (hints at product, needs imagination)",
+            "DESCRIPTIVE": "Descriptive term (directly describes the product/service)",
+            "GENERIC": "Generic term (names the product category itself)"
+        }
+        
+        category_description = category_descriptions.get(category, category)
+        
+        # Build the strategic classification string
+        return f"{protectability} - {category_description} with {distinctiveness.lower()} legal distinctiveness"
+    
+    def get_distinctiveness_score(classification: dict) -> float:
+        """
+        Get a numeric score (0-10) based on classification distinctiveness level.
+        """
+        distinctiveness_scores = {
+            "HIGHEST": 9.5,
+            "HIGH": 8.5,
+            "MODERATE": 7.0,
+            "LOW": 5.5,
+            "NONE": 3.0
+        }
+        distinctiveness = classification.get("distinctiveness", "LOW")
+        return distinctiveness_scores.get(distinctiveness, 6.0)
+    # ==================== END CLASSIFICATION-AWARE HELPERS ====================
+    
     def generate_fallback_report(brand_name: str, category: str, domain_data, social_data, trademark_data, visibility_data, classification: dict = None) -> dict:
         """Generate a complete report WITHOUT LLM using collected data
         
