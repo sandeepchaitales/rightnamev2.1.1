@@ -7626,7 +7626,8 @@ class BrandEvaluationTester:
             "category": "Beauty",
             "industry": "Cosmetics",
             "countries": ["India"],
-            "positioning": "Premium"
+            "positioning": "Premium",
+            "market_scope": "Single Country"
         }
         
         try:
