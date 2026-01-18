@@ -1107,8 +1107,7 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
         result["warning"] = "Suggestive marks are protectable but may face challenges from similar suggestive marks in the same industry."
         result["reasoning"] = f"'{brand_name}' suggests qualities of the product but requires consumer imagination to make the connection. This places it in the SUGGESTIVE category with moderate trademark protection."
         
-        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → SUGGESTIVE (hints at product)")
-        return result
+        return cache_and_return(result, f"🏷️ CLASSIFICATION: '{brand_name}' → SUGGESTIVE (hints at product)")
     
     # ========== STEP 5: ARBITRARY CHECK ==========
     # Is it a real word in UNRELATED context?
