@@ -8490,19 +8490,45 @@ BRAND: {brand}
             else:
                 logging.warning(f"No stored trademark data for '{brand_name}'")
         
-        # Add dimensions if missing
+        # Add dimensions if missing - NOW USES CLASSIFICATION-AWARE GENERATION
         if not brand_score.dimensions or len(brand_score.dimensions) == 0:
-            logging.warning(f"DIMENSIONS MISSING for '{brand_score.brand_name}' - Adding calculated dimensions")
-            base_score = brand_score.namescore / 10 if brand_score.namescore else 7.0
+            logging.warning(f"DIMENSIONS MISSING for '{brand_score.brand_name}' - Generating classification-aware dimensions")
+            
+            # Get classification for this brand
+            brand_classification = classify_brand_with_industry(
+                brand_score.brand_name, 
+                request.category or request.industry or "Business"
+            )
+            
+            # Get trademark risk
+            tr_risk = 5  # default
+            if brand_score.trademark_research:
+                if isinstance(brand_score.trademark_research, dict):
+                    tr_risk = brand_score.trademark_research.get("overall_risk_score", 5)
+                elif hasattr(brand_score.trademark_research, "overall_risk_score"):
+                    tr_risk = brand_score.trademark_research.overall_risk_score or 5
+            
+            # Generate classification-aware dimensions
+            calculated_dims = generate_classification_aware_dimensions(
+                brand_name=brand_score.brand_name,
+                classification=brand_classification,
+                category=request.category or "Business",
+                positioning=request.positioning or "Mid-Range",
+                trademark_risk=tr_risk,
+                strategy_snapshot=None,  # May not be available
+                mckinsey_analysis=None,
+                cultural_analysis=None
+            )
+            
             brand_score.dimensions = [
                 DimensionScore(
                     name=dim["name"],
-                    score=round(max(1, min(10, base_score + (dim_idx * 0.15) - 0.3)), 1),
+                    score=dim["score"],
                     reasoning=dim["reasoning"]
                 )
-                for dim_idx, dim in enumerate(DEFAULT_DIMENSIONS)
+                for dim in calculated_dims
             ]
-            logging.info(f"Added {len(brand_score.dimensions)} dimensions for '{brand_score.brand_name}'")
+            logging.info(f"Added {len(brand_score.dimensions)} classification-aware dimensions for '{brand_score.brand_name}' ({brand_classification.get('category')})")
         else:
             logging.info(f"Dimensions OK for '{brand_score.brand_name}': {len(brand_score.dimensions)} dimensions")
         
