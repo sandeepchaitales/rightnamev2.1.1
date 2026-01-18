@@ -7941,6 +7941,13 @@ class BrandEvaluationTester:
             print("❌ API health check failed, stopping tests")
             return False
         
+        # PRIORITY: NEW CONFLICT RELEVANCE ANALYSIS INTEGRATION (as requested in review)
+        print("\n🎯 PRIORITY TEST: NEW CONFLICT RELEVANCE ANALYSIS INTEGRATION")
+        print("="*60)
+        self.test_conflict_relevance_analysis_luminara()  # Test Case 1: Luminara in Beauty/Cosmetics
+        self.test_conflict_relevance_analysis_rapidoy()   # Test Case 2: Rapidoy (Category King conflict)
+        self.check_backend_logs_for_conflict_analysis()   # Verify backend logs show pre-computed analysis
+        
         # PRIORITY: NEW SINGLE CLASSIFICATION SYSTEM TESTS (as requested in review)
         print("\n🏷️ PRIORITY TEST: NEW SINGLE CLASSIFICATION SYSTEM")
         print("="*60)
