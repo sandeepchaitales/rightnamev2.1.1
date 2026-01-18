@@ -1078,8 +1078,7 @@ def classify_brand_with_industry(brand_name: str, industry: str) -> dict:
         result["warning"] = "⚠️ Descriptive marks require proof of 'Secondary Meaning' (acquired distinctiveness) for trademark protection. This typically requires 5+ years of exclusive use and significant marketing investment."
         result["reasoning"] = f"'{brand_name}' is composed of dictionary words ({', '.join(dictionary_tokens)}) that describe the product/service. Under trademark law, descriptive marks receive weak protection."
         
-        logging.info(f"🏷️ CLASSIFICATION: '{brand_name}' → DESCRIPTIVE (describes the product)")
-        return result
+        return cache_and_return(result, f"🏷️ CLASSIFICATION: '{brand_name}' → DESCRIPTIVE (describes the product)")
     
     # ========== STEP 4: SUGGESTIVE CHECK ==========
     # Does consumer need imagination to connect name to product?
