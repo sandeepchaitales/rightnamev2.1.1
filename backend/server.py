@@ -8141,62 +8141,25 @@ BRAND: {brand}
         # Add McKinsey Analysis if not present
         if not brand_score.mckinsey_analysis:
             verdict = brand_score.verdict
-            mckinsey_recommendation = "PIVOT" if verdict == "REJECT" else "REFINE" if verdict == "CAUTION" else "PROCEED"
             
-            brand_score.mckinsey_analysis = {
-                "benefits_experiences": {
-                    "linguistic_roots": f"The name '{brand_score.brand_name}' appears to be {'an invented/coined term' if not any(c in brand_score.brand_name.lower() for c in ['tech', 'soft', 'corp', 'global']) else 'a compound/descriptive term'}.",
-                    "phonetic_analysis": f"The name has {len(brand_score.brand_name)} characters with {'easy' if len(brand_score.brand_name) <= 8 else 'moderate'} pronunciation complexity.",
-                    "emotional_promises": ["Innovation", "Modernity", "Trust"],
-                    "functional_benefits": ["Clarity", "Professionalism"],
-                    "benefit_map": [
-                        {"name_trait": "Name length", "user_perception": "Memorable" if len(brand_score.brand_name) <= 8 else "Complex", "benefit_type": "Functional"},
-                        {"name_trait": "Sound pattern", "user_perception": "Professional", "benefit_type": "Emotional"}
-                    ],
-                    "target_persona_fit": "Moderate fit with professional/business audience."
-                },
-                "distinctiveness": {
-                    "distinctiveness_score": 6 if verdict == "GO" else 4,
-                    "category_noise_level": "MEDIUM",
-                    "industry_comparison": f"Compared to industry leaders in {request.category}, this name {'stands out' if verdict == 'GO' else 'may face differentiation challenges'}.",
-                    "naming_tropes_analysis": "Analysis based on common patterns in the industry.",
-                    "similar_competitors": [],
-                    "differentiation_opportunities": ["Consider unique visual branding", "Develop strong tagline", "Build distinctive brand voice"]
-                },
-                "brand_architecture": {
-                    "elasticity_score": 7 if verdict == "GO" else 5,
-                    "elasticity_analysis": f"The name has {'good' if verdict == 'GO' else 'limited'} potential for extension across product lines.",
-                    "recommended_architecture": "Standalone House Brand",
-                    "architecture_rationale": "Works best as a primary brand rather than sub-brand.",
-                    "memorability_index": 7 if len(brand_score.brand_name) <= 8 else 5,
-                    "memorability_factors": ["Name length", "Uniqueness", "Pronunciation ease"],
-                    "global_scalability": "Requires validation for international markets."
-                },
-                "executive_recommendation": mckinsey_recommendation,
-                "recommendation_rationale": f"Based on trademark analysis and market positioning, this name is recommended to {mckinsey_recommendation.lower()}.",
-                "critical_assessment": f"{'Strong candidate with minor refinements needed.' if verdict == 'GO' else 'Significant concerns identified that require attention.' if verdict == 'CAUTION' else 'Critical issues prevent recommendation for use.'}",
-                "alternative_directions": [] if mckinsey_recommendation == "PROCEED" else [
-                    {
-                        "direction_name": "Abstract/Invented Approach",
-                        "example_names": ["Nexiva", "Zephora", "Quantix"],
-                        "rationale": "Invented names offer stronger trademark protection and uniqueness.",
-                        "mckinsey_principle": "Distinctiveness"
-                    },
-                    {
-                        "direction_name": "Descriptive + Modifier",
-                        "example_names": [f"True{request.category.split()[0]}", f"Prime{request.category.split()[0]}", f"Nova{request.category.split()[0]}"],
-                        "rationale": "Combines category clarity with distinctive modifier.",
-                        "mckinsey_principle": "Benefits"
-                    },
-                    {
-                        "direction_name": "Metaphor/Symbolic",
-                        "example_names": ["Pinnacle", "Horizon", "Vertex"],
-                        "rationale": "Metaphorical names communicate aspiration and values.",
-                        "mckinsey_principle": "Architecture"
-                    }
-                ]
-            }
-            logging.info(f"✅ Added McKinsey analysis for '{brand_score.brand_name}': {mckinsey_recommendation}")
+            # Get classification for this brand (use cached or compute)
+            brand_classification = classify_brand_with_industry(
+                brand_score.brand_name, 
+                request.category or request.industry or "Business"
+            )
+            
+            # Generate classification-aware McKinsey analysis
+            brand_score.mckinsey_analysis = generate_mckinsey_analysis(
+                brand_name=brand_score.brand_name,
+                classification=brand_classification,
+                category=request.category or "Business",
+                positioning=request.positioning or "Mid-Range",
+                verdict=verdict,
+                trademark_risk=brand_score.trademark_research.overall_risk_score if brand_score.trademark_research else 5,
+                imitability_risk=None,  # Will use default
+                positioning_alignment=None  # Will use default
+            )
+            logging.info(f"✅ Added McKinsey analysis for '{brand_score.brand_name}': {brand_score.mckinsey_analysis.get('executive_recommendation', 'N/A')}")
     
     # Return the evaluation
     return evaluation
