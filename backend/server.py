@@ -2238,7 +2238,7 @@ COUNTRY_CULTURAL_DATA = {
     }
 }
 
-def generate_cultural_analysis(countries: list, brand_name: str, category: str = "Business") -> list:
+def generate_cultural_analysis(countries: list, brand_name: str, category: str = "Business", classification: dict = None) -> list:
     """Generate cultural analysis for ALL user-selected countries (max 4)
     
     NEW FORMULA-BASED SCORING:
@@ -2247,8 +2247,14 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
     - Safety: Phonetic accidents, slang, sacred terms
     - Fluency: Pronunciation ease for local speakers  
     - Vibe: Premium market fit vs local competitors
+    
+    NEW: Accepts pre-calculated classification to avoid duplicate computation.
     """
     result = []
+    
+    # Use passed classification or calculate if not provided
+    if classification is None:
+        classification = classify_brand_with_industry(brand_name, category)
     
     # Create case-insensitive lookups
     cultural_data_lower = {k.lower(): v for k, v in COUNTRY_CULTURAL_DATA.items()}
@@ -2282,7 +2288,8 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         
         # ========== NEW: FORMULA-BASED CULTURAL SCORING ==========
         # Calculate using: Score = (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
-        cultural_score_result = calculate_fallback_cultural_score(brand_name, category, display_name)
+        # PASS the classification to avoid duplicate calculation
+        cultural_score_result = calculate_fallback_cultural_score(brand_name, category, display_name, classification)
         score_data = cultural_score_result.get("data", {})
         
         safety_score = score_data.get("safety_score", {}).get("raw", 7)
@@ -2294,10 +2301,17 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         # Build comprehensive cultural notes - NO FORMULA (kept internal, shown via score_breakdown)
         cultural_notes_parts = []
         
-        # Part 1: Linguistic Decomposition Header (skip formula - it's in score_breakdown for frontend)
-        cultural_notes_parts.append(f"**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
+        # Part 1: Classification info at top
+        cultural_notes_parts.append(f"**🏷️ TRADEMARK CLASSIFICATION: {classification.get('category', 'Unknown')}**")
+        cultural_notes_parts.append(f"Distinctiveness: {classification.get('distinctiveness', 'Unknown')} | Protectability: {classification.get('protectability', 'Unknown')}")
+        if classification.get('warning'):
+            cultural_notes_parts.append(f"\n{classification.get('warning')}\n")
+        cultural_notes_parts.append("---")
         
-        # Part 2: Morpheme Breakdown
+        # Part 2: Linguistic Decomposition Header
+        cultural_notes_parts.append(f"\n**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
+        
+        # Part 3: Morpheme Breakdown
         decomposition = linguistic_analysis.get("decomposition", {})
         if decomposition.get("morphemes"):
             cultural_notes_parts.append("**MORPHEME BREAKDOWN:**")
