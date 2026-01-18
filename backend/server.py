@@ -7599,7 +7599,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             domain_statuses.append(f"- {brand}: Domain check failed")
     domain_context = "\n".join(domain_statuses)
     
-    # 2. Similarity data
+    # 2. Similarity data + Deep-Trace Analysis
     similarity_data = []
     similarity_should_reject = {}
     for brand in request.brand_names:
@@ -7610,6 +7610,12 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 similarity_should_reject[brand] = sim_data.get("result", {})
         else:
             similarity_data.append(f"Similarity check unavailable for {brand}")
+        
+        # Add Deep-Trace Analysis results (already computed earlier)
+        if brand in deep_trace_results:
+            trace = deep_trace_results[brand]
+            similarity_data.append(format_deep_trace_report(trace))
+    
     similarity_context = "\n\n".join(similarity_data)
     
     # 3. Trademark research data - Store as DICT for later use
