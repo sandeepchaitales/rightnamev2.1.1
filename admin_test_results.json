@@ -24,55 +24,55 @@
       "test": "API Health Check",
       "success": true,
       "details": "Status: 200, Response: {\"message\":\"RightName API is running\"}",
-      "timestamp": "2026-01-18T15:29:14.182410"
+      "timestamp": "2026-01-18T17:06:40.506239"
     },
     {
       "test": "Admin Login - Valid Credentials",
       "success": true,
       "details": "Login successful, token received",
-      "timestamp": "2026-01-18T15:29:14.473209"
+      "timestamp": "2026-01-18T17:06:40.800332"
     },
     {
       "test": "Admin Login - Invalid Credentials",
       "success": true,
       "details": "Correctly rejected invalid credentials with 401",
-      "timestamp": "2026-01-18T15:29:14.739502"
+      "timestamp": "2026-01-18T17:06:41.086315"
     },
     {
       "test": "Admin Verify Token",
       "success": true,
       "details": "Token verification successful",
-      "timestamp": "2026-01-18T15:29:14.777103"
+      "timestamp": "2026-01-18T17:06:41.125544"
     },
     {
       "test": "Admin Verify No Token",
       "success": true,
       "details": "Correctly rejected request without token with 401",
-      "timestamp": "2026-01-18T15:29:14.812337"
+      "timestamp": "2026-01-18T17:06:41.168903"
     },
     {
       "test": "Admin Get System Prompt",
       "success": true,
       "details": "System prompt retrieved, 30189 characters",
-      "timestamp": "2026-01-18T15:29:14.848148"
+      "timestamp": "2026-01-18T17:06:41.203652"
     },
     {
       "test": "Admin Get Early Stopping Prompt",
       "success": true,
       "details": "Early stopping prompt retrieved, 827 characters",
-      "timestamp": "2026-01-18T15:29:14.886011"
+      "timestamp": "2026-01-18T17:06:41.242466"
     },
     {
       "test": "Admin Get Model Settings",
       "success": true,
       "details": "Model settings retrieved successfully",
-      "timestamp": "2026-01-18T15:29:14.920786"
+      "timestamp": "2026-01-18T17:06:41.277392"
     },
     {
       "test": "Admin Get Usage Analytics",
       "success": true,
       "details": "Usage analytics retrieved successfully",
-      "timestamp": "2026-01-18T15:29:14.964682"
+      "timestamp": "2026-01-18T17:06:41.319400"
     }
   ],
   "summary": {
