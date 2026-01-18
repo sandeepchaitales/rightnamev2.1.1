@@ -2,6 +2,7 @@ import requests
 import sys
 import json
 import time
+import re
 from datetime import datetime
 import uuid
 
