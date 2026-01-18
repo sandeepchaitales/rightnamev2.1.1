@@ -1634,17 +1634,25 @@ async def conduct_trademark_research(
     category: str,
     countries: List[str],
     known_competitors: List[str] = None,
-    product_keywords: List[str] = None
+    product_keywords: List[str] = None,
+    classification: str = None  # NEW: Accept pre-computed classification
 ) -> TrademarkResearchResult:
     """
-    Conduct trademark research for a brand name.
-    Optimized for speed - uses known data cache primarily.
+    Conduct trademark research for a brand name using the Hybrid Risk Model.
     
-    Improvements #2 & #3:
-    - known_competitors: User-provided competitors to check for conflicts
-    - product_keywords: Additional keywords for more targeted searches
+    Args:
+        brand_name: The brand name to research
+        industry: Industry sector
+        category: Product category
+        countries: Target countries for registration
+        known_competitors: User-provided competitors to check for conflicts
+        product_keywords: Additional keywords for more targeted searches
+        classification: Pre-computed trademark classification (FANCIFUL, ARBITRARY, SUGGESTIVE, DESCRIPTIVE, GENERIC)
+    
+    Returns:
+        TrademarkResearchResult with hybrid risk assessment
     """
-    logger.info(f"Starting trademark research for '{brand_name}' in {industry}/{category}")
+    logger.info(f"Starting trademark research for '{brand_name}' in {industry}/{category} with classification: {classification}")
     
     # Default empty lists
     known_competitors = known_competitors or []
