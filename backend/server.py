@@ -798,6 +798,121 @@ def format_linguistic_analysis_for_output(analysis: dict, country: str) -> str:
     return "\n".join(output_parts)
 
 
+# ============ GATE 1: BRAND NAME CLASSIFICATION (Dictionary Check) ============
+# CRITICAL: Prevent AI from calling descriptive names "Coined/Invented"
+
+COMMON_DICTIONARY_WORDS = {
+    # Common English words that indicate DESCRIPTIVE names
+    "check", "my", "meal", "quick", "fast", "health", "care", "med", "doc", "doctor",
+    "pay", "flow", "cash", "money", "bank", "fin", "tech", "app", "book", "shop",
+    "buy", "sell", "trade", "market", "store", "home", "house", "real", "estate",
+    "food", "eat", "dine", "cook", "chef", "kitchen", "taste", "fresh", "organic",
+    "fit", "gym", "work", "out", "body", "mind", "soul", "life", "live", "well",
+    "travel", "trip", "tour", "fly", "drive", "ride", "go", "move", "run", "walk",
+    "learn", "teach", "study", "class", "school", "edu", "smart", "brain", "think",
+    "cloud", "data", "sync", "link", "connect", "net", "web", "site", "page", "hub",
+    "social", "chat", "talk", "speak", "call", "meet", "date", "love", "match",
+    "news", "feed", "post", "share", "like", "view", "watch", "play", "game", "fun",
+    "style", "fashion", "wear", "dress", "look", "beauty", "glow", "skin", "hair",
+    "auto", "car", "bike", "wheel", "park", "fix", "repair", "service", "clean",
+    "pet", "dog", "cat", "vet", "care", "kid", "baby", "family", "parent", "mom", "dad",
+    "green", "eco", "solar", "power", "energy", "save", "smart", "easy", "simple",
+    "pro", "plus", "max", "prime", "elite", "premium", "super", "mega", "ultra",
+    "one", "first", "best", "top", "next", "new", "now", "today", "daily", "weekly",
+    "local", "global", "world", "city", "urban", "rural", "metro", "zone", "area",
+    "true", "real", "pure", "free", "open", "clear", "bright", "light", "dark",
+    "blue", "red", "green", "gold", "silver", "black", "white", "color", "colour",
+    # Medical/Healthcare
+    "steth", "scope", "pulse", "heart", "blood", "test", "lab", "scan", "ray",
+    "heal", "cure", "therapy", "clinic", "hospital", "pharma", "drug", "pill",
+    # Finance
+    "wallet", "coin", "credit", "debit", "loan", "invest", "fund", "stock", "trade",
+    # Tech
+    "code", "dev", "build", "make", "create", "design", "pixel", "byte", "bit",
+    # Common suffixes that indicate descriptive
+    "ly", "er", "ist", "ify", "ize", "able", "ible", "ful", "less", "ment", "ness",
+    "works", "hub", "spot", "base", "point", "space", "place", "land", "world",
+}
+
+MODIFIED_SPELLING_PATTERNS = [
+    # Words with letters removed (Lyft, Flickr, Tumblr style)
+    ("lyft", "lift"), ("flickr", "flicker"), ("tumblr", "tumbler"),
+    ("grindr", "grinder"), ("fiverr", "fiver"), ("scribd", "scribed"),
+    ("bettr", "better"), ("fastr", "faster"), ("hungr", "hungry"),
+]
+
+
+def classify_brand_name_type(brand_name: str, decomposition: dict) -> str:
+    """
+    GATE 1: Properly classify brand names
+    
+    Rules:
+    - If name contains dictionary words → "Descriptive/Composite" (NOT Coined)
+    - If name is modified spelling of real words → "Modified Descriptive"
+    - If name contains heritage language roots → "Heritage"
+    - ONLY if truly invented with no real word roots → "Coined/Invented"
+    
+    This prevents the AI hallucination of calling "Check My Meal" a "coined neologism"
+    """
+    brand_lower = brand_name.lower()
+    
+    # Check 1: Does the name contain common dictionary words?
+    words_found = []
+    for word in COMMON_DICTIONARY_WORDS:
+        if word in brand_lower and len(word) >= 3:  # Minimum 3 chars to avoid false positives
+            words_found.append(word)
+    
+    # Check 2: Is it a modified spelling of real words?
+    is_modified_spelling = False
+    for modified, original in MODIFIED_SPELLING_PATTERNS:
+        if modified in brand_lower:
+            is_modified_spelling = True
+            break
+    
+    # Check 3: Check morphemes from decomposition
+    morphemes = decomposition.get("morphemes", [])
+    heritage_origins = ["Sanskrit", "Latin", "Greek", "Japanese", "Chinese", "Arabic", "Hebrew", "Persian"]
+    english_origins = ["English", "Modern English", "Old English"]
+    
+    has_heritage_morphemes = False
+    has_english_morphemes = False
+    
+    for morpheme in morphemes:
+        origin = morpheme.get("origin", "Unknown")
+        if origin in heritage_origins:
+            has_heritage_morphemes = True
+        if origin in english_origins:
+            has_english_morphemes = True
+    
+    # Classification Logic
+    if len(words_found) >= 2:
+        # Multiple dictionary words found → Definitely Descriptive
+        classification = "Descriptive/Composite"
+        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Descriptive/Composite (dictionary words: {words_found[:5]})")
+    elif len(words_found) == 1:
+        # One dictionary word + something else → Suggestive/Composite
+        classification = "Suggestive/Composite"
+        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Suggestive/Composite (contains: {words_found[0]})")
+    elif is_modified_spelling:
+        # Modified spelling of real words → Modified Descriptive
+        classification = "Modified Descriptive"
+        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Modified Descriptive (modified spelling)")
+    elif has_heritage_morphemes:
+        # Heritage language roots → Heritage
+        classification = "Heritage"
+        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Heritage (classical language roots)")
+    elif has_english_morphemes and len(morphemes) > 0:
+        # Has English morphemes → Suggestive
+        classification = "Suggestive"
+        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Suggestive (English morphemes)")
+    else:
+        # Only if NO dictionary words, NO morphemes recognized → Coined
+        classification = "Coined/Invented"
+        logging.info(f"📚 BRAND TYPE: '{brand_name}' → Coined/Invented (no dictionary words found)")
+    
+    return classification
+
+
 def check_sacred_royal_names(brand_name: str, countries: list) -> dict:
     """Check if brand name contains sacred, royal, or culturally sensitive terms for target markets"""
     brand_lower = brand_name.lower()
