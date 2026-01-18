@@ -1756,34 +1756,11 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         calculated_final = score_data.get("calculation", {}).get("final_score", 7.0)
         risk_verdict = score_data.get("risk_verdict", "CAUTION")
         
-        # Build comprehensive cultural notes using linguistic decomposition + new scoring
+        # Build comprehensive cultural notes - NO FORMULA (kept internal, shown via score_breakdown)
         cultural_notes_parts = []
         
-        # Part 0: NEW FORMULA SCORING HEADER
-        cultural_notes_parts.append(f"**📊 CULTURAL FIT SCORE: {calculated_final}/10**\n")
-        cultural_notes_parts.append(f"**Formula:** (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)\n")
-        cultural_notes_parts.append(f"**Calculation:** ({safety_score} × 0.4) + ({fluency_score} × 0.3) + ({vibe_score} × 0.3) = **{calculated_final}**\n")
-        cultural_notes_parts.append(f"**Verdict:** {risk_verdict}\n")
-        
-        cultural_notes_parts.append("---")
-        cultural_notes_parts.append(f"**🛡️ SAFETY SCORE: {safety_score}/10** - {score_data.get('safety_score', {}).get('reasoning', 'Checked for phonetic issues')}")
-        if score_data.get("safety_score", {}).get("issues_found", ["None"])[0] != "None found":
-            cultural_notes_parts.append(f"  Issues: {', '.join(score_data.get('safety_score', {}).get('issues_found', []))}")
-        
-        cultural_notes_parts.append(f"**🗣️ FLUENCY SCORE: {fluency_score}/10** - {score_data.get('fluency_score', {}).get('reasoning', 'Assessed pronunciation ease')}")
-        difficult_sounds = score_data.get("fluency_score", {}).get("difficult_sounds", [])
-        if difficult_sounds and difficult_sounds[0] != "None":
-            cultural_notes_parts.append(f"  Difficult sounds: {', '.join(difficult_sounds)}")
-        
-        cultural_notes_parts.append(f"**✨ VIBE SCORE: {vibe_score}/10** - {score_data.get('vibe_score', {}).get('reasoning', 'Evaluated market fit')}")
-        local_competitors = score_data.get("vibe_score", {}).get("local_competitors", [])
-        if local_competitors:
-            cultural_notes_parts.append(f"  Local competitors: {', '.join(local_competitors)}")
-        
-        cultural_notes_parts.append("---")
-        
-        # Part 1: Linguistic Decomposition Header
-        cultural_notes_parts.append(f"\n**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
+        # Part 1: Linguistic Decomposition Header (skip formula - it's in score_breakdown for frontend)
+        cultural_notes_parts.append(f"**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
         
         # Part 2: Morpheme Breakdown
         decomposition = linguistic_analysis.get("decomposition", {})
