@@ -6680,6 +6680,9 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             elif isinstance(tr, dict):
                 trademark_data_dict = tr.get('result', tr) if 'result' in tr else tr
         
+        # Get classification from all_brand_data (calculated ONCE at start)
+        brand_classification = all_brand_data.get(brand_name, {}).get("classification")
+        
         race_result = {
             "model": "FALLBACK/timeout",
             "data": generate_fallback_report(
@@ -6688,7 +6691,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 domain_data=domain_data,
                 social_data=social_data,
                 trademark_data=trademark_data_dict,
-                visibility_data=visibility_data
+                visibility_data=visibility_data,
+                classification=brand_classification  # Pass the pre-calculated classification
             )
         }
     
