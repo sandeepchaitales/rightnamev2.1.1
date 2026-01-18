@@ -4542,6 +4542,518 @@ def generate_alternative_directions(brand_name: str, legal_category: str, catego
     return directions[:3]  # Limit to 3
 
 
+# ============================================================================
+# DETAILED FRAMEWORK ANALYSIS - CLASSIFICATION-AWARE DIMENSIONS
+# ============================================================================
+# Connects all 6 dimensions to our pre-computed classification system
+# ============================================================================
+
+def generate_classification_aware_dimensions(
+    brand_name: str,
+    classification: dict,
+    category: str,
+    positioning: str,
+    trademark_risk: int,
+    strategy_snapshot: dict = None,
+    mckinsey_analysis: dict = None,
+    cultural_analysis: dict = None
+) -> list:
+    """
+    Generate 6 scoring dimensions connected to classification system.
+    
+    Dimensions:
+    1. Brand Distinctiveness & Memorability
+    2. Cultural & Linguistic Resonance  
+    3. Premiumisation & Trust Curve
+    4. Scalability & Brand Architecture
+    5. Trademark & Legal Sensitivity
+    6. Consumer Perception Mapping
+    """
+    
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    distinctiveness_level = classification.get("distinctiveness", "LOW")
+    protectability = classification.get("protectability", "WEAK")
+    dictionary_tokens = classification.get("dictionary_tokens", [])
+    
+    # Get data from other analyses if available
+    positioning_alignment = strategy_snapshot.get("positioning_alignment", {}) if strategy_snapshot else {}
+    linguistic_eval = strategy_snapshot.get("linguistic_evaluation", {}) if strategy_snapshot else {}
+    imitability_risk = strategy_snapshot.get("imitability_risk", {}) if strategy_snapshot else {}
+    asset_ceiling = strategy_snapshot.get("brand_asset_ceiling", {}) if strategy_snapshot else {}
+    
+    brand_architecture = mckinsey_analysis.get("brand_architecture", {}) if mckinsey_analysis else {}
+    
+    dimensions = []
+    
+    # ========== DIMENSION 1: BRAND DISTINCTIVENESS & MEMORABILITY ==========
+    dim1_score = generate_distinctiveness_dimension_score(classification, linguistic_eval)
+    dim1_reasoning = generate_distinctiveness_reasoning(brand_name, classification, linguistic_eval, imitability_risk)
+    dimensions.append({
+        "name": "Brand Distinctiveness & Memorability",
+        "score": dim1_score,
+        "reasoning": dim1_reasoning
+    })
+    
+    # ========== DIMENSION 2: CULTURAL & LINGUISTIC RESONANCE ==========
+    dim2_score = generate_cultural_dimension_score(linguistic_eval, cultural_analysis)
+    dim2_reasoning = generate_cultural_reasoning(brand_name, linguistic_eval, cultural_analysis)
+    dimensions.append({
+        "name": "Cultural & Linguistic Resonance",
+        "score": dim2_score,
+        "reasoning": dim2_reasoning
+    })
+    
+    # ========== DIMENSION 3: PREMIUMISATION & TRUST CURVE ==========
+    dim3_score = generate_premium_dimension_score(classification, positioning, positioning_alignment)
+    dim3_reasoning = generate_premium_reasoning(brand_name, classification, positioning, positioning_alignment)
+    dimensions.append({
+        "name": "Premiumisation & Trust Curve",
+        "score": dim3_score,
+        "reasoning": dim3_reasoning
+    })
+    
+    # ========== DIMENSION 4: SCALABILITY & BRAND ARCHITECTURE ==========
+    dim4_score = generate_scalability_dimension_score(classification, brand_architecture, asset_ceiling)
+    dim4_reasoning = generate_scalability_reasoning(brand_name, classification, brand_architecture, asset_ceiling, category)
+    dimensions.append({
+        "name": "Scalability & Brand Architecture",
+        "score": dim4_score,
+        "reasoning": dim4_reasoning
+    })
+    
+    # ========== DIMENSION 5: TRADEMARK & LEGAL SENSITIVITY ==========
+    dim5_score = generate_trademark_dimension_score(classification, trademark_risk)
+    dim5_reasoning = generate_trademark_reasoning(brand_name, classification, trademark_risk, protectability)
+    dimensions.append({
+        "name": "Trademark & Legal Sensitivity",
+        "score": dim5_score,
+        "reasoning": dim5_reasoning
+    })
+    
+    # ========== DIMENSION 6: CONSUMER PERCEPTION MAPPING ==========
+    dim6_score = generate_perception_dimension_score(classification, positioning, positioning_alignment)
+    dim6_reasoning = generate_perception_reasoning(brand_name, classification, positioning, positioning_alignment, category)
+    dimensions.append({
+        "name": "Consumer Perception Mapping",
+        "score": dim6_score,
+        "reasoning": dim6_reasoning
+    })
+    
+    return dimensions
+
+
+# -------------------- DIMENSION 1: DISTINCTIVENESS --------------------
+
+def generate_distinctiveness_dimension_score(classification: dict, linguistic_eval: dict) -> float:
+    """Calculate distinctiveness score based on classification."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    
+    # Base score from classification
+    base_scores = {
+        "FANCIFUL": 9.5,
+        "ARBITRARY": 8.5,
+        "SUGGESTIVE": 7.0,
+        "DESCRIPTIVE": 4.5,
+        "GENERIC": 2.0
+    }
+    score = base_scores.get(legal_category, 5.0)
+    
+    # Adjust for memorability
+    memorability = linguistic_eval.get("memorability_score", 7)
+    if memorability >= 8:
+        score += 0.3
+    elif memorability <= 5:
+        score -= 0.5
+    
+    # Adjust for pronunciation ease
+    if linguistic_eval.get("pronunciation_ease") == "LOW":
+        score -= 0.3
+    
+    return round(max(1.0, min(10.0, score)), 1)
+
+
+def generate_distinctiveness_reasoning(brand_name: str, classification: dict, linguistic_eval: dict, imitability_risk: dict) -> str:
+    """Generate reasoning for distinctiveness dimension."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    dictionary_tokens = classification.get("dictionary_tokens", [])
+    invented_tokens = classification.get("invented_tokens", [])
+    
+    # Phonetic architecture section
+    if legal_category == "FANCIFUL":
+        phonetic = f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' is a coined neologism with unique sound signature. No competing phonetic associations - maximum distinctiveness."
+    elif legal_category == "ARBITRARY":
+        phonetic = f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' uses familiar phonetics in unexpected context. Strong memorability through cognitive surprise."
+    elif legal_category == "SUGGESTIVE":
+        phonetic = f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' balances familiar sounds with suggestive meaning. Moderate distinctiveness with meaning hook."
+    elif legal_category == "DESCRIPTIVE":
+        tokens_str = ", ".join(dictionary_tokens[:3]) if dictionary_tokens else "common words"
+        phonetic = f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' uses dictionary words ({tokens_str}). Low phonetic distinctiveness - competes with similar descriptive names."
+    else:
+        phonetic = f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' is generic terminology. Zero phonetic distinctiveness - name is category descriptor."
+    
+    # Competitive isolation section
+    imitability_level = imitability_risk.get("imitability_level", "MODERATE") if imitability_risk else "MODERATE"
+    if imitability_level == "LOW":
+        competitive = f"**COMPETITIVE ISOLATION:**\nHigh barrier to imitation. Competitors cannot legally clone this name structure."
+    elif imitability_level == "MODERATE":
+        competitive = f"**COMPETITIVE ISOLATION:**\nModerate protection. Some risk of phonetic or conceptual lookalikes in the market."
+    else:
+        competitive = f"**COMPETITIVE ISOLATION:**\nLow barrier to imitation. Competitors can legally use synonyms, variations, and similar descriptive terms."
+    
+    # Memorability
+    memorability_score = linguistic_eval.get("memorability_score", 7) if linguistic_eval else 7
+    if memorability_score >= 8:
+        memory = f"**MEMORABILITY INDEX:**\n{len(brand_name)} characters with strong recall potential ({memorability_score}/10)."
+    elif memorability_score >= 6:
+        memory = f"**MEMORABILITY INDEX:**\n{len(brand_name)} characters with adequate recall potential ({memorability_score}/10)."
+    else:
+        memory = f"**MEMORABILITY INDEX:**\n{len(brand_name)} characters may challenge recall ({memorability_score}/10). Consider shorter alternatives."
+    
+    return f"{phonetic}\n\n{competitive}\n\n{memory}"
+
+
+# -------------------- DIMENSION 2: CULTURAL & LINGUISTIC --------------------
+
+def generate_cultural_dimension_score(linguistic_eval: dict, cultural_analysis: dict) -> float:
+    """Calculate cultural resonance score."""
+    base_score = 7.5
+    
+    # Deduct for cultural flags
+    cultural_flags = linguistic_eval.get("cultural_flags", []) if linguistic_eval else []
+    if len(cultural_flags) > 0:
+        base_score -= len(cultural_flags) * 0.8
+    
+    # Deduct for pronunciation issues
+    pronunciation_issues = linguistic_eval.get("pronunciation_issues", []) if linguistic_eval else []
+    if len(pronunciation_issues) > 2:
+        base_score -= 1.0
+    elif len(pronunciation_issues) > 0:
+        base_score -= 0.5
+    
+    # Check cultural_analysis if available
+    if cultural_analysis:
+        # Check for critical cultural issues in any country
+        for country_data in cultural_analysis.values() if isinstance(cultural_analysis, dict) else []:
+            if isinstance(country_data, dict):
+                if country_data.get("safety_score", 10) < 5:
+                    base_score -= 1.5
+                elif country_data.get("safety_score", 10) < 7:
+                    base_score -= 0.5
+    
+    return round(max(1.0, min(10.0, base_score)), 1)
+
+
+def generate_cultural_reasoning(brand_name: str, linguistic_eval: dict, cultural_analysis: dict) -> str:
+    """Generate reasoning for cultural dimension."""
+    
+    # Global linguistic audit
+    cultural_flags = linguistic_eval.get("cultural_flags", []) if linguistic_eval else []
+    pronunciation_issues = linguistic_eval.get("pronunciation_issues", []) if linguistic_eval else []
+    
+    if not cultural_flags and not pronunciation_issues:
+        linguistic_audit = f"**GLOBAL LINGUISTIC AUDIT:**\nNo negative connotations detected across major target market languages. '{brand_name}' demonstrates cultural neutrality suitable for international deployment."
+    elif cultural_flags:
+        flags_str = "; ".join(cultural_flags[:2])
+        linguistic_audit = f"**GLOBAL LINGUISTIC AUDIT:**\n⚠️ Cultural sensitivities identified: {flags_str}. Recommend market-specific validation before launch."
+    else:
+        issues_str = "; ".join([p.split(" - ")[0] if " - " in p else p for p in pronunciation_issues[:2]])
+        linguistic_audit = f"**GLOBAL LINGUISTIC AUDIT:**\nMinor pronunciation considerations: {issues_str}. Generally acceptable for international markets."
+    
+    # Cultural semiotics
+    if not cultural_flags:
+        semiotics = f"**CULTURAL SEMIOTICS:**\nThe brand name carries neutral-positive associations. No religious, political, or taboo connotations detected."
+    else:
+        semiotics = f"**CULTURAL SEMIOTICS:**\nSome cultural associations require attention. Review local market perceptions before major brand investment."
+    
+    # Pronunciation ease
+    pronunciation_ease = linguistic_eval.get("pronunciation_ease", "MODERATE") if linguistic_eval else "MODERATE"
+    if pronunciation_ease == "HIGH":
+        pronunciation = f"**PRONUNCIATION ACCESSIBILITY:**\nClean phonetic structure enables easy pronunciation across English and non-native speakers."
+    elif pronunciation_ease == "MODERATE":
+        pronunciation = f"**PRONUNCIATION ACCESSIBILITY:**\nModerate pronunciation complexity. May require brand education in some markets."
+    else:
+        pronunciation = f"**PRONUNCIATION ACCESSIBILITY:**\nChallenging pronunciation may hinder word-of-mouth and brand recall in some regions."
+    
+    return f"{linguistic_audit}\n\n{semiotics}\n\n{pronunciation}"
+
+
+# -------------------- DIMENSION 3: PREMIUMISATION & TRUST --------------------
+
+def generate_premium_dimension_score(classification: dict, positioning: str, positioning_alignment: dict) -> float:
+    """Calculate premiumisation score based on classification + positioning fit."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    
+    # Base score from classification (pricing power)
+    base_scores = {
+        "FANCIFUL": 9.0,
+        "ARBITRARY": 8.5,
+        "SUGGESTIVE": 7.0,
+        "DESCRIPTIVE": 4.0,
+        "GENERIC": 2.0
+    }
+    score = base_scores.get(legal_category, 5.0)
+    
+    # Adjust for positioning alignment
+    alignment = positioning_alignment.get("alignment", "NEUTRAL") if positioning_alignment else "NEUTRAL"
+    
+    if alignment == "MISALIGNED":
+        # Major penalty for misalignment (e.g., DESCRIPTIVE + Premium)
+        if "luxury" in positioning_lower or "premium" in positioning_lower:
+            score -= 2.5  # Descriptive names destroy premium perception
+        else:
+            score -= 1.0
+    elif alignment == "STRONG":
+        score += 0.5
+    
+    # Pricing power from strategy snapshot
+    pricing_power = positioning_alignment.get("pricing_power", "MODERATE") if positioning_alignment else "MODERATE"
+    if pricing_power == "LOW":
+        score -= 1.0
+    elif pricing_power == "HIGH":
+        score += 0.5
+    
+    return round(max(1.0, min(10.0, score)), 1)
+
+
+def generate_premium_reasoning(brand_name: str, classification: dict, positioning: str, positioning_alignment: dict) -> str:
+    """Generate reasoning for premiumisation dimension."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    alignment = positioning_alignment.get("alignment", "NEUTRAL") if positioning_alignment else "NEUTRAL"
+    pricing_power = positioning_alignment.get("pricing_power", "MODERATE") if positioning_alignment else "MODERATE"
+    
+    # Pricing power analysis
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        pricing = f"**PRICING POWER ANALYSIS:**\n'{brand_name}' supports premium pricing. Abstract/coined names signal exclusivity and enable price premiums over descriptive competitors (e.g., Apple vs. Computer Store)."
+    elif legal_category == "SUGGESTIVE":
+        pricing = f"**PRICING POWER ANALYSIS:**\n'{brand_name}' supports moderate-to-premium pricing. Suggestive names can command premiums when backed by strong brand storytelling."
+    elif legal_category == "DESCRIPTIVE":
+        pricing = f"**PRICING POWER ANALYSIS:**\n'{brand_name}' has LIMITED pricing power. Descriptive names signal utility/commodity, making it difficult to justify premium prices over competitors."
+    else:
+        pricing = f"**PRICING POWER ANALYSIS:**\n'{brand_name}' has ZERO pricing power. Generic terms cannot differentiate - pricing defaults to market commoditization."
+    
+    # Trust curve assessment
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        trust = f"**TRUST CURVE:**\nRequires initial brand education investment, but builds stronger long-term trust equity. Premium brands benefit from abstract naming."
+    elif legal_category == "SUGGESTIVE":
+        trust = f"**TRUST CURVE:**\nBalanced trust trajectory. Name hints at benefits while maintaining distinctiveness. Good for building professional credibility."
+    else:
+        trust = f"**TRUST CURVE:**\nFast initial trust (name explains product) but limited ceiling. Customers view brand as utility, not premium relationship."
+    
+    # Positioning fit
+    if alignment == "MISALIGNED" and ("luxury" in positioning_lower or "premium" in positioning_lower):
+        positioning_fit = f"**POSITIONING FIT:**\n⛔ CRITICAL MISMATCH: {legal_category} naming fundamentally conflicts with {positioning} positioning. Premium/luxury brands require abstract naming (Hermès, Rolex, Tesla) to command price premiums."
+    elif alignment == "MISALIGNED":
+        positioning_fit = f"**POSITIONING FIT:**\n⚠️ MISMATCH: Name structure may not optimally support {positioning} market positioning. Consider alignment review."
+    elif alignment == "STRONG":
+        positioning_fit = f"**POSITIONING FIT:**\n✅ STRONG ALIGNMENT: Name architecture supports {positioning} market positioning and target audience expectations."
+    else:
+        positioning_fit = f"**POSITIONING FIT:**\nADEQUATE: Name can support {positioning} positioning with proper brand development and communication strategy."
+    
+    return f"{pricing}\n\n{trust}\n\n{positioning_fit}"
+
+
+# -------------------- DIMENSION 4: SCALABILITY & ARCHITECTURE --------------------
+
+def generate_scalability_dimension_score(classification: dict, brand_architecture: dict, asset_ceiling: dict) -> float:
+    """Calculate scalability score from McKinsey elasticity + asset ceiling."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    
+    # Base score from classification (elasticity)
+    base_scores = {
+        "FANCIFUL": 9.0,
+        "ARBITRARY": 8.5,
+        "SUGGESTIVE": 6.5,
+        "DESCRIPTIVE": 3.5,
+        "GENERIC": 1.5
+    }
+    score = base_scores.get(legal_category, 5.0)
+    
+    # Use elasticity score from McKinsey if available
+    elasticity = brand_architecture.get("elasticity_score") if brand_architecture else None
+    if elasticity:
+        # Weight: 60% classification, 40% elasticity from McKinsey
+        score = (score * 0.6) + (elasticity * 0.4)
+    
+    # Adjust for expansion potential
+    expansion = asset_ceiling.get("expansion_potential", "MODERATE") if asset_ceiling else "MODERATE"
+    if expansion == "LOW":
+        score -= 0.5
+    elif expansion == "HIGH":
+        score += 0.3
+    
+    return round(max(1.0, min(10.0, score)), 1)
+
+
+def generate_scalability_reasoning(brand_name: str, classification: dict, brand_architecture: dict, asset_ceiling: dict, category: str) -> str:
+    """Generate reasoning for scalability dimension."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    elasticity_score = brand_architecture.get("elasticity_score", 5) if brand_architecture else 5
+    recommended_arch = brand_architecture.get("recommended_architecture", "Standalone") if brand_architecture else "Standalone"
+    expansion_potential = asset_ceiling.get("expansion_potential", "MODERATE") if asset_ceiling else "MODERATE"
+    
+    # Category stretch analysis
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        stretch = f"**CATEGORY STRETCH:**\n'{brand_name}' has maximum elasticity ({elasticity_score}/10). Can expand into any product category or geography without semantic conflict. Like Google expanding from search to cloud to hardware."
+    elif legal_category == "SUGGESTIVE":
+        stretch = f"**CATEGORY STRETCH:**\n'{brand_name}' has moderate elasticity ({elasticity_score}/10). Suggestive meaning creates some category association but allows related expansion with proper brand architecture."
+    elif legal_category == "DESCRIPTIVE":
+        stretch = f"**CATEGORY STRETCH:**\n'{brand_name}' is CATEGORY-LOCKED ({elasticity_score}/10). Descriptive names strongly associate with specific products. Expansion beyond {category} would confuse consumers."
+    else:
+        stretch = f"**CATEGORY STRETCH:**\n'{brand_name}' has ZERO elasticity ({elasticity_score}/10). Generic terms cannot build expandable brand equity."
+    
+    # Architecture recommendation
+    architecture = f"**ARCHITECTURE FIT:**\nRecommended structure: {recommended_arch}. "
+    if recommended_arch == "Branded House":
+        architecture += f"Name strength supports unified brand with sub-products (e.g., '{brand_name} Pro', '{brand_name} Lite')."
+    elif recommended_arch == "House of Brands":
+        architecture += f"Weak master brand requires independent product branding under corporate umbrella."
+    else:
+        architecture += f"Name can endorse product brands while maintaining separate identities."
+    
+    # Global scalability
+    if expansion_potential == "HIGH":
+        global_scale = f"**GLOBAL SCALABILITY:**\nExcellent international potential. Name travels well without translation issues or cultural conflicts."
+    elif expansion_potential == "MODERATE":
+        global_scale = f"**GLOBAL SCALABILITY:**\nModerate international potential. Validate meaning in target markets before global rollout."
+    else:
+        global_scale = f"**GLOBAL SCALABILITY:**\nLimited international potential. Descriptive terms require localization for each market, fragmenting brand equity."
+    
+    return f"{stretch}\n\n{architecture}\n\n{global_scale}"
+
+
+# -------------------- DIMENSION 5: TRADEMARK & LEGAL --------------------
+
+def generate_trademark_dimension_score(classification: dict, trademark_risk: int) -> float:
+    """Calculate trademark score from classification + risk assessment."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    
+    # Base score from classification (protectability)
+    base_scores = {
+        "FANCIFUL": 9.5,
+        "ARBITRARY": 8.5,
+        "SUGGESTIVE": 7.0,
+        "DESCRIPTIVE": 4.0,
+        "GENERIC": 1.0
+    }
+    score = base_scores.get(legal_category, 5.0)
+    
+    # Adjust for actual trademark risk (conflicts found)
+    if trademark_risk <= 2:
+        score += 0.5  # Clear field
+    elif trademark_risk >= 7:
+        score -= 2.0  # Significant conflicts
+    elif trademark_risk >= 5:
+        score -= 1.0  # Moderate conflicts
+    
+    return round(max(1.0, min(10.0, score)), 1)
+
+
+def generate_trademark_reasoning(brand_name: str, classification: dict, trademark_risk: int, protectability: str) -> str:
+    """Generate reasoning for trademark dimension."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    
+    # Distinctiveness audit based on classification
+    if legal_category == "FANCIFUL":
+        distinctiveness = f"**DISTINCTIVENESS AUDIT:**\n'{brand_name}' is FANCIFUL (coined/invented) - the strongest trademark category. Inherently distinctive under TMEP §1209. No Secondary Meaning proof required."
+    elif legal_category == "ARBITRARY":
+        distinctiveness = f"**DISTINCTIVENESS AUDIT:**\n'{brand_name}' is ARBITRARY - inherently distinctive. Common word used in unrelated context receives strong protection."
+    elif legal_category == "SUGGESTIVE":
+        distinctiveness = f"**DISTINCTIVENESS AUDIT:**\n'{brand_name}' is SUGGESTIVE - inherently distinctive. Registrable on Principal Register without Secondary Meaning proof."
+    elif legal_category == "DESCRIPTIVE":
+        distinctiveness = f"**DISTINCTIVENESS AUDIT:**\n'{brand_name}' is DESCRIPTIVE - NOT inherently distinctive. Requires proof of Secondary Meaning (acquired distinctiveness) under §2(f). Typically requires 5+ years exclusive use."
+    else:
+        distinctiveness = f"**DISTINCTIVENESS AUDIT:**\n'{brand_name}' is GENERIC - UNREGISTRABLE. Generic terms cannot be trademarked under any jurisdiction. Name the category, not the brand."
+    
+    # Risk level assessment
+    if trademark_risk <= 2:
+        risk_level = f"**REGISTRATION OUTLOOK:**\n✅ FAVORABLE ({trademark_risk}/10 risk). Clear trademark landscape. High probability of successful registration."
+    elif trademark_risk <= 4:
+        risk_level = f"**REGISTRATION OUTLOOK:**\n✅ GOOD ({trademark_risk}/10 risk). Minor potential conflicts identified. Standard examination expected."
+    elif trademark_risk <= 6:
+        risk_level = f"**REGISTRATION OUTLOOK:**\n⚠️ MODERATE ({trademark_risk}/10 risk). Some trademark crowding detected. May require responses to Office Actions."
+    else:
+        risk_level = f"**REGISTRATION OUTLOOK:**\n⛔ CHALLENGING ({trademark_risk}/10 risk). Significant conflicts detected. High likelihood of opposition or rejection."
+    
+    # Enforcement power
+    if protectability in ["STRONGEST", "STRONG"]:
+        enforcement = f"**ENFORCEMENT POWER:**\nMaximum scope of protection. Can pursue infringers for confusingly similar marks across related goods/services."
+    elif protectability == "MODERATE":
+        enforcement = f"**ENFORCEMENT POWER:**\nModerate scope. Can pursue direct copiers but harder to stop merely similar marks."
+    else:
+        enforcement = f"**ENFORCEMENT POWER:**\nLimited scope. Can only stop identical marks on identical goods. Competitors can use similar descriptive terms legally."
+    
+    return f"{distinctiveness}\n\n{risk_level}\n\n{enforcement}"
+
+
+# -------------------- DIMENSION 6: CONSUMER PERCEPTION --------------------
+
+def generate_perception_dimension_score(classification: dict, positioning: str, positioning_alignment: dict) -> float:
+    """Calculate consumer perception score."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    alignment = positioning_alignment.get("alignment", "NEUTRAL") if positioning_alignment else "NEUTRAL"
+    
+    # Base score from classification (perception control)
+    base_scores = {
+        "FANCIFUL": 8.5,  # Brand controls perception
+        "ARBITRARY": 8.0,
+        "SUGGESTIVE": 7.5,
+        "DESCRIPTIVE": 5.0,  # Name dictates perception
+        "GENERIC": 2.5
+    }
+    score = base_scores.get(legal_category, 5.0)
+    
+    # Significant penalty for positioning misalignment
+    if alignment == "MISALIGNED":
+        if "luxury" in positioning_lower or "premium" in positioning_lower:
+            score -= 3.0  # Descriptive + Premium = consumer confusion
+        else:
+            score -= 1.5
+    elif alignment == "STRONG":
+        score += 0.5
+    
+    return round(max(1.0, min(10.0, score)), 1)
+
+
+def generate_perception_reasoning(brand_name: str, classification: dict, positioning: str, positioning_alignment: dict, category: str) -> str:
+    """Generate reasoning for consumer perception dimension."""
+    legal_category = classification.get("category", "DESCRIPTIVE")
+    positioning_lower = positioning.lower() if positioning else "mid-range"
+    alignment = positioning_alignment.get("alignment", "NEUTRAL") if positioning_alignment else "NEUTRAL"
+    
+    # Perceptual grid placement
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        perceptual = f"**PERCEPTUAL GRID:**\n'{brand_name}' gives the brand full control over consumer perception. Abstract names are 'blank canvases' - perception shaped entirely by brand communication and experience."
+    elif legal_category == "SUGGESTIVE":
+        perceptual = f"**PERCEPTUAL GRID:**\n'{brand_name}' suggests product benefits without dictating perception. Consumers receive hint, brand storytelling completes the picture."
+    elif legal_category == "DESCRIPTIVE":
+        perceptual = f"**PERCEPTUAL GRID:**\n'{brand_name}' PRE-DETERMINES consumer perception. Descriptive names lock the brand into functional/utility positioning regardless of marketing investment."
+    else:
+        perceptual = f"**PERCEPTUAL GRID:**\n'{brand_name}' offers ZERO differentiation. Generic terms = commodity perception. Consumers see category, not brand."
+    
+    # Emotional response
+    if legal_category in ["FANCIFUL", "ARBITRARY"]:
+        emotional = f"**EMOTIONAL RESPONSE:**\nLikely to evoke curiosity, innovation, and exclusivity associations. Brand can craft desired emotional territory."
+    elif legal_category == "SUGGESTIVE":
+        emotional = f"**EMOTIONAL RESPONSE:**\nSuggestive meaning triggers specific emotional associations aligned with product benefits. Efficient emotional shortcut."
+    else:
+        emotional = f"**EMOTIONAL RESPONSE:**\nLimited emotional range. Descriptive names trigger functional/rational processing, not emotional connection."
+    
+    # Target audience fit
+    if alignment == "MISALIGNED" and ("luxury" in positioning_lower or "premium" in positioning_lower):
+        audience = f"**TARGET AUDIENCE FIT:**\n⛔ CRITICAL: {positioning} consumers expect abstract, exclusive-feeling names. '{brand_name}' signals utility/commodity, creating perception-positioning gap."
+    elif alignment == "MISALIGNED":
+        audience = f"**TARGET AUDIENCE FIT:**\n⚠️ MISMATCH: Name may not resonate optimally with {positioning} target audience in {category} market."
+    elif alignment == "STRONG":
+        audience = f"**TARGET AUDIENCE FIT:**\n✅ STRONG: Name architecture aligns with {positioning} consumer expectations in {category} market."
+    else:
+        audience = f"**TARGET AUDIENCE FIT:**\nADEQUATE: Name can serve {positioning} market with appropriate brand development investment."
+    
+    return f"{perceptual}\n\n{emotional}\n\n{audience}"
+
+
 def generate_risk_cons(brand_name: str, countries: list, category: str, domain_available: bool, verdict: str) -> list:
     """
     Generate KEY RISKS section that aligns with the Executive Summary.
