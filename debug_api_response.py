@@ -7,7 +7,7 @@ import requests
 import json
 
 def debug_api_response():
-    api_url = "https://brand-matrix-1.preview.emergentagent.com/api"
+    api_url = "https://cultural-fit.preview.emergentagent.com/api"
     
     payload = {
         "brand_names": ["Check My Meal"],

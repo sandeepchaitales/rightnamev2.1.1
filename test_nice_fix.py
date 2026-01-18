@@ -22,7 +22,7 @@ def test_nice_class_fix():
     try:
         # Start evaluation
         response = requests.post(
-            "https://brand-matrix-1.preview.emergentagent.com/api/evaluate/start",
+            "https://cultural-fit.preview.emergentagent.com/api/evaluate/start",
             json=payload,
             headers={'Content-Type': 'application/json'},
             timeout=30
@@ -41,7 +41,7 @@ def test_nice_class_fix():
             time.sleep(4)
             
             status_response = requests.get(
-                f"https://brand-matrix-1.preview.emergentagent.com/api/evaluate/status/{job_id}",
+                f"https://cultural-fit.preview.emergentagent.com/api/evaluate/status/{job_id}",
                 timeout=10
             )
             
