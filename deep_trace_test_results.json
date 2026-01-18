@@ -26,28 +26,28 @@
   ],
   "test_results": [
     {
-      "test": "Deep-Trace Analysis - Rapidoy HTTP",
-      "success": false,
-      "details": "HTTP 422: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"market_scope\"],\"msg\":\"Field required\",\"input\":{\"brand_names\":[\"Rapidoy\"],\"category\":\"Ride-hailing\",\"industry\":\"Transport\",\"countries\":[\"India\"],\"positioning\":\"Mid-Range\"},\"url\":\"https://errors.pydantic.dev/2.12/v/missing\"}]}",
-      "timestamp": "2026-01-18T22:55:46.610094"
+      "test": "Deep-Trace Analysis - Rapidoy CRITICAL",
+      "success": true,
+      "details": "\u2705 PASSED: Rapidoy correctly REJECTED. Score: 0.0/100, Verdict: REJECT, Rapido conflict detected, Response time: 2.84s",
+      "timestamp": "2026-01-18T22:56:05.388791"
     },
     {
-      "test": "Deep-Trace Analysis - Zyntrix HTTP",
-      "success": false,
-      "details": "HTTP 422: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"market_scope\"],\"msg\":\"Field required\",\"input\":{\"brand_names\":[\"Zyntrix\"],\"category\":\"AI Platform\",\"industry\":\"Technology\",\"countries\":[\"USA\"],\"positioning\":\"Premium\"},\"url\":\"https://errors.pydantic.dev/2.12/v/missing\"}]}",
-      "timestamp": "2026-01-18T22:55:46.652529"
+      "test": "Deep-Trace Analysis - Zyntrix PASS",
+      "success": true,
+      "details": "\u2705 PASSED: Zyntrix correctly approved. Score: 76.0/100, Verdict: GO, No major conflicts, Response time: 45.39s",
+      "timestamp": "2026-01-18T22:56:50.778453"
     },
     {
       "test": "Backend Logs - Deep-Trace Messages",
-      "success": false,
-      "details": "No Deep-Trace Analysis messages found in backend logs",
-      "timestamp": "2026-01-18T22:55:46.659310"
+      "success": true,
+      "details": "Found 1/6 expected messages",
+      "timestamp": "2026-01-18T22:56:50.788713"
     }
   ],
   "summary": {
     "total_tests": 3,
-    "passed_tests": 0,
-    "failed_tests": 3,
-    "success_rate": "0.0%"
+    "passed_tests": 3,
+    "failed_tests": 0,
+    "success_rate": "100.0%"
   }
 }
