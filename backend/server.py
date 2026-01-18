@@ -8120,15 +8120,26 @@ BRAND: {brand}
                     "secondary_classes": [],
                     "filing_strategy": f"File in Class {nice_class.get('class_number', 3)} ({nice_class.get('class_description', category)})"
                 },
-                # Use actual classification for dimensions reasoning
-                "dimensions": [
-                    {"name": "Brand Distinctiveness & Memorability", "score": get_distinctiveness_score(classification), "reasoning": f"**PHONETIC ARCHITECTURE:**\n'{brand_name}' demonstrates {'strong' if len(brand_name) <= 10 else 'moderate'} memorability characteristics.\n\n**COMPETITIVE ISOLATION:**\nAs a {classification.get('category', 'DESCRIPTIVE').lower()} term, offers {classification.get('distinctiveness', 'MODERATE').lower()} distinctiveness in the {category} market."},
-                    {"name": "Cultural & Linguistic Resonance", "score": 7.2, "reasoning": f"**GLOBAL LINGUISTIC AUDIT:**\nNo negative connotations detected across major languages.\n\n**CULTURAL SEMIOTICS:**\nNeutral-positive associations suitable for international branding."},
-                    {"name": "Premiumisation & Trust Curve", "score": 7.0, "reasoning": f"**PRICING POWER:**\nName structure supports {'premium' if overall_score >= 70 else 'mid-tier'} positioning.\n\n**TRUST SIGNALS:**\nProfessional presentation suitable for {category} sector."},
-                    {"name": "Scalability & Brand Architecture", "score": 7.3, "reasoning": f"**CATEGORY STRETCH:**\nFlexible foundation for product line extensions.\n\n**ARCHITECTURE FIT:**\nWorks as standalone brand or master brand."},
-                    {"name": "Trademark & Legal Sensitivity", "score": float(trademark_score), "reasoning": f"**DISTINCTIVENESS:**\n{'High' if trademark_risk <= 3 else 'Moderate' if trademark_risk <= 6 else 'Low'} distinctiveness for trademark purposes.\n\n**RISK LEVEL:**\n{trademark_risk}/10 - {'Favorable' if trademark_risk <= 3 else 'Manageable' if trademark_risk <= 6 else 'Challenging'} registration outlook."},
-                    {"name": "Consumer Perception Mapping", "score": 7.0, "reasoning": f"**PERCEPTUAL GRID:**\nPositioned for {category} consumer expectations.\n\n**EMOTIONAL RESPONSE:**\nLikely to evoke innovation and modernity associations."}
-                ],
+                # NEW: Use classification-aware dimensions
+                "dimensions": generate_classification_aware_dimensions(
+                    brand_name=brand_name,
+                    classification=classification,
+                    category=category,
+                    positioning=request.positioning,
+                    trademark_risk=trademark_risk,
+                    strategy_snapshot=strategy_snapshot,
+                    mckinsey_analysis=generate_mckinsey_analysis(
+                        brand_name=brand_name,
+                        classification=classification,
+                        category=category,
+                        positioning=request.positioning,
+                        verdict=verdict,
+                        trademark_risk=trademark_risk,
+                        imitability_risk=strategy_snapshot.get("imitability_risk"),
+                        positioning_alignment=strategy_snapshot.get("positioning_alignment")
+                    ),
+                    cultural_analysis=fallback_cultural
+                ),
                 "domain_analysis": {
                     "exact_match_status": "TAKEN" if not domain_available else "AVAILABLE",
                     "risk_level": "LOW",
