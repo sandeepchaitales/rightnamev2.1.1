@@ -1,0 +1,53 @@
+{
+  "test_focus": "Deep-Trace Analysis Feature Testing",
+  "description": "Testing NEW Deep-Trace Analysis feature for RIGHTNAME brand evaluation API",
+  "critical_bug_fix": "Rapidoy/Rapido conflict detection in ride-hailing category",
+  "test_cases": [
+    {
+      "name": "Rapidoy in Ride-hailing",
+      "type": "CRITICAL - Should REJECT",
+      "expected_score": "0-40 (HIGH RISK)",
+      "expected_verdict": "REJECT",
+      "expected_conflict": "Rapido ($5B ride-hailing company)"
+    },
+    {
+      "name": "Zyntrix AI Platform",
+      "type": "POSITIVE - Should PASS",
+      "expected_score": "71-100 (GREEN zone)",
+      "expected_verdict": "GO/APPROVE",
+      "expected_conflict": "None"
+    }
+  ],
+  "backend_log_verification": [
+    "\ud83d\udd0d DEEP-TRACE ANALYSIS started for 'Rapidoy'",
+    "ROOT EXTRACTION: rapidoy \u2192 rapid",
+    "\u26a0\ufe0f CATEGORY KING FOUND: Rapido",
+    "\ud83d\udee1\ufe0f DEEP-TRACE REJECTION: Rapidoy \u2192 Score X/100"
+  ],
+  "test_results": [
+    {
+      "test": "Deep-Trace Analysis - Rapidoy HTTP",
+      "success": false,
+      "details": "HTTP 422: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"market_scope\"],\"msg\":\"Field required\",\"input\":{\"brand_names\":[\"Rapidoy\"],\"category\":\"Ride-hailing\",\"industry\":\"Transport\",\"countries\":[\"India\"],\"positioning\":\"Mid-Range\"},\"url\":\"https://errors.pydantic.dev/2.12/v/missing\"}]}",
+      "timestamp": "2026-01-18T22:55:46.610094"
+    },
+    {
+      "test": "Deep-Trace Analysis - Zyntrix HTTP",
+      "success": false,
+      "details": "HTTP 422: {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"market_scope\"],\"msg\":\"Field required\",\"input\":{\"brand_names\":[\"Zyntrix\"],\"category\":\"AI Platform\",\"industry\":\"Technology\",\"countries\":[\"USA\"],\"positioning\":\"Premium\"},\"url\":\"https://errors.pydantic.dev/2.12/v/missing\"}]}",
+      "timestamp": "2026-01-18T22:55:46.652529"
+    },
+    {
+      "test": "Backend Logs - Deep-Trace Messages",
+      "success": false,
+      "details": "No Deep-Trace Analysis messages found in backend logs",
+      "timestamp": "2026-01-18T22:55:46.659310"
+    }
+  ],
+  "summary": {
+    "total_tests": 3,
+    "passed_tests": 0,
+    "failed_tests": 3,
+    "success_rate": "0.0%"
+  }
+}
