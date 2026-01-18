@@ -7112,6 +7112,20 @@ BRAND: {brand}
                 "suggested_pricing": f"{'Premium' if overall_score >= 75 else 'Mid-range'} positioning recommended"
             }
         
+        # ==================== STRATEGY SNAPSHOT (Calculate ONCE) ====================
+        strategy_snapshot = generate_strategy_snapshot(
+            brand_name=brand_name,
+            classification=classification,
+            category=category,
+            positioning=request.positioning,
+            countries=request.countries,
+            domain_available=domain_available,
+            trademark_risk=trademark_risk,
+            social_data=social_data
+        )
+        logging.info(f"📊 STRATEGY SNAPSHOT for '{brand_name}': {strategy_snapshot.get('legal_classification')} | Ceiling: {strategy_snapshot.get('brand_asset_ceiling', {}).get('ceiling_score', 'N/A')}/100")
+        # ==================== END STRATEGY SNAPSHOT ====================
+        
         return {
             "brand_scores": [{
                 "brand_name": brand_name,
@@ -7124,37 +7138,10 @@ BRAND: {brand}
                     "reason": f"Trademark risk assessment: {trademark_risk}/10. {'Favorable conditions for registration.' if trademark_risk <= 3 else 'Some considerations for legal review.' if trademark_risk <= 6 else 'Significant trademark concerns identified.'}"
                 },
                 # NEW: Use Strategy Snapshot Framework for investor-grade pros/cons
-                "pros": generate_strategy_snapshot(
-                    brand_name=brand_name,
-                    classification=classification,
-                    category=category,
-                    positioning=request.positioning,
-                    countries=request.countries,
-                    domain_available=domain_available,
-                    trademark_risk=trademark_risk,
-                    social_data=social_data
-                ).get("strengths", []),
-                "cons": generate_strategy_snapshot(
-                    brand_name=brand_name,
-                    classification=classification,
-                    category=category,
-                    positioning=request.positioning,
-                    countries=request.countries,
-                    domain_available=domain_available,
-                    trademark_risk=trademark_risk,
-                    social_data=social_data
-                ).get("risks", []),
+                "pros": strategy_snapshot.get("strengths", []),
+                "cons": strategy_snapshot.get("risks", []),
                 # Store full strategy snapshot for advanced analytics
-                "strategy_snapshot": generate_strategy_snapshot(
-                    brand_name=brand_name,
-                    classification=classification,
-                    category=category,
-                    positioning=request.positioning,
-                    countries=request.countries,
-                    domain_available=domain_available,
-                    trademark_risk=trademark_risk,
-                    social_data=social_data
-                ),
+                "strategy_snapshot": strategy_snapshot,
                 # CRITICAL FIX: Always use generate_cultural_analysis for sacred name detection
                 # If market_intelligence has data, merge it, but always run local analysis
                 # NEW: Pass classification to avoid duplicate computation
