@@ -7619,6 +7619,317 @@ class BrandEvaluationTester:
             self.log_test("Logic Gates - Comparison Summary", False, str(e))
             return False
 
+    def test_conflict_relevance_analysis_luminara(self):
+        """Test NEW Conflict Relevance Analysis - Luminara in Beauty/Cosmetics"""
+        payload = {
+            "brand_names": ["Luminara"],
+            "category": "Beauty",
+            "industry": "Cosmetics",
+            "countries": ["India"],
+            "positioning": "Premium"
+        }
+        
+        try:
+            print(f"\n🎯 Testing NEW Conflict Relevance Analysis - Luminara...")
+            print(f"Expected: Real conflicts from trademark research (NOT 'NO DIRECT CONFLICTS')")
+            print(f"Expected: visibility_analysis with direct_competitors populated")
+            print(f"Expected: warning_triggered = true if conflicts found")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120-second timeout as requested
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Conflict Relevance Analysis - Luminara HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Conflict Relevance Analysis - Luminara Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                analysis_issues = []
+                
+                # Test 1: Check visibility_analysis section exists
+                visibility_analysis = brand.get("visibility_analysis", {})
+                if not visibility_analysis:
+                    analysis_issues.append("visibility_analysis section missing")
+                else:
+                    print(f"✅ Found visibility_analysis section")
+                    
+                    # Test 2: Check direct_competitors array is populated (NOT empty)
+                    direct_competitors = visibility_analysis.get("direct_competitors", [])
+                    if not direct_competitors or len(direct_competitors) == 0:
+                        analysis_issues.append("direct_competitors array is empty - should show real conflicts from trademark research")
+                    else:
+                        print(f"✅ Found {len(direct_competitors)} direct competitors")
+                        
+                        # Check that competitors have real data (not placeholder)
+                        for i, competitor in enumerate(direct_competitors):
+                            if isinstance(competitor, dict):
+                                name = competitor.get("name", "")
+                                if not name or name.lower() in ["placeholder", "example", "test"]:
+                                    analysis_issues.append(f"Competitor {i} has placeholder name: {name}")
+                    
+                    # Test 3: Check warning_triggered field
+                    warning_triggered = visibility_analysis.get("warning_triggered")
+                    if warning_triggered is None:
+                        analysis_issues.append("warning_triggered field missing from visibility_analysis")
+                    elif len(direct_competitors) > 0 and not warning_triggered:
+                        analysis_issues.append(f"warning_triggered should be true when {len(direct_competitors)} conflicts found")
+                    else:
+                        print(f"✅ warning_triggered = {warning_triggered}")
+                    
+                    # Test 4: Check conflict_summary
+                    conflict_summary = visibility_analysis.get("conflict_summary", "")
+                    if not conflict_summary:
+                        analysis_issues.append("conflict_summary missing from visibility_analysis")
+                    elif "NO DIRECT CONFLICTS" in conflict_summary.upper():
+                        analysis_issues.append("conflict_summary still shows 'NO DIRECT CONFLICTS' - should show actual conflict counts")
+                    else:
+                        print(f"✅ Found conflict_summary: {conflict_summary[:100]}...")
+                
+                # Test 5: Check trademark_research consistency
+                trademark_research = brand.get("trademark_research", {})
+                if trademark_research:
+                    tm_conflicts = trademark_research.get("trademark_conflicts", [])
+                    co_conflicts = trademark_research.get("company_conflicts", [])
+                    
+                    print(f"📊 Trademark research found: {len(tm_conflicts)} TM conflicts, {len(co_conflicts)} company conflicts")
+                    
+                    # If trademark research found conflicts, visibility analysis should reflect this
+                    if (len(tm_conflicts) > 0 or len(co_conflicts) > 0) and len(direct_competitors) == 0:
+                        analysis_issues.append("Trademark research found conflicts but visibility_analysis.direct_competitors is empty")
+                
+                # Test 6: Check for specific expected conflicts (Luminara related)
+                if direct_competitors:
+                    competitor_names = [c.get("name", "").lower() for c in direct_competitors if isinstance(c, dict)]
+                    luminara_related = [name for name in competitor_names if "luminara" in name]
+                    
+                    if len(luminara_related) == 0:
+                        print(f"⚠️  Warning: No Luminara-related conflicts found in direct_competitors: {competitor_names}")
+                    else:
+                        print(f"✅ Found Luminara-related conflicts: {luminara_related}")
+                
+                if analysis_issues:
+                    self.log_test("Conflict Relevance Analysis - Luminara", False, "; ".join(analysis_issues))
+                    return False
+                
+                self.log_test("Conflict Relevance Analysis - Luminara", True, 
+                            f"All checks passed. Direct competitors: {len(direct_competitors)}, Warning triggered: {warning_triggered}, Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Conflict Relevance Analysis - Luminara JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Conflict Relevance Analysis - Luminara Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Conflict Relevance Analysis - Luminara Exception", False, str(e))
+            return False
+
+    def test_conflict_relevance_analysis_rapidoy(self):
+        """Test NEW Conflict Relevance Analysis - Rapidoy (Category King conflict with Rapido)"""
+        payload = {
+            "brand_names": ["Rapidoy"],
+            "category": "Ride-hailing",
+            "industry": "Transport",
+            "countries": ["India"],
+            "positioning": "Mid-Range"
+        }
+        
+        try:
+            print(f"\n🎯 Testing NEW Conflict Relevance Analysis - Rapidoy...")
+            print(f"Expected: Deep-Trace Analysis detecting 'Rapido' as Category King")
+            print(f"Expected: visibility_analysis.direct_competitors including Rapido conflict")
+            print(f"Expected: Very low score due to Category King conflict")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120-second timeout as requested
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Conflict Relevance Analysis - Rapidoy HTTP", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Conflict Relevance Analysis - Rapidoy Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                analysis_issues = []
+                
+                # Test 1: Check NameScore is very low (due to Category King conflict)
+                namescore = brand.get("namescore")
+                if namescore is None:
+                    analysis_issues.append("namescore field missing")
+                elif namescore > 30:  # Should be very low due to Category King conflict
+                    analysis_issues.append(f"Expected very low NameScore due to Category King conflict, got {namescore}/100")
+                else:
+                    print(f"✅ Low NameScore as expected: {namescore}/100")
+                
+                # Test 2: Check verdict is REJECT
+                verdict = brand.get("verdict", "")
+                if verdict != "REJECT":
+                    analysis_issues.append(f"Expected REJECT verdict due to Category King conflict, got: {verdict}")
+                else:
+                    print(f"✅ REJECT verdict as expected")
+                
+                # Test 3: Check visibility_analysis section
+                visibility_analysis = brand.get("visibility_analysis", {})
+                if not visibility_analysis:
+                    analysis_issues.append("visibility_analysis section missing")
+                else:
+                    # Test 4: Check direct_competitors includes Rapido
+                    direct_competitors = visibility_analysis.get("direct_competitors", [])
+                    if not direct_competitors:
+                        analysis_issues.append("direct_competitors array is empty - should include Rapido conflict")
+                    else:
+                        competitor_names = [c.get("name", "").lower() for c in direct_competitors if isinstance(c, dict)]
+                        rapido_found = any("rapido" in name for name in competitor_names)
+                        
+                        if not rapido_found:
+                            analysis_issues.append(f"Rapido not found in direct_competitors: {competitor_names}")
+                        else:
+                            print(f"✅ Found Rapido in direct_competitors")
+                    
+                    # Test 5: Check warning_triggered is true
+                    warning_triggered = visibility_analysis.get("warning_triggered")
+                    if not warning_triggered:
+                        analysis_issues.append("warning_triggered should be true for Category King conflict")
+                    else:
+                        print(f"✅ warning_triggered = true")
+                
+                # Test 6: Check for Deep-Trace Analysis indicators
+                summary = brand.get("summary", "")
+                final_assessment = brand.get("final_assessment", {})
+                
+                # Look for Deep-Trace or Rapido mentions
+                response_text = json.dumps(data).lower()
+                deep_trace_found = "deep-trace" in response_text or "rapido" in response_text
+                
+                if not deep_trace_found:
+                    analysis_issues.append("No Deep-Trace Analysis or Rapido conflict detection found in response")
+                else:
+                    print(f"✅ Deep-Trace Analysis or Rapido conflict detected")
+                
+                # Test 7: Check conflict_summary mentions the issue
+                conflict_summary = visibility_analysis.get("conflict_summary", "")
+                if conflict_summary and "NO DIRECT CONFLICTS" in conflict_summary.upper():
+                    analysis_issues.append("conflict_summary shows 'NO DIRECT CONFLICTS' despite Category King conflict")
+                
+                if analysis_issues:
+                    self.log_test("Conflict Relevance Analysis - Rapidoy", False, "; ".join(analysis_issues))
+                    return False
+                
+                self.log_test("Conflict Relevance Analysis - Rapidoy", True, 
+                            f"Category King conflict detected. NameScore: {namescore}/100, Verdict: {verdict}, Competitors: {len(direct_competitors)}, Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Conflict Relevance Analysis - Rapidoy JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Conflict Relevance Analysis - Rapidoy Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Conflict Relevance Analysis - Rapidoy Exception", False, str(e))
+            return False
+
+    def check_backend_logs_for_conflict_analysis(self):
+        """Check backend logs for specific Conflict Relevance Analysis messages"""
+        try:
+            print(f"\n📋 Checking backend logs for Conflict Relevance Analysis messages...")
+            
+            # Check supervisor backend logs
+            import subprocess
+            result = subprocess.run(
+                ["tail", "-n", "200", "/var/log/supervisor/backend.out.log"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode != 0:
+                self.log_test("Backend Logs - Access", False, "Could not access backend logs")
+                return False
+            
+            log_content = result.stdout
+            expected_messages = [
+                "🎯 Building Conflict Relevance Analysis",
+                "✅ Injected PRE-COMPUTED visibility_analysis",
+                "from real data"
+            ]
+            
+            found_messages = []
+            missing_messages = []
+            
+            for message in expected_messages:
+                if message in log_content:
+                    found_messages.append(message)
+                    print(f"✅ Found log message: {message}")
+                else:
+                    missing_messages.append(message)
+                    print(f"❌ Missing log message: {message}")
+            
+            # Also check for specific brand analysis messages
+            brand_messages = [
+                "Luminara",
+                "Rapidoy",
+                "pre-computed analysis",
+                "visibility_analysis"
+            ]
+            
+            brand_found = []
+            for message in brand_messages:
+                if message in log_content:
+                    brand_found.append(message)
+            
+            if len(found_messages) >= 2:  # At least 2 out of 3 expected messages
+                self.log_test("Backend Logs - Conflict Analysis Messages", True, 
+                            f"Found {len(found_messages)}/3 expected messages, Brand mentions: {len(brand_found)}")
+                return True
+            else:
+                self.log_test("Backend Logs - Conflict Analysis Messages", False, 
+                            f"Only found {len(found_messages)}/3 expected messages: {found_messages}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            self.log_test("Backend Logs - Timeout", False, "Log check timed out")
+            return False
+        except Exception as e:
+            self.log_test("Backend Logs - Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
