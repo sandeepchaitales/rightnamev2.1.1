@@ -6425,7 +6425,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 "mitigation_strategies": RISK_MITIGATION_STRATEGIES[:5],
                 "registration_timeline": generate_registration_timeline(request.countries),
                 "legal_precedents": generate_legal_precedents("LOW" if trademark_risk <= 3 else "MEDIUM"),
-                "strategic_classification": f"{'STRONG' if trademark_risk <= 3 else 'MODERATE' if trademark_risk <= 6 else 'WEAK'} - Coined/Invented term with {'high' if trademark_risk <= 3 else 'moderate'} legal distinctiveness",
+                # Use actual classification from 5-step spectrum instead of hardcoded "Coined/Invented"
+                "strategic_classification": generate_strategic_classification(classification, trademark_risk),
                 "trademark_classes": [str(nice_class.get('class_number', 3))],
                 "trademark_matrix": {
                     "primary_class": nice_class.get('class_number', 3),
