@@ -1012,12 +1012,581 @@ def extract_industry_from_text(text: str) -> Optional[str]:
     return None
 
 
+# ============================================================================
+# HYBRID RISK MODEL - TRADEMARK INTELLIGENCE
+# ============================================================================
+# Two-Pillar Architecture:
+# PILLAR 1: Absolute Grounds (Internal Flaw) - Classification-based
+# PILLAR 2: Relative Grounds (External Threat) - Conflict-based
+# ============================================================================
+
+# Country-Specific Trademark Statutes
+COUNTRY_TRADEMARK_STATUTES = {
+    "USA": {
+        "statute": "Lanham Act Section 2(e)",
+        "refusal_type": "Merely Descriptive",
+        "office": "USPTO",
+        "action_term": "Office Action",
+        "precedent": "Polaroid Corp. v. Polarad Electronics (1961)",
+        "precedent_principle": "Eight-factor test for likelihood of confusion"
+    },
+    "India": {
+        "statute": "Section 9(1)(b) of the Trade Marks Act, 1999",
+        "refusal_type": "Absolute Grounds for Refusal",
+        "office": "Trade Marks Registry",
+        "action_term": "Examination Report",
+        "precedent": "Cadila Healthcare v. Cadila Pharmaceuticals (2001)",
+        "precedent_principle": "Supreme Court established likelihood of confusion test for India"
+    },
+    "UK": {
+        "statute": "Section 3(1)(c) of the Trade Marks Act 1994",
+        "refusal_type": "Absolute Grounds (Descriptiveness)",
+        "office": "UKIPO",
+        "action_term": "Examination Report",
+        "precedent": "Nestlé v. Cadbury (2013)",
+        "precedent_principle": "Shape marks and acquired distinctiveness standards"
+    },
+    "UAE": {
+        "statute": "Federal Law No. 37 of 1992, Article 3",
+        "refusal_type": "Descriptive Marks",
+        "office": "Ministry of Economy",
+        "action_term": "Rejection Notice",
+        "precedent": "N/A - Civil law jurisdiction",
+        "precedent_principle": "Registry examination without common law precedent system"
+    },
+    "Singapore": {
+        "statute": "Section 7(1)(c) of the Trade Marks Act",
+        "refusal_type": "Descriptive Signs",
+        "office": "IPOS",
+        "action_term": "Examination Report",
+        "precedent": "Polo/Lauren Co. v. Shop-In Department Store (1998)",
+        "precedent_principle": "Likelihood of confusion in luxury goods context"
+    },
+    "Thailand": {
+        "statute": "Section 7 of the Trade Marks Act B.E. 2534",
+        "refusal_type": "Descriptive Marks",
+        "office": "DIP (Department of Intellectual Property)",
+        "action_term": "Examination Report",
+        "precedent": "N/A",
+        "precedent_principle": "Registry-based examination system"
+    },
+    "Australia": {
+        "statute": "Section 41 of the Trade Marks Act 1995",
+        "refusal_type": "Lack of Distinctiveness",
+        "office": "IP Australia",
+        "action_term": "Adverse Report",
+        "precedent": "Cantarella Bros v. Modena Trading (2014)",
+        "precedent_principle": "High Court ruling on foreign word distinctiveness"
+    },
+    "Japan": {
+        "statute": "Article 3(1)(iii) of the Trademark Act",
+        "refusal_type": "Descriptive Marks",
+        "office": "JPO (Japan Patent Office)",
+        "action_term": "Refusal Decision",
+        "precedent": "N/A",
+        "precedent_principle": "Strict examination of descriptive elements"
+    },
+    "China": {
+        "statute": "Article 11 of the Trademark Law",
+        "refusal_type": "Generic or Descriptive Signs",
+        "office": "CNIPA",
+        "action_term": "Rejection Notice",
+        "precedent": "N/A",
+        "precedent_principle": "First-to-file system with strict examination"
+    },
+    "Germany": {
+        "statute": "Section 8(2)(2) of the Markengesetz",
+        "refusal_type": "Descriptive Marks",
+        "office": "DPMA",
+        "action_term": "Examination Report",
+        "precedent": "N/A",
+        "precedent_principle": "EU harmonized examination standards"
+    },
+    "France": {
+        "statute": "Article L711-2 of the Intellectual Property Code",
+        "refusal_type": "Descriptive Signs",
+        "office": "INPI",
+        "action_term": "Examination Report",
+        "precedent": "N/A",
+        "precedent_principle": "EU harmonized examination standards"
+    },
+    "Canada": {
+        "statute": "Section 12(1)(b) of the Trademarks Act",
+        "refusal_type": "Clearly Descriptive",
+        "office": "CIPO",
+        "action_term": "Examiner's Report",
+        "precedent": "N/A",
+        "precedent_principle": "Similar to US standards with some variations"
+    }
+}
+
+# Default for unlisted countries
+DEFAULT_STATUTE = {
+    "statute": "Local trademark laws regarding distinctiveness",
+    "refusal_type": "Absolute Grounds for Refusal",
+    "office": "National Trademark Registry",
+    "action_term": "Examination Report",
+    "precedent": "N/A",
+    "precedent_principle": "Registry-based examination"
+}
+
+
+def get_country_statute(country: str) -> Dict[str, str]:
+    """Get country-specific trademark statute information."""
+    # Normalize country name
+    country_upper = country.upper().strip()
+    
+    # Handle common variations
+    country_map = {
+        "UNITED STATES": "USA",
+        "US": "USA",
+        "UNITED KINGDOM": "UK",
+        "BRITAIN": "UK",
+        "ENGLAND": "UK",
+        "UNITED ARAB EMIRATES": "UAE",
+        "EMIRATES": "UAE"
+    }
+    
+    normalized = country_map.get(country_upper, country_upper)
+    
+    # Try exact match first
+    if normalized in COUNTRY_TRADEMARK_STATUTES:
+        return COUNTRY_TRADEMARK_STATUTES[normalized]
+    
+    # Try case-insensitive match
+    for key in COUNTRY_TRADEMARK_STATUTES:
+        if key.upper() == normalized:
+            return COUNTRY_TRADEMARK_STATUTES[key]
+    
+    return DEFAULT_STATUTE
+
+
+def calculate_hybrid_trademark_risk(
+    classification: str,
+    critical_conflicts: int,
+    high_conflicts: int,
+    medium_conflicts: int,
+    total_conflicts: int,
+    countries: List[str] = None
+) -> Dict[str, Any]:
+    """
+    HYBRID RISK MODEL - The Attorney Logic Formula
+    
+    Two Pillars:
+    1. ABSOLUTE GROUNDS (Internal Flaw): Classification-based inherent strength
+    2. RELATIVE GROUNDS (External Threat): Conflict-based market risk
+    
+    Args:
+        classification: FANCIFUL, ARBITRARY, SUGGESTIVE, DESCRIPTIVE, GENERIC
+        critical_conflicts: Identical marks found
+        high_conflicts: Similar marks in same class
+        medium_conflicts: Somewhat similar marks
+        total_conflicts: Total conflict count
+        countries: List of target countries for jurisdiction-specific analysis
+    
+    Returns:
+        Complete risk assessment with per-country analysis
+    """
+    
+    # ==================== PILLAR 1: ABSOLUTE GROUNDS ====================
+    # Base scores from trademark classification (Internal Strength)
+    BASE_SUCCESS = {
+        "FANCIFUL": 95,    # Gold Standard - invented word
+        "ARBITRARY": 90,   # Excellent - real word, unrelated context
+        "SUGGESTIVE": 75,  # Good - requires imagination (examiners may argue)
+        "DESCRIPTIVE": 45, # Coin-toss - Section 2(e)/9(1)(b) refusal likely
+        "GENERIC": 5       # Dead on arrival - legally impossible
+    }
+    
+    BASE_RISK = {
+        "FANCIFUL": 1,     # Minimal risk
+        "ARBITRARY": 1,    # Minimal risk
+        "SUGGESTIVE": 2,   # Low risk (examiner scrutiny possible)
+        "DESCRIPTIVE": 5,  # Moderate risk (refusal likely)
+        "GENERIC": 9       # Critical risk (unregistrable)
+    }
+    
+    # Get base scores
+    classification_upper = classification.upper() if classification else "DESCRIPTIVE"
+    success_prob = BASE_SUCCESS.get(classification_upper, 45)
+    risk_score = BASE_RISK.get(classification_upper, 5)
+    
+    # Attorney notes for each classification
+    classification_notes = {
+        "FANCIFUL": "Gold Standard - Invented term with maximum inherent distinctiveness",
+        "ARBITRARY": "Excellent - Common word used in completely unrelated context",
+        "SUGGESTIVE": "Good - Requires imagination to connect to product (examiner may challenge)",
+        "DESCRIPTIVE": "Weak - Directly describes product/service attributes. Refusal likely without Secondary Meaning.",
+        "GENERIC": "Unregistrable - Names the product category itself. Cannot function as trademark."
+    }
+    attorney_note = classification_notes.get(classification_upper, "Classification unclear")
+    
+    # ==================== PILLAR 2: RELATIVE GROUNDS ====================
+    # Apply conflict penalties (External Threats) - HIERARCHICAL
+    conflict_analysis = []
+    
+    if critical_conflicts > 0:
+        # CRITICAL = Identical mark exists - virtually fatal
+        success_prob -= 80
+        risk_score += 5
+        conflict_analysis.append({
+            "severity": "CRITICAL",
+            "count": critical_conflicts,
+            "impact": "-80% success, +5 risk",
+            "explanation": "Identical mark(s) found. Registration legally impossible unless conflicting mark is dead/abandoned."
+        })
+    elif high_conflicts > 0:
+        # HIGH = Similar mark - Likelihood of Confusion refusal
+        success_prob -= 40
+        risk_score += 3
+        conflict_analysis.append({
+            "severity": "HIGH",
+            "count": high_conflicts,
+            "impact": "-40% success, +3 risk",
+            "explanation": "Similar mark(s) in same/related class. 'Likelihood of Confusion' refusal probable."
+        })
+    elif medium_conflicts > 0:
+        # MEDIUM = Somewhat similar - may be overcome
+        success_prob -= 10
+        risk_score += 1
+        conflict_analysis.append({
+            "severity": "MEDIUM",
+            "count": medium_conflicts,
+            "impact": "-10% success, +1 risk",
+            "explanation": "Potentially conflicting mark(s). May be overcome via coexistence agreement or goods limitation."
+        })
+    else:
+        conflict_analysis.append({
+            "severity": "NONE",
+            "count": 0,
+            "impact": "No penalty",
+            "explanation": "No conflicting marks found in search. Clean relative grounds."
+        })
+    
+    # ==================== OPPOSITION PROBABILITY ====================
+    # Base calculation from conflicts
+    if critical_conflicts > 0:
+        opposition_prob = 85  # Almost certain lawsuit
+    elif high_conflicts > 0:
+        opposition_prob = 60  # Likely opposition
+    elif medium_conflicts > 0:
+        opposition_prob = 30  # Possible challenge
+    else:
+        opposition_prob = 10  # Low - no known conflicts
+    
+    # The "Bully" Modifier - Competitors target weak marks
+    if classification_upper in ["DESCRIPTIVE", "GENERIC"]:
+        opposition_prob += 10  # Competitors bully descriptive marks to keep language free
+    
+    # ==================== APPLY FLOOR/CEILING ====================
+    success_prob = max(5, min(95, success_prob))
+    risk_score = max(1, min(10, risk_score))
+    opposition_prob = max(5, min(95, opposition_prob))
+    
+    # ==================== DETERMINE VERDICT ====================
+    if risk_score >= 8:
+        verdict = "HIGH RISK"
+        verdict_detail = "Rebranding Recommended"
+        verdict_color = "red"
+    elif risk_score >= 5:
+        verdict = "MODERATE RISK"
+        verdict_detail = "Refusal Likely - Prepare for Office Action"
+        verdict_color = "amber"
+    else:
+        verdict = "LOW RISK"
+        verdict_detail = "Favorable - Proceed with Filing"
+        verdict_color = "green"
+    
+    # ==================== PER-COUNTRY LEGAL ANALYSIS ====================
+    country_analyses = []
+    countries = countries or ["India"]  # Default
+    
+    for country in countries:
+        statute_info = get_country_statute(country)
+        
+        # Generate country-specific analysis
+        country_analysis = generate_country_legal_analysis(
+            country=country,
+            classification=classification_upper,
+            statute_info=statute_info,
+            success_prob=success_prob,
+            risk_score=risk_score,
+            critical_conflicts=critical_conflicts,
+            high_conflicts=high_conflicts,
+            medium_conflicts=medium_conflicts,
+            total_conflicts=total_conflicts
+        )
+        country_analyses.append(country_analysis)
+    
+    return {
+        # Core Risk Metrics
+        "overall_risk_score": risk_score,
+        "registration_success_probability": success_prob,
+        "opposition_probability": opposition_prob,
+        
+        # Verdict
+        "verdict": verdict,
+        "verdict_detail": verdict_detail,
+        "verdict_color": verdict_color,
+        
+        # Conflict Counts
+        "critical_conflicts_count": critical_conflicts,
+        "high_risk_conflicts_count": high_conflicts,
+        "medium_conflicts_count": medium_conflicts,
+        "total_conflicts_found": total_conflicts,
+        
+        # Pillar Analysis
+        "absolute_grounds": {
+            "classification": classification_upper,
+            "base_success": BASE_SUCCESS.get(classification_upper, 45),
+            "base_risk": BASE_RISK.get(classification_upper, 5),
+            "attorney_note": attorney_note
+        },
+        "relative_grounds": {
+            "conflict_analysis": conflict_analysis,
+            "clean_search_warning": classification_upper in ["DESCRIPTIVE", "GENERIC"] and total_conflicts == 0
+        },
+        
+        # Per-Country Legal Analysis
+        "country_analyses": country_analyses,
+        
+        # Strategic Recommendation
+        "strategic_recommendation": generate_strategic_recommendation(
+            classification_upper, success_prob, risk_score, 
+            critical_conflicts, high_conflicts, countries
+        )
+    }
+
+
+def generate_country_legal_analysis(
+    country: str,
+    classification: str,
+    statute_info: Dict[str, str],
+    success_prob: int,
+    risk_score: int,
+    critical_conflicts: int,
+    high_conflicts: int,
+    medium_conflicts: int,
+    total_conflicts: int
+) -> Dict[str, Any]:
+    """Generate country-specific legal analysis for trademark registration."""
+    
+    office = statute_info["office"]
+    statute = statute_info["statute"]
+    refusal_type = statute_info["refusal_type"]
+    action_term = statute_info["action_term"]
+    precedent = statute_info["precedent"]
+    precedent_principle = statute_info["precedent_principle"]
+    
+    # ==================== ABSOLUTE GROUNDS ANALYSIS ====================
+    if classification == "GENERIC":
+        absolute_analysis = (
+            f"**FATAL FLAW:** This is a GENERIC term that names the product category itself. "
+            f"The {office} will refuse registration under **{statute}** ({refusal_type}). "
+            f"Generic terms cannot function as trademarks under any jurisdiction. "
+            f"No amount of evidence or argument can overcome this defect."
+        )
+    elif classification == "DESCRIPTIVE":
+        absolute_analysis = (
+            f"**HIGH RISK - DESCRIPTIVE MARK:** The {office} will likely issue an {action_term} "
+            f"citing **{statute}** ({refusal_type}). "
+            f"The name directly describes product/service attributes, lacking inherent distinctiveness. "
+            f"To overcome: Must prove 'acquired distinctiveness' (Secondary Meaning) through 5+ years exclusive use, "
+            f"significant advertising spend, and consumer recognition evidence."
+        )
+    elif classification == "SUGGESTIVE":
+        absolute_analysis = (
+            f"**MODERATE STRENGTH - SUGGESTIVE MARK:** The name requires imagination to connect to the product. "
+            f"While inherently distinctive, the {office} examiner may argue the mark is merely descriptive under **{statute}**. "
+            f"Be prepared to argue the 'imagination test' - that consumers need a mental leap to understand the product connection."
+        )
+    elif classification == "ARBITRARY":
+        absolute_analysis = (
+            f"**STRONG - ARBITRARY MARK:** Common word used in unrelated context (like 'Apple' for computers). "
+            f"Inherently distinctive under **{statute}**. The {office} should not raise descriptiveness objections. "
+            f"Focus registration strategy on relative grounds (conflicting marks) rather than absolute grounds."
+        )
+    else:  # FANCIFUL
+        absolute_analysis = (
+            f"**STRONGEST - FANCIFUL/COINED MARK:** Invented term with no prior dictionary meaning. "
+            f"Maximum inherent distinctiveness under **{statute}**. The {office} will not raise descriptiveness objections. "
+            f"This is the 'Gold Standard' for trademark strength. Focus entirely on conflict clearance."
+        )
+    
+    # ==================== RELATIVE GROUNDS ANALYSIS ====================
+    if critical_conflicts > 0:
+        relative_analysis = (
+            f"**CRITICAL CONFLICT DETECTED:** {critical_conflicts} identical or near-identical mark(s) found. "
+            f"The {office} will issue an {action_term} citing likelihood of confusion. "
+            f"Registration is effectively blocked unless the conflicting mark is abandoned or you obtain consent."
+        )
+    elif high_conflicts > 0:
+        relative_analysis = (
+            f"**HIGH CONFLICT RISK:** {high_conflicts} similar mark(s) found in same/related class. "
+            f"Expect an {action_term} from the {office} citing likelihood of confusion. "
+            f"May require legal argument, coexistence agreement, or limitation of goods/services to overcome."
+        )
+    elif medium_conflicts > 0:
+        relative_analysis = (
+            f"**MODERATE CONFLICT RISK:** {medium_conflicts} potentially conflicting mark(s) found. "
+            f"The {office} may cite these in examination. Prepare arguments distinguishing your mark. "
+            f"Consider coexistence agreement or goods limitation if challenged."
+        )
+    else:
+        if classification in ["DESCRIPTIVE", "GENERIC"]:
+            relative_analysis = (
+                f"**CLEAN SEARCH - BUT WARNING:** No conflicting marks found in {country} search. "
+                f"⚠️ However, this does NOT cure the descriptiveness flaw. "
+                f"The risk is from {office} EXAMINER rejection under {statute}, not competitor lawsuit. "
+                f"A clean search means no opposition from third parties, but the government may still refuse registration."
+            )
+        else:
+            relative_analysis = (
+                f"**CLEAN SEARCH:** No conflicting marks found in {country}. "
+                f"Favorable relative grounds. Focus on building brand without trademark conflict concerns."
+            )
+    
+    # ==================== COUNTRY-SPECIFIC RECOMMENDATION ====================
+    if classification in ["DESCRIPTIVE", "GENERIC"]:
+        recommendation = [
+            f"Prepare evidence of acquired distinctiveness (sales figures, advertising spend, consumer surveys)",
+            f"Consider filing a logo/device mark to bypass text-only refusal",
+            f"Budget for responding to {action_term} from {office}",
+            f"Consider adding a distinctive prefix/suffix to strengthen the mark",
+            f"Consult local trademark counsel familiar with {office} examination practices"
+        ]
+    elif classification == "SUGGESTIVE":
+        recommendation = [
+            f"Prepare 'imagination test' arguments in case examiner challenges distinctiveness",
+            f"Document the mental leap required to connect name to product",
+            f"File with standard examination - good chance of success",
+            f"Monitor for conflicting applications during examination period"
+        ]
+    else:  # ARBITRARY or FANCIFUL
+        recommendation = [
+            f"Proceed with standard trademark filing at {office}",
+            f"Strong inherent distinctiveness - focus on conflict clearance",
+            f"Consider filing in multiple classes if product line may expand",
+            f"Register domain names and social handles simultaneously"
+        ]
+    
+    return {
+        "country": country,
+        "office": office,
+        "statute": statute,
+        "refusal_type": refusal_type,
+        "action_term": action_term,
+        "absolute_grounds_analysis": absolute_analysis,
+        "relative_grounds_analysis": relative_analysis,
+        "precedent": {
+            "case_name": precedent,
+            "principle": precedent_principle
+        },
+        "recommendation": recommendation
+    }
+
+
+def generate_strategic_recommendation(
+    classification: str,
+    success_prob: int,
+    risk_score: int,
+    critical_conflicts: int,
+    high_conflicts: int,
+    countries: List[str]
+) -> Dict[str, Any]:
+    """Generate overall strategic recommendation based on hybrid risk assessment."""
+    
+    primary_country = countries[0] if countries else "your target market"
+    
+    if classification == "GENERIC":
+        return {
+            "action": "REBRAND IMMEDIATELY",
+            "urgency": "CRITICAL",
+            "summary": f"'{classification}' classification makes registration legally impossible. Invest zero additional resources in this name.",
+            "steps": [
+                "STOP all brand development activities for this name",
+                "Engage naming consultant or agency for alternatives",
+                "Consider suggestive or fanciful naming approach",
+                "Conduct fresh trademark clearance on alternatives"
+            ]
+        }
+    elif classification == "DESCRIPTIVE" and (critical_conflicts > 0 or high_conflicts > 0):
+        return {
+            "action": "REBRAND RECOMMENDED",
+            "urgency": "HIGH",
+            "summary": f"Descriptive name WITH conflicts is a double-jeopardy situation. Both absolute and relative grounds against you.",
+            "steps": [
+                "Rebranding is the most cost-effective path forward",
+                "If proceeding anyway: Expect legal costs of $10K-50K+ to fight both refusals and oppositions",
+                "Alternative: Acquire the conflicting mark if possible",
+                "Alternative: Negotiate coexistence agreement (expensive, uncertain)"
+            ]
+        }
+    elif classification == "DESCRIPTIVE":
+        return {
+            "action": "PROCEED WITH CAUTION",
+            "urgency": "MODERATE",
+            "summary": f"Descriptive name faces examiner refusal risk even with clean search. Plan for {success_prob}% success rate.",
+            "steps": [
+                f"Gather evidence of acquired distinctiveness BEFORE filing",
+                "Consider filing logo/stylized mark simultaneously",
+                f"Budget for responding to Office Action/Examination Report",
+                "Begin using mark in commerce immediately to build evidence",
+                "Alternative: Add distinctive element to strengthen mark"
+            ]
+        }
+    elif critical_conflicts > 0:
+        return {
+            "action": "REBRAND OR ACQUIRE",
+            "urgency": "HIGH",
+            "summary": f"Critical conflict blocks registration regardless of name strength. Identical mark exists.",
+            "steps": [
+                "Option A: Acquire the conflicting mark (negotiate purchase)",
+                "Option B: Obtain consent agreement from mark owner",
+                "Option C: Rebrand to avoid conflict entirely",
+                "Do NOT proceed without resolving conflict - waste of filing fees"
+            ]
+        }
+    elif high_conflicts > 0:
+        return {
+            "action": "PROCEED WITH LEGAL STRATEGY",
+            "urgency": "MODERATE",
+            "summary": f"Similar marks exist but may be distinguishable. Prepare legal arguments.",
+            "steps": [
+                "Engage trademark attorney to assess likelihood of confusion",
+                "Prepare arguments distinguishing your mark (different channels, goods, consumers)",
+                "Consider coexistence agreement with conflicting mark owner",
+                "File with expectation of Office Action - budget accordingly"
+            ]
+        }
+    else:
+        return {
+            "action": "PROCEED WITH FILING",
+            "urgency": "LOW",
+            "summary": f"Favorable conditions for registration. {success_prob}% estimated success rate.",
+            "steps": [
+                f"File trademark application in {primary_country}",
+                "Secure matching domain names and social handles",
+                "Set up trademark watch service to monitor for new conflicts",
+                "Consider filing in additional markets if expansion planned"
+            ]
+        }
+
+
+# Legacy wrapper for backward compatibility
 def calculate_risk_scores(
     trademark_conflicts: List[TrademarkConflict],
     company_conflicts: List[CompanyConflict],
-    common_law_conflicts: List[Dict]
-) -> Dict[str, int]:
-    """Calculate overall risk scores based on discovered conflicts"""
+    common_law_conflicts: List[Dict],
+    classification: str = "DESCRIPTIVE",
+    countries: List[str] = None
+) -> Dict[str, Any]:
+    """
+    Calculate overall risk scores using the Hybrid Risk Model.
+    
+    This is a wrapper that maintains backward compatibility while using
+    the new hybrid model internally.
+    """
     
     # Count conflicts by severity
     critical_count = sum(1 for c in trademark_conflicts if c.risk_level == "CRITICAL")
@@ -1031,43 +1600,31 @@ def calculate_risk_scores(
     
     total_conflicts = len(trademark_conflicts) + len(company_conflicts) + len(common_law_conflicts)
     
-    # Calculate overall risk score (1-10)
-    if critical_count > 0:
-        overall_risk = min(10, 8 + critical_count)
-    elif high_count > 0:
-        overall_risk = min(9, 5 + high_count)
-    elif medium_count > 0:
-        overall_risk = min(6, 3 + medium_count)
-    else:
-        overall_risk = max(1, min(3, total_conflicts))
+    # Use hybrid model
+    hybrid_result = calculate_hybrid_trademark_risk(
+        classification=classification,
+        critical_conflicts=critical_count,
+        high_conflicts=high_count,
+        medium_conflicts=medium_count,
+        total_conflicts=total_conflicts,
+        countries=countries
+    )
     
-    # Calculate registration success probability
-    if critical_count > 0:
-        success_prob = max(10, 30 - (critical_count * 10))
-    elif high_count > 0:
-        success_prob = max(30, 60 - (high_count * 10))
-    elif medium_count > 0:
-        success_prob = max(50, 80 - (medium_count * 5))
-    else:
-        success_prob = min(90, 85 + (5 if total_conflicts == 0 else 0))
-    
-    # Calculate opposition probability
-    if critical_count > 0 or high_count > 1:
-        opposition_prob = min(90, 60 + (critical_count * 15) + (high_count * 10))
-    elif high_count == 1:
-        opposition_prob = 50
-    elif medium_count > 0:
-        opposition_prob = min(40, 20 + (medium_count * 5))
-    else:
-        opposition_prob = 10
-    
+    # Return in legacy format with enhanced data
     return {
-        "overall_risk_score": overall_risk,
-        "registration_success_probability": success_prob,
-        "opposition_probability": opposition_prob,
+        "overall_risk_score": hybrid_result["overall_risk_score"],
+        "registration_success_probability": hybrid_result["registration_success_probability"],
+        "opposition_probability": hybrid_result["opposition_probability"],
         "critical_conflicts_count": critical_count,
         "high_risk_conflicts_count": high_count,
-        "total_conflicts_found": total_conflicts
+        "total_conflicts_found": total_conflicts,
+        # New hybrid model data
+        "verdict": hybrid_result["verdict"],
+        "verdict_detail": hybrid_result["verdict_detail"],
+        "absolute_grounds": hybrid_result["absolute_grounds"],
+        "relative_grounds": hybrid_result["relative_grounds"],
+        "country_analyses": hybrid_result["country_analyses"],
+        "strategic_recommendation": hybrid_result["strategic_recommendation"]
     }
 
 
