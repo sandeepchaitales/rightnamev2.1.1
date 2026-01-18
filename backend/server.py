@@ -802,6 +802,9 @@ def format_linguistic_analysis_for_output(analysis: dict, country: str) -> str:
 # Single classification called ONCE, result passed to all sections
 # Implements 5-Step Spectrum of Distinctiveness
 
+# CACHE to avoid duplicate classification calls
+_CLASSIFICATION_CACHE = {}
+
 COMMON_DICTIONARY_WORDS = {
     # Common English words that indicate DESCRIPTIVE names
     "check", "my", "meal", "quick", "fast", "health", "care", "med", "doc", "doctor",
