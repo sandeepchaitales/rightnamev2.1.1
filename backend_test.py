@@ -7603,6 +7603,13 @@ class BrandEvaluationTester:
             print("❌ API health check failed, stopping tests")
             return False
         
+        # PRIORITY: NEW SINGLE CLASSIFICATION SYSTEM TESTS (as requested in review)
+        print("\n🏷️ PRIORITY TEST: NEW SINGLE CLASSIFICATION SYSTEM")
+        print("="*60)
+        self.test_new_classification_system_check_my_meal()  # Test Case 1: Check My Meal (DESCRIPTIVE)
+        self.test_new_classification_system_zomato()         # Test Case 2: Zomato (FANCIFUL)
+        self.test_backend_logs_classification_called_once()  # Verify logs show classification called ONCE
+        
         # PRIORITY: NEW LOGIC GATES TESTING (as requested in review)
         print("\n🔥 PRIORITY TEST: NEW LOGIC GATES (Brand Classification & Category Mismatch)")
         self.test_logic_gates_category_mismatch()  # Test Case 1: Check My Meal (MISMATCH)
