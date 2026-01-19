@@ -9235,6 +9235,42 @@ BRAND: {brand}
             except Exception as e:
                 logging.error(f"Failed to inject pre-computed visibility_analysis: {e}")
         # ============ END VISIBILITY ANALYSIS OVERRIDE ============
+        
+        # ============ OVERRIDE SOCIAL AVAILABILITY WITH REAL DATA ============
+        # Replace LLM-generated social_availability with actual check results
+        social_data_for_brand = all_brand_data.get(brand_name_for_matrix, {}).get("social")
+        if social_data_for_brand:
+            try:
+                from schemas import SocialAvailability, SocialHandleResult
+                
+                real_social = build_social_availability_from_data(brand_name_for_matrix, social_data_for_brand)
+                
+                # Convert platforms to SocialHandleResult objects
+                platform_results = []
+                for p in real_social.get('platforms', []):
+                    platform_results.append(SocialHandleResult(
+                        platform=p.get('platform', 'unknown'),
+                        handle=p.get('handle', brand_name_for_matrix.lower()),
+                        available=p.get('available'),
+                        url=p.get('url', ''),
+                        status=p.get('status', 'UNKNOWN')
+                    ))
+                
+                brand_score.social_availability = SocialAvailability(
+                    handle=real_social.get('handle', brand_name_for_matrix.lower()),
+                    platforms=platform_results,
+                    available_platforms=real_social.get('available_platforms', []),
+                    taken_platforms=real_social.get('taken_platforms', []),
+                    recommendation=real_social.get('recommendation', '')
+                )
+                
+                logging.info(f"✅ Injected REAL social_availability for '{brand_name_for_matrix}': "
+                           f"{len(real_social.get('available_platforms', []))} available, "
+                           f"{len(real_social.get('taken_platforms', []))} taken")
+                
+            except Exception as e:
+                logging.error(f"Failed to inject real social_availability: {e}")
+        # ============ END SOCIAL AVAILABILITY OVERRIDE ============
     
     # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
     if all_rejections:
