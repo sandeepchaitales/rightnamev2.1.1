@@ -2460,112 +2460,177 @@ const Dashboard = () => {
     const brand = data.brand_scores[0];
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 print:bg-white">
+        <div className="min-h-screen bg-slate-50 text-slate-900 print:bg-white print:min-h-0">
             {/* Preload logo for print */}
             <img src={LOGO_URL} alt="" style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }} />
             
-            {/* Print Styles */}
+            {/* Print Styles - COMPREHENSIVE FIX */}
             <style>{`
                 @media print {
                     @page { 
                         size: A4 portrait; 
-                        margin: 10mm; 
+                        margin: 8mm 10mm; 
                     }
                     
+                    /* ========== GLOBAL RESETS ========== */
                     html, body {
                         margin: 0 !important;
                         padding: 0 !important;
+                        height: auto !important;
+                        min-height: 0 !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
                     
-                    /* ========== HIDE NON-PRINT ELEMENTS ========== */
-                    .no-print { 
-                        display: none !important;
-                        height: 0 !important;
-                        overflow: hidden !important;
+                    /* Remove ALL viewport-based heights */
+                    *, *::before, *::after {
+                        min-height: 0 !important;
+                        max-height: none !important;
                     }
                     
-                    /* ========== PAGE 1: COVER PAGE (SUMMARY) ========== */
+                    /* ========== HIDE NON-PRINT & INTERACTIVE ELEMENTS ========== */
+                    .no-print,
+                    .hover-text,
+                    .interactive-hint,
+                    [data-tooltip],
+                    .tooltip,
+                    button:not(.print-show),
+                    .sticky {
+                        display: none !important;
+                        visibility: hidden !important;
+                        height: 0 !important;
+                        width: 0 !important;
+                        overflow: hidden !important;
+                        position: absolute !important;
+                        left: -9999px !important;
+                    }
+                    
+                    /* Hide "Hover/tap for details" text */
+                    *[class*="hover"],
+                    *[class*="tap"],
+                    .recharts-tooltip-wrapper,
+                    .recharts-legend-wrapper text {
+                        display: none !important;
+                    }
+                    
+                    /* ========== PAGE 1: COVER PAGE ========== */
                     .cover-page-container {
                         position: relative !important;
                         left: auto !important;
                         visibility: visible !important;
-                        width: 100% !important;
-                        height: 100vh !important;
-                        min-height: 100vh !important;
-                        max-height: 100vh !important;
                         display: flex !important;
                         flex-direction: column !important;
                         align-items: center !important;
                         justify-content: center !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        min-height: 250mm !important; /* A4 height minus margins */
                         background: white !important;
-                        padding: 15mm !important;
+                        padding: 10mm !important;
                         page-break-after: always !important;
-                        break-after: page !important;
                         box-sizing: border-box !important;
-                        overflow: hidden !important;
                     }
                     
-                    /* ========== PAGE 2: EVALUATION SUMMARY (REPORT STARTS) ========== */
-                    /* Force Page 2 to start immediately after Cover Page */
+                    /* ========== PAGE 2+: CONTENT PAGES ========== */
+                    /* NO page-break-after on content - only page-break-before on NEW sections */
                     .page-2-content {
                         page-break-before: avoid !important;
-                        break-before: avoid !important;
-                        page-break-after: always !important;
-                        break-after: page !important;
                         padding-top: 0 !important;
                         margin-top: 0 !important;
                     }
                     
-                    /* ========== PAGE 3: FINAL ASSESSMENT + STRATEGY SNAPSHOT ========== */
-                    .page-3-content {
-                        page-break-before: always !important;
-                        break-before: page !important;
-                        page-break-after: always !important;
-                        break-after: page !important;
-                        padding-top: 5mm !important;
-                    }
-                    
-                    /* ========== PAGE 4: WHAT'S IN THE NAME + 6 DIMENSIONS ========== */
-                    .page-4-content {
-                        page-break-before: always !important;
-                        break-before: page !important;
-                        page-break-after: always !important;
-                        break-after: page !important;
-                        padding-top: 5mm !important;
-                    }
-                    
-                    /* ========== PAGE 5+: EVERY MAJOR SECTION ON NEW PAGE ========== */
+                    /* Page 3+ sections - ONLY page-break-before, NOT after */
+                    .page-3-content,
+                    .page-4-content,
                     .print-new-page { 
                         page-break-before: always !important; 
                         break-before: page !important;
-                        padding-top: 5mm !important;
+                        padding-top: 3mm !important;
                     }
                     
-                    /* ========== PREVENT BREAKS INSIDE CARDS ========== */
-                    .print-card, 
-                    .print-section > div,
+                    /* ========== PREVENT BREAKS INSIDE COMPONENTS ========== */
+                    .print-card,
                     .print-no-break,
-                    .break-inside-avoid {
+                    .break-inside-avoid,
+                    [class*="Card"],
+                    [class*="card"],
+                    [class*="Module"],
+                    [class*="Section"],
+                    .bg-white.rounded-2xl,
+                    .bg-white.rounded-xl,
+                    .border.rounded-2xl,
+                    .border.rounded-xl,
+                    table,
+                    thead,
+                    tbody tr,
+                    .grid > div {
                         break-inside: avoid !important; 
                         page-break-inside: avoid !important;
                     }
                     
-                    /* ========== MAIN CONTENT SPACING ========== */
+                    /* ========== COMPACT SPACING FOR PRINT ========== */
                     main {
                         max-width: 100% !important;
-                        padding: 0 !important;
+                        padding: 0 2mm !important;
                         margin: 0 !important;
                     }
                     
-                    main > section:first-of-type {
-                        margin-top: 0 !important;
-                        padding-top: 0 !important;
+                    section {
+                        margin-bottom: 3mm !important;
+                        padding: 0 !important;
                     }
                     
-                    section {
-                        margin-bottom: 5mm !important;
+                    /* Reduce ALL padding by 50% for print */
+                    .p-6, .p-8 { padding: 3mm !important; }
+                    .p-4, .p-5 { padding: 2mm !important; }
+                    .p-2, .p-3 { padding: 1mm !important; }
+                    .px-6, .px-8 { padding-left: 3mm !important; padding-right: 3mm !important; }
+                    .py-6, .py-8 { padding-top: 3mm !important; padding-bottom: 3mm !important; }
+                    .px-4, .px-5 { padding-left: 2mm !important; padding-right: 2mm !important; }
+                    .py-4, .py-5 { padding-top: 2mm !important; padding-bottom: 2mm !important; }
+                    
+                    /* Reduce margins */
+                    .mb-6, .mb-8 { margin-bottom: 3mm !important; }
+                    .mb-4, .mb-5 { margin-bottom: 2mm !important; }
+                    .mt-6, .mt-8 { margin-top: 3mm !important; }
+                    .mt-4, .mt-5 { margin-top: 2mm !important; }
+                    .gap-6, .gap-8 { gap: 3mm !important; }
+                    .gap-4, .gap-5 { gap: 2mm !important; }
+                    .space-y-6 > * + *, .space-y-8 > * + * { margin-top: 3mm !important; }
+                    .space-y-4 > * + * { margin-top: 2mm !important; }
+                    
+                    /* ========== COMPACT TEXT FOR PRINT ========== */
+                    .text-5xl { font-size: 24pt !important; }
+                    .text-4xl { font-size: 20pt !important; }
+                    .text-3xl { font-size: 16pt !important; }
+                    .text-2xl { font-size: 14pt !important; }
+                    .text-xl { font-size: 12pt !important; }
+                    .text-lg { font-size: 11pt !important; }
+                    .text-base { font-size: 10pt !important; }
+                    .text-sm { font-size: 9pt !important; }
+                    .text-xs { font-size: 8pt !important; }
+                    
+                    p, li, span, td, th {
+                        line-height: 1.3 !important;
+                    }
+                    
+                    /* ========== MULTI-COLUMN LISTS FOR DENSITY ========== */
+                    .print-2-col {
+                        column-count: 2 !important;
+                        column-gap: 4mm !important;
+                    }
+                    
+                    .print-3-col {
+                        column-count: 3 !important;
+                        column-gap: 3mm !important;
+                    }
+                    
+                    /* Domain lists in 2 columns */
+                    .domain-list,
+                    [class*="domain"] ul,
+                    [class*="Domain"] ul {
+                        column-count: 2 !important;
+                        column-gap: 4mm !important;
                     }
                     
                     /* ========== GRIDS FOR PRINT ========== */
@@ -2573,18 +2638,52 @@ const Dashboard = () => {
                         grid-template-columns: 1fr !important;
                     }
                     
-                    .grid {
-                        gap: 4px !important;
+                    .print\\:grid-cols-2 {
+                        grid-template-columns: 1fr 1fr !important;
                     }
                     
-                    /* ========== IMAGES ========== */
+                    .grid {
+                        gap: 2mm !important;
+                    }
+                    
+                    /* ========== IMAGES & CHARTS ========== */
                     img {
                         max-width: 100% !important;
+                        height: auto !important;
                     }
                     
-                    /* ========== FIX STICKY ELEMENTS ========== */
-                    .sticky {
-                        position: relative !important;
+                    /* Make radar chart smaller for print */
+                    .recharts-wrapper {
+                        max-width: 180px !important;
+                        max-height: 180px !important;
+                    }
+                    
+                    svg {
+                        max-width: 100% !important;
+                        height: auto !important;
+                    }
+                    
+                    /* ========== TABLES ========== */
+                    table {
+                        width: 100% !important;
+                        font-size: 9pt !important;
+                        border-collapse: collapse !important;
+                    }
+                    
+                    th, td {
+                        padding: 1.5mm 2mm !important;
+                        border: 0.5px solid #e2e8f0 !important;
+                    }
+                    
+                    /* ========== ROUNDED CORNERS (smaller for print) ========== */
+                    .rounded-2xl { border-radius: 4mm !important; }
+                    .rounded-xl { border-radius: 3mm !important; }
+                    .rounded-lg { border-radius: 2mm !important; }
+                    
+                    /* ========== BACKGROUNDS ========== */
+                    .bg-gradient-to-r {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
                 }
             `}</style>
