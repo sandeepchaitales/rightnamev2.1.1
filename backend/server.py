@@ -874,7 +874,12 @@ def tokenize_brand_name(brand_name: str) -> list:
     "CheckMyMeal" → ["check", "my", "meal"]
     "FaceBook" → ["face", "book"]
     "Xerox" → ["xerox"]
+    "LUMINARA" → ["luminara"] (all-caps treated as single word)
     """
+    # Normalize: If ALL CAPS, convert to title case first to avoid splitting each letter
+    if brand_name.isupper() and len(brand_name) > 1:
+        brand_name = brand_name.title()  # LUMINARA → Luminara
+    
     brand_lower = brand_name.lower()
     
     # Method 1: Split by common separators
