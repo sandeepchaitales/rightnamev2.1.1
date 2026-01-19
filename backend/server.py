@@ -9252,7 +9252,6 @@ BRAND: {brand}
                         platform=p.get('platform', 'unknown'),
                         handle=p.get('handle', brand_name_for_matrix.lower()),
                         available=p.get('available'),
-                        url=p.get('url', ''),
                         status=p.get('status', 'UNKNOWN')
                     ))
                 
