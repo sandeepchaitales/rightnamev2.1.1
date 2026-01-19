@@ -9012,16 +9012,26 @@ BRAND: {brand}
                     from dataclasses import asdict
                     tr_data_for_matrix = asdict(tr_data_for_matrix)
         
-        # Check if brand name appears to be invented (no dictionary words)
-        brand_is_invented = not any(word.lower() in brand_name_for_matrix.lower() for word in 
-            ['shop', 'store', 'tech', 'soft', 'cloud', 'pay', 'money', 'quick', 'fast', 'best', 'top', 'pro', 'smart', 'easy'])
+        # Check if brand name appears to be invented using CLASSIFICATION SYSTEM
+        # Use our existing 5-tier trademark spectrum instead of primitive word matching
+        brand_classification = all_brand_data.get(brand_name_for_matrix, {}).get("classification")
+        if not brand_classification:
+            brand_classification = classify_brand_with_industry(brand_name_for_matrix, request.category)
+        
+        classification_category = brand_classification.get("category", "SUGGESTIVE") if brand_classification else "SUGGESTIVE"
+        
+        # Only FANCIFUL and ARBITRARY are truly "invented" - DESCRIPTIVE and GENERIC are NOT
+        brand_is_invented = classification_category in ["FANCIFUL", "ARBITRARY"]
+        
+        logging.info(f"🏷️ LEGAL MATRIX: '{brand_name_for_matrix}' classification={classification_category}, invented={brand_is_invented}")
         
         # Generate intelligent matrix
         intelligent_matrix = generate_intelligent_trademark_matrix(
             brand_name=brand_name_for_matrix,
             category=request.category,
             trademark_data=tr_data_for_matrix,
-            brand_is_invented=brand_is_invented
+            brand_is_invented=brand_is_invented,
+            classification=brand_classification  # Pass full classification for better commentary
         )
         
         # Convert to TrademarkRiskMatrix schema
