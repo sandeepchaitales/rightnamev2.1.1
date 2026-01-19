@@ -1725,7 +1725,13 @@ CATEGORY_MAPPING = {
     
     # Finance & Payments
     "finance": "finance", "banking": "finance", "payments": "finance", "insurance": "finance",
-    "investment": "finance", "lending": "finance", "wealth": "finance"
+    "investment": "finance", "lending": "finance", "wealth": "finance",
+    
+    # Fashion & Apparel (NEW)
+    "fashion": "fashion", "apparel": "fashion", "clothing": "fashion", "streetwear": "fashion",
+    "fashion & apparel": "fashion", "footwear": "fashion", "shoes": "fashion",
+    "accessories": "fashion", "luxury fashion": "fashion", "sportswear": "fashion",
+    "athleisure": "fashion", "denim": "fashion", "activewear": "fashion"
 }
 
 def get_category_key(category: str) -> str:
