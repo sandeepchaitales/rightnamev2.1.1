@@ -5637,10 +5637,13 @@ def get_nice_classification(category: str) -> dict:
     # Default to Class 35 for unknown categories
     return {"class_number": 35, "class_description": "Advertising, business management, retail services", "matched_term": category}
 
-def generate_intelligent_trademark_matrix(brand_name: str, category: str, trademark_data: dict, brand_is_invented: bool = True) -> dict:
+def generate_intelligent_trademark_matrix(brand_name: str, category: str, trademark_data: dict, brand_is_invented: bool = True, classification: dict = None) -> dict:
     """
     Generate intelligent Legal Risk Matrix with SPECIFIC, ACTIONABLE commentary
-    based on actual trademark research results - NOT generic placeholders.
+    based on actual trademark research results AND brand classification - NOT generic placeholders.
+    
+    Uses the 5-tier trademark spectrum:
+    GENERIC → DESCRIPTIVE → SUGGESTIVE → ARBITRARY → FANCIFUL
     """
     # Extract data from trademark research
     risk_score = trademark_data.get('overall_risk_score', 5) if trademark_data else 5
@@ -5652,12 +5655,34 @@ def generate_intelligent_trademark_matrix(brand_name: str, category: str, tradem
     nice_class = get_nice_classification(category)
     class_number = nice_class.get('class_number', 35)
     
-    # Calculate individual risk factors
-    genericness_score = 1 if brand_is_invented else min(6, 2 + len(brand_name.split()) * 2)
+    # Get classification details
+    classification_category = classification.get("category", "SUGGESTIVE") if classification else ("FANCIFUL" if brand_is_invented else "DESCRIPTIVE")
+    
+    # ==================== CLASSIFICATION-AWARE SCORING ====================
+    # Map classification to genericness score
+    CLASSIFICATION_SCORES = {
+        "FANCIFUL": 1,      # Invented words - strongest
+        "ARBITRARY": 2,     # Real words, unrelated use
+        "SUGGESTIVE": 4,    # Hints at product
+        "DESCRIPTIVE": 7,   # Describes product (hard to register)
+        "GENERIC": 9        # Common term (unregistrable)
+    }
+    
+    genericness_score = CLASSIFICATION_SCORES.get(classification_category, 5)
     conflict_score = min(9, 1 + total_conflicts * 2) if total_conflicts > 0 else 1
-    phonetic_score = min(7, 1 + len([c for c in tm_conflicts if c.get('conflict_type') == 'phonetic']) * 3)
+    phonetic_score = min(7, 1 + len([c for c in tm_conflicts if safe_get(c, 'conflict_type') == 'phonetic']) * 3)
     class_score = min(6, 1 + total_conflicts) if total_conflicts > 0 else 2
-    rebrand_score = min(8, 1 + conflict_score // 2)
+    rebrand_score = min(8, 1 + conflict_score // 2 + (genericness_score // 2))  # Factor in genericness
+    
+    # Adjust registration probability based on classification
+    CLASSIFICATION_PROB_MODIFIER = {
+        "FANCIFUL": 1.2,    # +20% chance
+        "ARBITRARY": 1.1,   # +10% chance
+        "SUGGESTIVE": 1.0,  # No change
+        "DESCRIPTIVE": 0.6, # -40% chance
+        "GENERIC": 0.1      # -90% chance
+    }
+    adjusted_registration_prob = min(95, int(registration_prob * CLASSIFICATION_PROB_MODIFIER.get(classification_category, 1.0)))
     
     # Determine zones
     def get_zone(score):
@@ -5665,20 +5690,36 @@ def generate_intelligent_trademark_matrix(brand_name: str, category: str, tradem
         elif score <= 6: return "Yellow"
         else: return "Red"
     
-    # Generate SPECIFIC commentary for each factor
+    # ==================== CLASSIFICATION-SPECIFIC COMMENTARY ====================
+    DISTINCTIVENESS_COMMENTARY = {
+        "FANCIFUL": f"'{brand_name}' is a FANCIFUL (coined/invented) term with no dictionary meaning - STRONGEST trademark protection. Inherently distinctive under TMEP §1209. No Secondary Meaning proof required. Recommendation: File as wordmark in Class {class_number} with intent-to-use basis. Consider design mark for additional protection layer.",
+        
+        "ARBITRARY": f"'{brand_name}' is an ARBITRARY mark - a real word used in an unrelated context. STRONG trademark protection. Example: 'Apple' for computers. Recommendation: File as wordmark in Class {class_number}. Distinctiveness is inherent but document unique usage context.",
+        
+        "SUGGESTIVE": f"'{brand_name}' is a SUGGESTIVE mark - hints at product qualities without directly describing them. MODERATE trademark protection. Requires imagination to connect name to product. Recommendation: File in Class {class_number} with strong specimens of use showing acquired distinctiveness.",
+        
+        "DESCRIPTIVE": f"⚠️ '{brand_name}' is a DESCRIPTIVE mark - directly describes the product/service. WEAK trademark protection. USPTO will likely issue Office Action for descriptiveness. Recommendation: (1) Add distinctive design elements, (2) Build 5+ years of exclusive use for 'acquired distinctiveness', or (3) Consider supplemental register initially. Budget for legal response: $1,500-3,000.",
+        
+        "GENERIC": f"🚫 '{brand_name}' appears GENERIC - common term for the product category. UNREGISTRABLE as trademark. Example: 'Computer Store' for computer retail. Recommendation: REBRAND with distinctive coined term. Generic terms cannot function as trademarks regardless of use duration. Alternative: Use as trade dress with highly distinctive visual elements only."
+    }
+    
+    genericness_commentary = DISTINCTIVENESS_COMMENTARY.get(classification_category, 
+        f"'{brand_name}' shows {classification_category} distinctiveness. Registration outlook depends on use evidence and market exclusivity.")
+    
+    # ==================== GENERATE MATRIX ====================
     matrix = {
         "genericness": {
             "likelihood": genericness_score,
-            "severity": genericness_score + 1 if genericness_score > 3 else 2,
+            "severity": min(10, genericness_score + 1),
             "zone": get_zone(genericness_score),
-            "commentary": f"'{brand_name}' is {'a coined/invented term with no dictionary meaning - HIGH distinctiveness for trademark protection' if brand_is_invented else 'partially descriptive which may face distinctiveness challenges'}. Recommendation: {'File as wordmark in Class ' + str(class_number) + ' with intent-to-use basis. Consider design mark for additional protection layer.' if genericness_score <= 3 else 'Strengthen with distinctive design elements. Consider acquired distinctiveness argument if mark has been in use.'}"
+            "commentary": genericness_commentary
         },
         "existing_conflicts": {
             "likelihood": conflict_score,
             "severity": min(9, conflict_score + 2),
             "zone": get_zone(conflict_score),
             "commentary": f"Found {total_conflicts} potential conflicts ({len(tm_conflicts)} trademark, {len(co_conflicts)} company registrations). " + (
-                f"Top conflict: {tm_conflicts[0].get('name', 'Unknown')} in Class {tm_conflicts[0].get('class_number', 'N/A')} ({tm_conflicts[0].get('status', 'Status unknown')}). Recommendation: Conduct comprehensive knockout search with IP attorney before filing. Prepare co-existence agreement template if proceeding."
+                f"Top conflict: {safe_get(tm_conflicts[0], 'name', 'Unknown')} in Class {safe_get(tm_conflicts[0], 'class_number', 'N/A')} ({safe_get(tm_conflicts[0], 'status', 'Status unknown')}). Recommendation: Conduct comprehensive knockout search with IP attorney before filing. Prepare co-existence agreement template if proceeding."
                 if tm_conflicts else 
                 "No direct trademark conflicts found in primary class. Recommendation: Proceed with filing in Class " + str(class_number) + ". Set up trademark watch service to monitor new filings with similar marks."
             )
@@ -5687,7 +5728,7 @@ def generate_intelligent_trademark_matrix(brand_name: str, category: str, tradem
             "likelihood": phonetic_score,
             "severity": phonetic_score + 1 if phonetic_score > 3 else 2,
             "zone": get_zone(phonetic_score),
-            "commentary": f"{'Phonetic variants analyzed: No confusingly similar marks detected in Class ' + str(class_number) + '.' if phonetic_score <= 3 else 'Potential phonetic conflicts identified with similar-sounding marks.'} Recommendation: {'Register both word mark and phonetic variants as defensive strategy. Monitor app stores and domain registrations for sound-alike competitors.' if phonetic_score <= 3 else 'Consider slight spelling modifications to increase distinctiveness. Clear phonetic differentiation from ' + (tm_conflicts[0].get('name', 'existing marks') if tm_conflicts else 'existing marks') + ' is advised.'}"
+            "commentary": f"{'Phonetic variants analyzed: No confusingly similar marks detected in Class ' + str(class_number) + '.' if phonetic_score <= 3 else 'Potential phonetic conflicts identified with similar-sounding marks.'} Recommendation: {'Register both word mark and phonetic variants as defensive strategy. Monitor app stores and domain registrations for sound-alike competitors.' if phonetic_score <= 3 else 'Consider slight spelling modifications to increase distinctiveness. Clear phonetic differentiation from ' + (safe_get(tm_conflicts[0], 'name', 'existing marks') if tm_conflicts else 'existing marks') + ' is advised.'}"
         },
         "relevant_classes": {
             "likelihood": class_score,
@@ -5699,9 +5740,24 @@ def generate_intelligent_trademark_matrix(brand_name: str, category: str, tradem
             "likelihood": rebrand_score,
             "severity": 8 if rebrand_score > 5 else 4,
             "zone": get_zone(rebrand_score),
-            "commentary": f"{'LOW rebranding risk - No senior marks with enforcement history found. Registration outlook: {:.0f}% success probability.'.format(registration_prob) if rebrand_score <= 3 else 'MODERATE rebranding risk due to existing conflicts. Recommend legal clearance opinion before significant brand investment.'} Action: {'Proceed with brand development. Secure federal registration early to build brand equity and prevent future challenges.' if rebrand_score <= 3 else 'Obtain formal legal opinion on conflict severity. Budget for potential opposition proceedings ($5,000-25,000 depending on jurisdiction).'}"
+            "commentary": (
+                f"{'LOW' if rebrand_score <= 3 else 'MODERATE' if rebrand_score <= 6 else 'HIGH'} rebranding risk. " +
+                (f"Classification: {classification_category}. " if classification_category in ["DESCRIPTIVE", "GENERIC"] else "") +
+                f"Registration outlook: {adjusted_registration_prob}% success probability. " +
+                ("Action: Proceed with brand development. Secure federal registration early." if rebrand_score <= 3 
+                 else "Action: Obtain formal legal opinion. Consider alternative brand names as backup." if classification_category in ["DESCRIPTIVE", "GENERIC"]
+                 else "Action: Budget for potential opposition proceedings ($5,000-25,000).")
+            )
         },
-        "overall_assessment": f"Overall trademark risk: {risk_score}/10. {'Favorable registration outlook - proceed with filing.' if risk_score <= 3 else 'Moderate risk - legal clearance recommended.' if risk_score <= 6 else 'High risk - significant conflicts require resolution before proceeding.'} Registration success probability: {registration_prob}%. {'Timeline: 12-18 months for registration. Estimated cost: $2,500-5,000 (single class, single jurisdiction).' if risk_score <= 5 else 'Extended timeline likely due to potential opposition. Budget for legal defense costs.'}"
+        "overall_assessment": (
+            f"Overall trademark risk: {max(risk_score, genericness_score)}/10 (Classification: {classification_category}). " +
+            ("✅ Favorable registration outlook - proceed with filing." if genericness_score <= 3 and risk_score <= 3
+             else "⚠️ Moderate risk - legal clearance recommended." if genericness_score <= 5 and risk_score <= 6
+             else "🚨 High risk - significant challenges expected." if classification_category in ["DESCRIPTIVE", "GENERIC"]
+             else "⚠️ Conflicts require resolution before proceeding.") +
+            f" Adjusted registration success probability: {adjusted_registration_prob}%." +
+            (" Timeline: 12-18 months for registration." if adjusted_registration_prob >= 60 else " Extended timeline likely due to potential Office Actions.")
+        )
     }
     
     return matrix
