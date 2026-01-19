@@ -5850,6 +5850,37 @@ def build_social_availability_from_data(brand_name: str, social_data: dict) -> d
     }
 
 
+def generate_strategic_classification(classification: dict, trademark_risk: int = 5) -> str:
+    """
+    TOP-LEVEL FUNCTION: Generate strategic_classification string based on ACTUAL 5-step spectrum classification.
+    This is used to OVERRIDE LLM-generated classifications that are incorrect.
+    
+    Examples:
+    - FANCIFUL: "STRONGEST - Coined/Invented term with highest legal distinctiveness"
+    - DESCRIPTIVE: "WEAK - Descriptive term (directly describes product) with low legal distinctiveness"
+    """
+    if not classification:
+        return "Classification unavailable"
+    
+    category = classification.get("category", "DESCRIPTIVE")
+    protectability = classification.get("protectability", "WEAK")
+    distinctiveness = classification.get("distinctiveness", "LOW")
+    
+    # Map classification category to human-readable description
+    category_descriptions = {
+        "FANCIFUL": "Coined/Invented term (completely made up word)",
+        "ARBITRARY": "Arbitrary term (common word in unrelated context)",
+        "SUGGESTIVE": "Suggestive term (hints at product, needs imagination)",
+        "DESCRIPTIVE": "Descriptive term (directly describes the product/service)",
+        "GENERIC": "Generic term (names the product category itself)"
+    }
+    
+    category_description = category_descriptions.get(category, category)
+    
+    # Build the strategic classification string
+    return f"{protectability} - {category_description} with {distinctiveness.lower()} legal distinctiveness"
+
+
 def build_conflict_relevance_analysis(
     brand_name: str,
     category: str,
