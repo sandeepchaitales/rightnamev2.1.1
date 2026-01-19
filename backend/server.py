@@ -8669,18 +8669,7 @@ BRAND: {brand}
                 },
                 "multi_domain_availability": generate_smart_domain_suggestions(brand_name, category, request.countries, domain_available),
                 "domain_strategy": generate_fallback_domain_strategy(brand_name, category, request.countries, domain_available),
-                "social_availability": {
-                    "handle": brand_name.lower(),
-                    "twitter": {"available": True, "url": f"https://twitter.com/{brand_name.lower()}"},
-                    "instagram": {"available": True, "url": f"https://instagram.com/{brand_name.lower()}"},
-                    "linkedin": {"available": True, "url": f"https://linkedin.com/company/{brand_name.lower()}"},
-                    "facebook": {"available": True, "url": f"https://facebook.com/{brand_name.lower()}"},
-                    "youtube": {"available": True, "url": f"https://youtube.com/@{brand_name.lower()}"},
-                    "tiktok": {"available": True, "url": f"https://tiktok.com/@{brand_name.lower()}"},
-                    "taken_platforms": [],
-                    "available_platforms": ["twitter", "instagram", "linkedin", "facebook", "youtube", "tiktok"],
-                    "recommendation": f"Secure @{brand_name.lower()} across all major platforms immediately."
-                },
+                "social_availability": build_social_availability_from_data(brand_name, social_data),
                 "trademark_research": {
                     "nice_classification": nice_class,
                     "overall_risk_score": trademark_risk,
