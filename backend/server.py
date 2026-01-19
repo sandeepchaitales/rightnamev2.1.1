@@ -9304,24 +9304,19 @@ BRAND: {brand}
         
         # ============ OVERRIDE STRATEGIC CLASSIFICATION WITH PRE-COMPUTED DATA ============
         # The LLM often ignores our pre-computed classification, so we FORCE it here
+        # ALWAYS OVERRIDE - don't trust the LLM's classification at all
         brand_classification = all_brand_data.get(brand_name_for_matrix, {}).get("classification")
         if brand_classification:
             correct_classification = generate_strategic_classification(brand_classification, 5)
             old_classification = brand_score.strategic_classification
             
-            # Only override if LLM got it wrong
-            category = brand_classification.get("category", "DESCRIPTIVE")
-            if category == "FANCIFUL" and "descriptive" in (old_classification or "").lower():
-                brand_score.strategic_classification = correct_classification
-                logging.warning(f"⚠️ FIXED strategic_classification for '{brand_name_for_matrix}': "
-                              f"'{old_classification}' → '{correct_classification}' (LLM incorrectly said DESCRIPTIVE)")
-            elif category == "DESCRIPTIVE" and "coined" in (old_classification or "").lower():
-                brand_score.strategic_classification = correct_classification
-                logging.warning(f"⚠️ FIXED strategic_classification for '{brand_name_for_matrix}': "
-                              f"'{old_classification}' → '{correct_classification}' (LLM incorrectly said COINED)")
-            elif category != "DESCRIPTIVE" and old_classification != correct_classification:
-                # Always use our pre-computed classification
-                brand_score.strategic_classification = correct_classification
+            # ALWAYS override with our pre-computed classification
+            brand_score.strategic_classification = correct_classification
+            
+            if old_classification and old_classification != correct_classification:
+                logging.warning(f"⚠️ OVERRODE LLM strategic_classification for '{brand_name_for_matrix}': "
+                              f"'{old_classification}' → '{correct_classification}'")
+            else:
                 logging.info(f"✅ Set strategic_classification for '{brand_name_for_matrix}': {correct_classification}")
         # ============ END STRATEGIC CLASSIFICATION OVERRIDE ============
     
