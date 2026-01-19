@@ -1700,6 +1700,80 @@ CATEGORY_COUNTRY_MARKET_DATA = {
             "strategic_advantage": "Digital-first approach enables superior user experience. API-based architecture allows rapid iteration. Regulatory clarity increasing globally.",
             "entry_recommendation": "Phase 1: Niche segment with clear pain point. Phase 2: Expand product suite. Phase 3: Geographic or vertical expansion. Focus on compliance, partnerships with licensed entities, and fraud prevention."
         }
+    },
+    
+    # ============ FASHION & APPAREL ============
+    "fashion": {
+        "India": {
+            "competitors": [
+                {"name": "Zara India", "x_coordinate": 80, "y_coordinate": 75, "quadrant": "Fast Fashion Premium"},
+                {"name": "H&M India", "x_coordinate": 60, "y_coordinate": 65, "quadrant": "Fast Fashion Value"},
+                {"name": "Bewakoof", "x_coordinate": 35, "y_coordinate": 70, "quadrant": "DTC Youth"},
+                {"name": "The Souled Store", "x_coordinate": 45, "y_coordinate": 75, "quadrant": "Pop Culture Streetwear"}
+            ],
+            "user_position": {"x": 55, "y": 80, "quadrant": "Premium Streetwear"},
+            "axis_x": "Price: ₹500 Budget → ₹10,000+ Premium",
+            "axis_y": "Style: Classic/Traditional → Streetwear/Avant-garde",
+            "white_space": "India's $90B apparel market is dominated by ethnic wear (40%) and fast fashion. **Gap: Premium streetwear segment (₹2,000-8,000)** targeting Gen Z urbanites. Only 5% of market is streetwear vs 25% globally. Rising sneaker culture, hip-hop influence, and Instagram fashion driving demand. Limited homegrown streetwear brands with authentic positioning.",
+            "strategic_advantage": "430M Gen Z + Millennials with rising disposable income. Instagram/YouTube fashion influencers drive trends. Limited competition in premium streetwear - Bewakoof is budget, international brands are overpriced. D2C model enables 60%+ gross margins. India's textile manufacturing ecosystem supports local production.",
+            "entry_recommendation": "Phase 1: Launch 20-30 SKU capsule collection, D2C only via Instagram + own website. Phase 2: Collaborate with Indian hip-hop artists, cricketers for authenticity. Phase 3: Selective multi-brand retail (Lifestyle, Shopper's Stop). Key: Build community via drops, limited editions, streetwear culture events."
+        },
+        "USA": {
+            "competitors": [
+                {"name": "Supreme", "x_coordinate": 95, "y_coordinate": 90, "quadrant": "Hype Streetwear"},
+                {"name": "Off-White", "x_coordinate": 90, "y_coordinate": 85, "quadrant": "Luxury Streetwear"},
+                {"name": "Stüssy", "x_coordinate": 75, "y_coordinate": 80, "quadrant": "OG Streetwear"},
+                {"name": "BAPE", "x_coordinate": 85, "y_coordinate": 75, "quadrant": "Japanese Streetwear"}
+            ],
+            "user_position": {"x": 65, "y": 78, "quadrant": "Emerging Streetwear"},
+            "axis_x": "Price: $50 Entry → $500+ Hype",
+            "axis_y": "Positioning: Mass → Exclusive/Limited",
+            "white_space": "US streetwear market ($185B by 2027) is mature but **Gap: Affordable premium streetwear ($80-200)** between fast fashion (H&M, Zara) and hype brands (Supreme, Off-White). Gen Z wants authenticity without $300+ price tags. Sustainability and ethical production increasingly important. Resale market ($15B) indicates strong demand exceeds supply for quality streetwear.",
+            "strategic_advantage": "Direct-to-consumer eliminates wholesale margins. Social media enables community-building without retail footprint. Collaborations drive virality. US consumers pay premium for 'story' and authenticity. Athleisure crossover expands addressable market.",
+            "entry_recommendation": "Phase 1: Launch with limited 'drop' model - build scarcity and hype. Phase 2: Strategic collaborations with artists, athletes, brands (start small). Phase 3: Selective wholesale to Nordstrom, SSENSE, END Clothing. Key: Community-first, authentic brand story, quality over quantity."
+        },
+        "Japan": {
+            "competitors": [
+                {"name": "BAPE", "x_coordinate": 90, "y_coordinate": 85, "quadrant": "Harajuku Hype"},
+                {"name": "NEIGHBORHOOD", "x_coordinate": 85, "y_coordinate": 80, "quadrant": "Military Streetwear"},
+                {"name": "UNIQLO", "x_coordinate": 40, "y_coordinate": 50, "quadrant": "Mass Basics"},
+                {"name": "COMME des GARÇONS", "x_coordinate": 95, "y_coordinate": 90, "quadrant": "Avant-garde Luxury"}
+            ],
+            "user_position": {"x": 70, "y": 75, "quadrant": "International Streetwear"},
+            "axis_x": "Price: ¥3,000 Entry → ¥100,000+ Luxury",
+            "axis_y": "Style: Minimalist → Bold/Experimental",
+            "white_space": "Japan's $100B fashion market is birthplace of streetwear. **Gap: International streetwear brands** with authentic non-Japanese story. Japanese consumers are most discerning but respect authenticity. 'Gaijin' (foreign) brands with genuine culture story can succeed (see: Supreme's Japan success). Growing 'genderless' and sustainability trends create new niches.",
+            "strategic_advantage": "Japanese consumers pay premium for quality and story. Strong sneaker culture supports streetwear crossover. Tokyo remains global fashion capital - success here validates brand globally. Japanese wholesale/retail partners (BEAMS, UNITED ARROWS) provide distribution.",
+            "entry_recommendation": "Phase 1: Pop-up in Harajuku/Shibuya to test market, build buzz. Phase 2: Wholesale to curated retailers (BEAMS, UNITED ARROWS). Phase 3: Flagship store if demand warrants. Key: Never discount (destroys brand in Japan), respect local sizing, partner with Japanese creatives for localization."
+        },
+        "UK": {
+            "competitors": [
+                {"name": "Palace Skateboards", "x_coordinate": 85, "y_coordinate": 85, "quadrant": "British Streetwear"},
+                {"name": "Burberry", "x_coordinate": 90, "y_coordinate": 70, "quadrant": "Luxury Heritage"},
+                {"name": "ASOS", "x_coordinate": 45, "y_coordinate": 65, "quadrant": "Fast Fashion Online"},
+                {"name": "Represent", "x_coordinate": 75, "y_coordinate": 80, "quadrant": "Manchester Streetwear"}
+            ],
+            "user_position": {"x": 65, "y": 78, "quadrant": "International Streetwear"},
+            "axis_x": "Price: £30 Budget → £500+ Premium",
+            "axis_y": "Positioning: High Street → Streetwear Culture",
+            "white_space": "UK streetwear market (£12B) has strong local scene (Palace, Corteiz, Represent). **Gap: Accessible premium international streetwear (£80-200)**. Post-Brexit, EU brands face logistics challenges - opportunity for non-EU brands. London remains key fashion city. Football/music culture drives streetwear adoption beyond core skate/hip-hop.",
+            "strategic_advantage": "English-speaking market enables direct marketing. Strong influencer ecosystem. London Fashion Week provides platform. UK consumers are early adopters - success here influences EU. Post-Brexit means less EU competition, more opportunity for US/Asia brands.",
+            "entry_recommendation": "Phase 1: Online-first via own site, partner with END Clothing, SSENSE for credibility. Phase 2: London pop-up in Soho/Shoreditch. Phase 3: Wholesale to Selfridges, Harvey Nichols. Key: Football and grime music collaborations resonate locally."
+        },
+        "default": {
+            "competitors": [
+                {"name": "Nike", "x_coordinate": 70, "y_coordinate": 75, "quadrant": "Sportswear Giant"},
+                {"name": "Adidas", "x_coordinate": 65, "y_coordinate": 70, "quadrant": "Sport Heritage"},
+                {"name": "Zara", "x_coordinate": 55, "y_coordinate": 60, "quadrant": "Fast Fashion"},
+                {"name": "Supreme", "x_coordinate": 90, "y_coordinate": 90, "quadrant": "Hype Streetwear"}
+            ],
+            "user_position": {"x": 60, "y": 78, "quadrant": "Emerging Streetwear"},
+            "axis_x": "Price: Budget → Premium",
+            "axis_y": "Style: Classic → Streetwear/Experimental",
+            "white_space": "Global streetwear market continues rapid growth driven by Gen Z and millennial consumers. **Gap: Authentic, sustainable streetwear** at accessible price points ($80-200). Fast fashion lacks authenticity; hype brands are unattainable. Community-driven brands with genuine stories outperform.",
+            "strategic_advantage": "Direct-to-consumer model enables global reach with lower capital requirements. Social media and collaborations drive organic growth. Sustainability increasingly important differentiator.",
+            "entry_recommendation": "Phase 1: Launch D2C with limited drops to build scarcity. Phase 2: Strategic collaborations for reach. Phase 3: Selective wholesale to premium retailers. Focus on community, authenticity, and quality."
+        }
     }
 }
 
