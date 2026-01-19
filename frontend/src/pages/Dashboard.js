@@ -2772,7 +2772,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== NEW PAGE: MARKET INTELLIGENCE (MOVED BEFORE DIGITAL PRESENCE) ==================== */}
+                {/* ==================== PAGE 6: MARKET INTELLIGENCE ==================== */}
                 {(brand.domain_analysis || brand.visibility_analysis || brand.cultural_analysis) && (
                     <section className="print-new-page">
                         <SectionHeader icon={TrendingUp} title="Market Intelligence" subtitle="Domain status, conflicts & cultural fit" color="amber" />
@@ -2788,7 +2788,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== NEW PAGE: DIGITAL PRESENCE ==================== */}
+                {/* ==================== PAGE 7: DIGITAL PRESENCE ==================== */}
                 {(brand.multi_domain_availability || brand.social_availability) && (
                     <section className="print-new-page">
                         <SectionHeader icon={Globe} title="Digital Presence Check" subtitle="Domain & social availability" color="cyan" badge={`${brand.multi_domain_availability?.category_domains?.filter(d => d.available).length || 0}/${brand.multi_domain_availability?.category_domains?.length || 0} Available`} />
@@ -2804,7 +2804,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== NEW PAGE: COMPETITIVE LANDSCAPE ==================== */}
+                {/* ==================== PAGE 8: COMPETITIVE LANDSCAPE ==================== */}
                 {(brand.competitor_analysis || brand.country_competitor_analysis?.length > 0) && (
                     <section className="print-new-page">
                         <SectionHeader icon={Users} title="Competitive Landscape" subtitle="Strategic positioning matrix by market" color="blue" />
@@ -2819,7 +2819,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== NEW PAGE: LEGAL RISK MATRIX ==================== */}
+                {/* ==================== PAGE 9: LEGAL RISK MATRIX ==================== */}
                 {brand.trademark_matrix && (
                     <section className="print-new-page">
                         <SectionHeader icon={Scale} title="Legal Risk Matrix" subtitle="IP Analysis & Trademark Assessment" color="red" />
@@ -2831,7 +2831,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== NEW PAGE: TRADEMARK RESEARCH ==================== */}
+                {/* ==================== PAGE 10: TRADEMARK RESEARCH INTELLIGENCE ==================== */}
                 {brand.trademark_research && (
                     <section className="print-new-page">
                         <SectionHeader icon={Shield} title="Trademark Research Intelligence" subtitle="Real-Time Conflict Discovery & Risk Analysis" color="violet" badge="NEW" />
