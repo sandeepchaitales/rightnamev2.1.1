@@ -839,17 +839,17 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
                     {categoryDomains.length > 0 && (
                         <div className="mb-4">
                             <p className="text-xs font-bold text-slate-500 uppercase mb-2">Category TLDs</p>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 print:grid-cols-4 print:gap-1">
                                 {categoryDomains.map((d, i) => (
-                                    <div key={i} className={`p-3 rounded-lg border flex items-center justify-between ${
+                                    <div key={i} className={`p-3 print:p-1 rounded-lg border flex items-center justify-between ${
                                         d.available || d.status?.toLowerCase().includes('available') 
                                             ? 'bg-emerald-50 border-emerald-200' 
                                             : 'bg-red-50 border-red-200'
                                     }`}>
                                         <span className="font-mono text-xs font-bold text-slate-700">{d.domain}</span>
                                         {d.available || d.status?.toLowerCase().includes('available') 
-                                            ? <CheckCircle className="w-4 h-4 text-emerald-500" />
-                                            : <XOctagon className="w-4 h-4 text-red-500" />
+                                            ? <CheckCircle className="w-4 h-4 text-emerald-500 print:w-3 print:h-3" />
+                                            : <XOctagon className="w-4 h-4 text-red-500 print:w-3 print:h-3" />
                                         }
                                     </div>
                                 ))}
@@ -860,17 +860,17 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
                     {countryDomains.length > 0 && (
                         <div className="mb-4">
                             <p className="text-xs font-bold text-slate-500 uppercase mb-2">Country TLDs</p>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 print:grid-cols-4 print:gap-1">
                                 {countryDomains.map((d, i) => (
-                                    <div key={i} className={`p-3 rounded-lg border flex items-center justify-between ${
+                                    <div key={i} className={`p-3 print:p-1 rounded-lg border flex items-center justify-between ${
                                         d.available || d.status?.toLowerCase().includes('available') 
                                             ? 'bg-emerald-50 border-emerald-200' 
                                             : 'bg-red-50 border-red-200'
                                     }`}>
                                         <span className="font-mono text-xs font-bold text-slate-700">{d.domain}</span>
                                         {d.available || d.status?.toLowerCase().includes('available') 
-                                            ? <CheckCircle className="w-4 h-4 text-emerald-500" />
-                                            : <XOctagon className="w-4 h-4 text-red-500" />
+                                            ? <CheckCircle className="w-4 h-4 text-emerald-500 print:w-3 print:h-3" />
+                                            : <XOctagon className="w-4 h-4 text-red-500 print:w-3 print:h-3" />
                                         }
                                     </div>
                                 ))}
@@ -879,7 +879,7 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
                     )}
                     
                     {multiDomain?.recommended_domain && (
-                        <div className="p-4 bg-violet-50 rounded-xl border border-violet-200">
+                        <div className="p-4 print:p-2 bg-violet-50 rounded-xl border border-violet-200">
                             <p className="text-xs font-bold text-violet-700 uppercase mb-1">Recommended Domain</p>
                             <p className="font-mono font-bold text-violet-900">{multiDomain.recommended_domain}</p>
                             {multiDomain.acquisition_strategy && (
