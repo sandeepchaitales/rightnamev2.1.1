@@ -2750,12 +2750,11 @@ const Dashboard = () => {
                             </div>
                         ) : (
                             <LockedSection title="Detailed Framework Analysis" onUnlock={handleRegister} />
-                        )
                         )}
                     </section>
                 )}
 
-                {/* ==================== McKINSEY THREE-QUESTION FRAMEWORK ANALYSIS ==================== */}
+                {/* ==================== PAGE 5: McKINSEY THREE-PILLAR BRAND ASSESSMENT ==================== */}
                 {brand.mckinsey_analysis && (
                     <section className="print-new-page">
                         <SectionHeader 
