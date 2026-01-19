@@ -2479,11 +2479,14 @@ const Dashboard = () => {
                         print-color-adjust: exact !important;
                     }
                     
+                    /* ========== HIDE NON-PRINT ELEMENTS ========== */
                     .no-print { 
-                        display: none !important; 
+                        display: none !important;
+                        height: 0 !important;
+                        overflow: hidden !important;
                     }
                     
-                    /* ========== PAGE 1: COVER PAGE ========== */
+                    /* ========== PAGE 1: COVER PAGE (SUMMARY) ========== */
                     .cover-page-container {
                         position: relative !important;
                         left: auto !important;
@@ -2491,6 +2494,7 @@ const Dashboard = () => {
                         width: 100% !important;
                         height: 100vh !important;
                         min-height: 100vh !important;
+                        max-height: 100vh !important;
                         display: flex !important;
                         flex-direction: column !important;
                         align-items: center !important;
@@ -2500,36 +2504,68 @@ const Dashboard = () => {
                         page-break-after: always !important;
                         break-after: page !important;
                         box-sizing: border-box !important;
+                        overflow: hidden !important;
                     }
                     
-                    /* ========== PAGE 2: Evaluation Summary (NO page break before) ========== */
+                    /* ========== PAGE 2: EVALUATION SUMMARY (REPORT STARTS) ========== */
+                    /* Force Page 2 to start immediately after Cover Page */
                     .page-2-content {
-                        page-break-before: auto !important;
+                        page-break-before: avoid !important;
+                        break-before: avoid !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
+                        padding-top: 0 !important;
+                        margin-top: 0 !important;
                     }
                     
-                    /* ========== PAGE 3+: New pages ========== */
+                    /* ========== PAGE 3: FINAL ASSESSMENT + STRATEGY SNAPSHOT ========== */
+                    .page-3-content {
+                        page-break-before: always !important;
+                        break-before: page !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
+                        padding-top: 5mm !important;
+                    }
+                    
+                    /* ========== PAGE 4: WHAT'S IN THE NAME + 6 DIMENSIONS ========== */
+                    .page-4-content {
+                        page-break-before: always !important;
+                        break-before: page !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
+                        padding-top: 5mm !important;
+                    }
+                    
+                    /* ========== PAGE 5+: EVERY MAJOR SECTION ON NEW PAGE ========== */
                     .print-new-page { 
                         page-break-before: always !important; 
                         break-before: page !important;
                         padding-top: 5mm !important;
                     }
                     
-                    /* ========== PREVENT BREAKS INSIDE ========== */
+                    /* ========== PREVENT BREAKS INSIDE CARDS ========== */
                     .print-card, 
                     .print-section > div,
-                    .print-no-break {
+                    .print-no-break,
+                    .break-inside-avoid {
                         break-inside: avoid !important; 
                         page-break-inside: avoid !important;
                     }
                     
-                    /* ========== SPACING ========== */
+                    /* ========== MAIN CONTENT SPACING ========== */
                     main {
                         max-width: 100% !important;
                         padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    
+                    main > section:first-of-type {
+                        margin-top: 0 !important;
+                        padding-top: 0 !important;
                     }
                     
                     section {
-                        margin-bottom: 8mm !important;
+                        margin-bottom: 5mm !important;
                     }
                     
                     /* ========== GRIDS FOR PRINT ========== */
@@ -2538,20 +2574,25 @@ const Dashboard = () => {
                     }
                     
                     .grid {
-                        gap: 6px !important;
+                        gap: 4px !important;
                     }
                     
                     /* ========== IMAGES ========== */
                     img {
                         max-width: 100% !important;
                     }
+                    
+                    /* ========== FIX STICKY ELEMENTS ========== */
+                    .sticky {
+                        position: relative !important;
+                    }
                 }
             `}</style>
 
-            {/* Cover Page */}
+            {/* Cover Page - PAGE 1 */}
             <CoverPage brandName={brand.brand_name} score={brand.namescore} verdict={brand.verdict} date={currentDate} query={query} reportId={data.report_id} />
 
-            {/* Navbar */}
+            {/* Navbar - Hidden in Print */}
             <div className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center no-print sticky top-0 z-50">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="rounded-full">
