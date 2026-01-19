@@ -2705,31 +2705,33 @@ const Dashboard = () => {
                 </section>
 
                 {/* ==================== PAGE 3: FINAL ASSESSMENT + STRATEGY SNAPSHOT ==================== */}
-                {/* Final Assessment */}
-                {brand.final_assessment && (
-                    <section className="print-new-page">
-                        <SectionHeader icon={Zap} title="Final Assessment" subtitle="Consultant Verdict & Roadmap" color="emerald" />
-                        {isAuthenticated ? (
-                            <FinalAssessmentFull assessment={brand.final_assessment} verdict={brand.verdict} score={brand.namescore} />
-                        ) : (
-                            <LockedSection title="Final Assessment" onUnlock={handleRegister} />
-                        )}
-                    </section>
-                )}
-
-                {/* Strategy Snapshot - Same Page 3 as Final Assessment */}
-                <section className={brand.final_assessment ? "" : "print-new-page"}>
-                    <SectionHeader icon={Target} title="Strategy Snapshot" subtitle="Strengths and risks analysis" color="emerald" />
-                    {isAuthenticated ? (
-                        <StrategySnapshot classification={brand.strategic_classification} pros={brand.pros} cons={brand.cons} />
-                    ) : (
-                        <LockedSection title="Strategy Snapshot" onUnlock={handleRegister} />
+                <section className="page-3-content">
+                    {/* Final Assessment */}
+                    {brand.final_assessment && (
+                        <div className="mb-6">
+                            <SectionHeader icon={Zap} title="Final Assessment" subtitle="Consultant Verdict & Roadmap" color="emerald" />
+                            {isAuthenticated ? (
+                                <FinalAssessmentFull assessment={brand.final_assessment} verdict={brand.verdict} score={brand.namescore} />
+                            ) : (
+                                <LockedSection title="Final Assessment" onUnlock={handleRegister} />
+                            )}
+                        </div>
                     )}
+
+                    {/* Strategy Snapshot - Same Page 3 as Final Assessment */}
+                    <div>
+                        <SectionHeader icon={Target} title="Strategy Snapshot" subtitle="Strengths and risks analysis" color="emerald" />
+                        {isAuthenticated ? (
+                            <StrategySnapshot classification={brand.strategic_classification} pros={brand.pros} cons={brand.cons} />
+                        ) : (
+                            <LockedSection title="Strategy Snapshot" onUnlock={handleRegister} />
+                        )}
+                    </div>
                 </section>
 
-                {/* ==================== PAGE 4+: WHAT'S IN THE NAME + 6 DIMENSIONS (STACKED) ==================== */}
+                {/* ==================== PAGE 4: WHAT'S IN THE NAME + 6 DIMENSIONS ==================== */}
                 {brand.dimensions && (
-                    <section className="print-new-page">
+                    <section className="page-4-content">
                         {/* Banner */}
                         <div className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 rounded-2xl p-8 text-center mb-6 print:p-6 print:mb-4">
                             <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight print:text-2xl">
@@ -2748,6 +2750,7 @@ const Dashboard = () => {
                             </div>
                         ) : (
                             <LockedSection title="Detailed Framework Analysis" onUnlock={handleRegister} />
+                        )
                         )}
                     </section>
                 )}
