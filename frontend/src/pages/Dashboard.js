@@ -2505,12 +2505,18 @@ const Dashboard = () => {
                         left: -9999px !important;
                     }
                     
-                    /* Hide "Hover/tap for details" text */
-                    *[class*="hover"],
-                    *[class*="tap"],
+                    /* Hide interactive hints text - BE SPECIFIC, don't hide hover: utilities */
+                    .hover-hint,
+                    .tap-hint,
+                    .interactive-hint,
                     .recharts-tooltip-wrapper,
-                    .recharts-legend-wrapper text {
+                    .recharts-tooltip-cursor {
                         display: none !important;
+                    }
+                    
+                    /* Remove hover effects in print (but don't hide elements) */
+                    *:hover {
+                        box-shadow: none !important;
                     }
                     
                     /* ========== PAGE 1: COVER PAGE ========== */
