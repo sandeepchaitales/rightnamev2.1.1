@@ -5776,6 +5776,80 @@ def safe_get(obj, key, default=None):
     return getattr(obj, key, default)
 
 
+def build_social_availability_from_data(brand_name: str, social_data: dict) -> dict:
+    """
+    Build social_availability section from ACTUAL social check data.
+    
+    Takes the real results from check_social_availability() and formats them
+    for the report, instead of returning hardcoded placeholder data.
+    """
+    clean_handle = brand_name.lower().replace(" ", "").replace("-", "")
+    
+    # Default fallback if no data
+    if not social_data or not isinstance(social_data, dict):
+        return {
+            "handle": clean_handle,
+            "platforms": [],
+            "available_platforms": [],
+            "taken_platforms": [],
+            "recommendation": f"Social media check unavailable. Manually verify @{clean_handle} availability."
+        }
+    
+    # Extract platforms checked
+    platforms_checked = social_data.get("platforms_checked", [])
+    
+    # Build platform results
+    platforms = []
+    available_platforms = []
+    taken_platforms = []
+    
+    for p in platforms_checked:
+        platform_name = p.get("platform", "unknown")
+        is_available = p.get("available")
+        status = p.get("status", "UNKNOWN")
+        url = p.get("url", "")
+        
+        platform_result = {
+            "platform": platform_name,
+            "available": is_available,
+            "status": status,
+            "url": url,
+            "handle": p.get("handle", clean_handle)
+        }
+        platforms.append(platform_result)
+        
+        if is_available == True:
+            available_platforms.append(platform_name)
+        elif is_available == False:
+            taken_platforms.append(platform_name)
+    
+    # Generate recommendation based on actual data
+    total_checked = len(platforms_checked)
+    available_count = len(available_platforms)
+    taken_count = len(taken_platforms)
+    
+    if taken_count == 0 and available_count > 0:
+        recommendation = f"✅ EXCELLENT: @{clean_handle} is available on {available_count} platforms. Secure all handles immediately before launch."
+    elif taken_count > 0 and available_count > 0:
+        recommendation = f"⚠️ PARTIAL: @{clean_handle} is available on {available_count}/{total_checked} platforms. Taken on: {', '.join(taken_platforms)}. Consider variations like @{clean_handle}app or @get{clean_handle}."
+    elif taken_count > 0 and available_count == 0:
+        recommendation = f"❌ UNAVAILABLE: @{clean_handle} is taken on all checked platforms ({', '.join(taken_platforms)}). Consider alternative handles or brand name variations."
+    else:
+        recommendation = f"Social availability check inconclusive. Manually verify @{clean_handle} on major platforms."
+    
+    return {
+        "handle": clean_handle,
+        "platforms": platforms,
+        "available_platforms": available_platforms,
+        "taken_platforms": taken_platforms,
+        "recommendation": recommendation,
+        # Also include raw counts for frontend
+        "_total_checked": total_checked,
+        "_available_count": available_count,
+        "_taken_count": taken_count
+    }
+
+
 def build_conflict_relevance_analysis(
     brand_name: str,
     category: str,
