@@ -446,7 +446,7 @@ const PerformanceRadar = ({ dimensions, brandName }) => {
                         </RadarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-2 text-center">
+                <div className="mt-2 text-center no-print">
                     <p className="text-xs text-slate-400">Hover/tap points for details</p>
                 </div>
             </div>
