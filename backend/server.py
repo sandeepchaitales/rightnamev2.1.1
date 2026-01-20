@@ -6150,16 +6150,24 @@ def calculate_dupont_score(
     }
     
     # Factor 2: Similarity of Goods/Services (HIGH WEIGHT)
+    # Get class info for better analysis
+    conflict_class = conflict_data.get("conflict_class") if conflict_data else None
+    user_class = conflict_data.get("user_class") if conflict_data else None
+    
     if same_category:
         goods_score = 9  # Same category = high similarity
+        class_analysis = f"Same NICE class ({user_class}). Direct competition likely."
     elif conflict_data and conflict_data.get("related_category"):
         goods_score = 6  # Related category
+        class_analysis = f"Related categories (User: Class {user_class}, Conflict: Class {conflict_class}). Some overlap possible."
     else:
         goods_score = 2  # Different category
+        class_analysis = f"Different NICE classes (User: Class {user_class}, Conflict: Class {conflict_class}). Different market segments - LOW confusion risk."
+    
     factors["factor_2_goods_similarity"] = {
         "score": goods_score,
         "weight": "HIGH",
-        "analysis": f"Same NICE class: {'Yes' if same_category else 'No'}. {'Direct competition likely.' if same_category else 'Different market segments.'}"
+        "analysis": class_analysis
     }
     
     # Factor 3: Trade Channel Overlap (MEDIUM WEIGHT)
@@ -6167,7 +6175,7 @@ def calculate_dupont_score(
     factors["factor_3_trade_channels"] = {
         "score": channel_score,
         "weight": "MEDIUM",
-        "analysis": f"Trade channels {'likely overlap' if same_category else 'likely differ'} based on product category"
+        "analysis": f"Trade channels {'likely overlap (same industry)' if same_category else 'unlikely to overlap (different industries)'}"
     }
     
     # Factor 4: Purchaser Sophistication (MEDIUM WEIGHT)
