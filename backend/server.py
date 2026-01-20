@@ -10402,6 +10402,106 @@ BRAND: {brand}
             else:
                 logging.info(f"✅ Set strategic_classification for '{brand_name_for_matrix}': {correct_classification}")
         # ============ END STRATEGIC CLASSIFICATION OVERRIDE ============
+        
+        # ============ 🆕 FEATURE 1: MULTI-CLASS NICE STRATEGY ============
+        try:
+            nice_strategy = get_multi_class_nice_strategy(request.category)
+            if nice_strategy:
+                brand_score.nice_classification_strategy = nice_strategy
+                logging.info(f"✅ Added Multi-Class NICE Strategy for '{brand_name_for_matrix}': "
+                           f"{nice_strategy['total_classes_recommended']} classes recommended")
+        except Exception as e:
+            logging.error(f"Failed to add NICE strategy: {e}")
+        # ============ END MULTI-CLASS NICE STRATEGY ============
+        
+        # ============ 🆕 FEATURE 2: REALISTIC REGISTRATION COSTS ============
+        try:
+            num_classes = nice_strategy.get('total_classes_recommended', 1) if nice_strategy else 1
+            realistic_costs = generate_realistic_registration_timeline(request.countries, num_classes)
+            brand_score.realistic_registration_costs = realistic_costs
+            logging.info(f"✅ Added Realistic Registration Costs for '{brand_name_for_matrix}': "
+                       f"Expected value: {realistic_costs.get('expected_value_cost', 'N/A')}")
+        except Exception as e:
+            logging.error(f"Failed to add realistic costs: {e}")
+        # ============ END REALISTIC REGISTRATION COSTS ============
+        
+        # ============ 🆕 FEATURE 3: DUPONT 13-FACTOR ANALYSIS ============
+        try:
+            # Get all conflicts from pre-computed data or trademark research
+            all_conflicts = []
+            
+            # From visibility analysis
+            if brand_score.visibility_analysis:
+                for dc in brand_score.visibility_analysis.direct_competitors or []:
+                    all_conflicts.append({
+                        "name": dc.name,
+                        "category": dc.category,
+                        "same_class_conflict": True
+                    })
+                for pc in brand_score.visibility_analysis.phonetic_conflicts or []:
+                    if pc.found_conflict:
+                        all_conflicts.append({
+                            "name": pc.found_conflict.get("name", "Unknown"),
+                            "category": request.category,
+                            "same_class_conflict": pc.found_conflict.get("same_class", True)
+                        })
+            
+            # From trademark research
+            if brand_score.trademark_research:
+                tr = brand_score.trademark_research
+                if hasattr(tr, 'trademark_conflicts') and tr.trademark_conflicts:
+                    for tc in tr.trademark_conflicts:
+                        conflict_name = tc.name if hasattr(tc, 'name') else tc.get('name', 'Unknown')
+                        all_conflicts.append({
+                            "name": conflict_name,
+                            "category": request.category,
+                            "same_class_conflict": True
+                        })
+                elif isinstance(tr, dict) and tr.get('trademark_conflicts'):
+                    for tc in tr['trademark_conflicts']:
+                        all_conflicts.append({
+                            "name": tc.get('name', 'Unknown'),
+                            "category": request.category,
+                            "same_class_conflict": True
+                        })
+            
+            # Apply DuPont analysis if conflicts exist
+            if all_conflicts:
+                dupont_result = apply_dupont_analysis_to_conflicts(
+                    brand_name=brand_name_for_matrix,
+                    category=request.category,
+                    conflicts=all_conflicts
+                )
+                brand_score.dupont_analysis = dupont_result
+                logging.info(f"✅ Added DuPont 13-Factor Analysis for '{brand_name_for_matrix}': "
+                           f"{len(all_conflicts)} conflicts analyzed, verdict: {dupont_result.get('overall_dupont_verdict', 'N/A')}")
+            else:
+                brand_score.dupont_analysis = {
+                    "has_analysis": False,
+                    "highest_risk_conflict": None,
+                    "overall_dupont_verdict": "GO",
+                    "analysis_summary": "No conflicts found requiring DuPont analysis - low likelihood of confusion"
+                }
+                logging.info(f"✅ DuPont Analysis for '{brand_name_for_matrix}': No conflicts to analyze")
+        except Exception as e:
+            logging.error(f"Failed to add DuPont analysis: {e}")
+        # ============ END DUPONT 13-FACTOR ANALYSIS ============
+        
+        # ============ 🆕 FEATURE 4: ENHANCED SOCIAL MEDIA ANALYSIS ============
+        try:
+            # Run enhanced social check (this adds activity analysis)
+            enhanced_social = await check_social_availability_enhanced(brand_name_for_matrix, request.countries)
+            brand_score.enhanced_social_availability = enhanced_social
+            
+            # Log summary
+            summary = enhanced_social.get('summary', {})
+            logging.info(f"✅ Added Enhanced Social Analysis for '{brand_name_for_matrix}': "
+                       f"{summary.get('available_count', 0)} available, "
+                       f"{summary.get('critical_conflicts', 0)} fatal conflicts, "
+                       f"acquisition cost: {summary.get('acquisition_cost_range', 'N/A')}")
+        except Exception as e:
+            logging.error(f"Failed to add enhanced social analysis: {e}")
+        # ============ END ENHANCED SOCIAL MEDIA ANALYSIS ============
     
     # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
     if all_rejections:
