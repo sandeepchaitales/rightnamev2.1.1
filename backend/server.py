@@ -10477,23 +10477,27 @@ BRAND: {brand}
             # From visibility analysis - CHECK CLASS PROPERLY
             if brand_score.visibility_analysis:
                 for dc in brand_score.visibility_analysis.direct_competitors or []:
-                    # Direct competitors are in SAME category by definition
+                    # For direct competitors, check if we have class info
+                    # Company names without class info should NOT be assumed same class
+                    dc_class = getattr(dc, 'class_number', None) or getattr(dc, 'nice_class', None)
+                    is_same = (dc_class == user_nice_class) if (dc_class and user_nice_class) else False
                     all_conflicts.append({
                         "name": dc.name,
                         "category": dc.category,
-                        "same_class_conflict": True,  # Direct competitors = same industry = high risk
-                        "conflict_class": user_nice_class,  # Assumed same class for direct competitors
+                        "same_class_conflict": is_same,
+                        "conflict_class": dc_class,
                         "user_class": user_nice_class
                     })
                 for pc in brand_score.visibility_analysis.phonetic_conflicts or []:
                     if pc.found_conflict:
-                        # Phonetic conflicts need class check
-                        conflict_same_class = pc.found_conflict.get("same_class", False)
+                        # Phonetic conflicts - check for class match
+                        pc_class = pc.found_conflict.get("class") or pc.found_conflict.get("nice_class") or pc.found_conflict.get("class_number")
+                        is_same = (pc_class == user_nice_class) if (pc_class and user_nice_class) else False
                         all_conflicts.append({
                             "name": pc.found_conflict.get("name", "Unknown"),
                             "category": request.category,
-                            "same_class_conflict": conflict_same_class,
-                            "conflict_class": pc.found_conflict.get("class") if conflict_same_class else None,
+                            "same_class_conflict": is_same,
+                            "conflict_class": pc_class,
                             "user_class": user_nice_class
                         })
             
