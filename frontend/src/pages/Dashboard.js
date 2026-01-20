@@ -3302,6 +3302,9 @@ const Dashboard = () => {
                             trademarkResearch={brand.trademark_research} 
                             registrationTimeline={brand.registration_timeline}
                             mitigationStrategies={brand.mitigation_strategies}
+                            niceClassificationStrategy={brand.nice_classification_strategy}
+                            realisticRegistrationCosts={brand.realistic_registration_costs}
+                            dupontAnalysis={brand.dupont_analysis}
                         />
                     </section>
                 )}
