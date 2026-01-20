@@ -3251,7 +3251,7 @@ const Dashboard = () => {
                 )}
 
                 {/* ==================== PAGE 7: DIGITAL PRESENCE ==================== */}
-                {(brand.multi_domain_availability || brand.social_availability) && (
+                {(brand.multi_domain_availability || brand.social_availability || brand.enhanced_social_availability) && (
                     <section className="print-new-page">
                         <SectionHeader icon={Globe} title="Digital Presence Check" subtitle="Domain & social availability" color="cyan" badge={`${brand.multi_domain_availability?.category_domains?.filter(d => d.available).length || 0}/${brand.multi_domain_availability?.category_domains?.length || 0} Available`} />
                         {isAuthenticated ? (
@@ -3259,6 +3259,7 @@ const Dashboard = () => {
                                 multiDomain={brand.multi_domain_availability} 
                                 domainAnalysis={brand.domain_analysis}
                                 socialAvailability={brand.social_availability}
+                                enhancedSocialAvailability={brand.enhanced_social_availability}
                             />
                         ) : (
                             <LockedSection title="Digital Presence Check" onUnlock={handleRegister} />
