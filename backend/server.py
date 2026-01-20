@@ -5912,16 +5912,39 @@ def get_multi_class_nice_strategy(category: str) -> dict:
     
     category_lower = category.lower().strip()
     
-    # Check for exact or partial matches
+    # First check for exact matches
+    if category_lower in MULTI_CLASS_STRATEGY:
+        strategy = MULTI_CLASS_STRATEGY[category_lower]
+        return {
+            "primary_class": strategy["primary"],
+            "secondary_classes": strategy["secondary"],
+            "total_classes_recommended": strategy["total_recommended"],
+            "filing_strategy": strategy["filing_strategy"],
+            "expansion_classes": []
+        }
+    
+    # Check for partial matches - prefer LONGER keyword matches to avoid "app" matching "apparel"
+    best_match = None
+    best_match_len = 0
+    
     for keyword, strategy in MULTI_CLASS_STRATEGY.items():
         if keyword in category_lower:
-            return {
-                "primary_class": strategy["primary"],
-                "secondary_classes": strategy["secondary"],
-                "total_classes_recommended": strategy["total_recommended"],
-                "filing_strategy": strategy["filing_strategy"],
-                "expansion_classes": []  # Can be populated based on growth plans
-            }
+            # Check if it's a whole word match (not part of another word)
+            # e.g., "app" should not match "apparel", but "fashion" should match "fashion & apparel"
+            import re
+            if re.search(r'\b' + re.escape(keyword) + r'\b', category_lower):
+                if len(keyword) > best_match_len:
+                    best_match = strategy
+                    best_match_len = len(keyword)
+    
+    if best_match:
+        return {
+            "primary_class": best_match["primary"],
+            "secondary_classes": best_match["secondary"],
+            "total_classes_recommended": best_match["total_recommended"],
+            "filing_strategy": best_match["filing_strategy"],
+            "expansion_classes": []
+        }
     
     # Default strategy for unknown categories
     basic_class = get_nice_classification(category)
