@@ -781,11 +781,12 @@ const DetailedDimensionCard = ({ dimension, index }) => {
 };
 
 // ============ DIGITAL PRESENCE SECTION ============
-const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailability }) => {
+const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailability, enhancedSocialAvailability }) => {
     const categoryDomains = multiDomain?.category_domains || [];
     const countryDomains = multiDomain?.country_domains || [];
-    // Get ALL social handles from the platforms array
-    const socialHandles = socialAvailability?.platforms || socialAvailability?.handles || [];
+    // Get ALL social handles from the platforms array - prefer enhanced if available
+    const socialHandles = enhancedSocialAvailability?.platforms || socialAvailability?.platforms || socialAvailability?.handles || [];
+    const enhancedSummary = enhancedSocialAvailability?.summary || {};
     
     const availableCount = [...categoryDomains, ...countryDomains].filter(d => d.available || d.status?.toLowerCase().includes('available')).length;
     const totalCount = categoryDomains.length + countryDomains.length;
@@ -794,6 +795,17 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
     const availableSocials = socialHandles.filter(s => s.available || s.status?.toLowerCase().includes('available')).length;
     const takenSocials = socialHandles.filter(s => !s.available && s.status && !s.status?.toLowerCase().includes('available') && !s.status?.toLowerCase().includes('error') && !s.status?.toLowerCase().includes('unsupported')).length;
     
+    // Enhanced social risk colors
+    const getRiskLevelStyle = (riskLevel) => {
+        const level = (riskLevel || '').toUpperCase();
+        if (level === 'FATAL') return { bg: 'bg-red-600', text: 'text-white', border: 'border-red-600' };
+        if (level === 'HIGH') return { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300' };
+        if (level === 'MEDIUM') return { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-300' };
+        if (level === 'LOW') return { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' };
+        if (level === 'NONE') return { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300' };
+        return { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-300' };
+    };
+    
     const getStatusIcon = (s) => {
         if (s.available || s.status?.toLowerCase().includes('available')) {
             return <CheckCircle className="w-4 h-4 text-emerald-500" />;
@@ -801,6 +813,12 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
         if (s.status?.toLowerCase().includes('unsupported') || s.status?.toLowerCase().includes('error')) {
             return <AlertCircle className="w-4 h-4 text-slate-400" />;
         }
+        // Use risk level for taken handles
+        const riskLevel = (s.risk_level || '').toUpperCase();
+        if (riskLevel === 'FATAL') return <XOctagon className="w-4 h-4 text-red-600" />;
+        if (riskLevel === 'HIGH') return <AlertTriangle className="w-4 h-4 text-red-500" />;
+        if (riskLevel === 'MEDIUM') return <AlertCircle className="w-4 h-4 text-amber-500" />;
+        if (riskLevel === 'LOW') return <HelpCircle className="w-4 h-4 text-blue-500" />;
         return <XOctagon className="w-4 h-4 text-red-500" />;
     };
     
@@ -811,6 +829,12 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
         if (s.status?.toLowerCase().includes('unsupported') || s.status?.toLowerCase().includes('error')) {
             return 'bg-slate-50 border-slate-200';
         }
+        // Use risk level styling for taken handles
+        const riskLevel = (s.risk_level || '').toUpperCase();
+        if (riskLevel === 'FATAL') return 'bg-red-100 border-red-400';
+        if (riskLevel === 'HIGH') return 'bg-red-50 border-red-300';
+        if (riskLevel === 'MEDIUM') return 'bg-amber-50 border-amber-300';
+        if (riskLevel === 'LOW') return 'bg-blue-50 border-blue-200';
         return 'bg-red-50 border-red-200';
     };
     
@@ -821,6 +845,11 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
         if (s.status?.toLowerCase().includes('unsupported') || s.status?.toLowerCase().includes('error')) {
             return 'bg-slate-100 text-slate-500';
         }
+        const riskLevel = (s.risk_level || '').toUpperCase();
+        if (riskLevel === 'FATAL') return 'bg-red-600 text-white';
+        if (riskLevel === 'HIGH') return 'bg-red-100 text-red-700';
+        if (riskLevel === 'MEDIUM') return 'bg-amber-100 text-amber-700';
+        if (riskLevel === 'LOW') return 'bg-blue-100 text-blue-700';
         return 'bg-red-100 text-red-700';
     };
     
@@ -890,47 +919,117 @@ const DigitalPresenceSection = ({ multiDomain, domainAnalysis, socialAvailabilit
                 </div>
             </PrintCard>
             
-            {/* Social Handles - Show ALL platforms with their status */}
+            {/* 🆕 ENHANCED SOCIAL MEDIA ANALYSIS */}
             {socialHandles.length > 0 && (
                 <PrintCard>
                     <div className="bg-white rounded-2xl p-6 border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <SubSectionHeader icon={AtSign} title="Social Media Handles" />
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                                 <Badge className="bg-emerald-100 text-emerald-700 text-xs">
-                                    {availableSocials} Available
+                                    {enhancedSummary.available_count || availableSocials} Available
                                 </Badge>
-                                <Badge className="bg-red-100 text-red-700 text-xs">
-                                    {takenSocials} Taken
-                                </Badge>
+                                {enhancedSummary.critical_conflicts > 0 && (
+                                    <Badge className="bg-red-600 text-white text-xs">
+                                        {enhancedSummary.critical_conflicts} Fatal
+                                    </Badge>
+                                )}
+                                {(enhancedSummary.taken_high_risk?.length > 0) && (
+                                    <Badge className="bg-red-100 text-red-700 text-xs">
+                                        {enhancedSummary.taken_high_risk.length} High Risk
+                                    </Badge>
+                                )}
                             </div>
                         </div>
                         
                         {/* Show handle being checked */}
-                        {socialAvailability?.handle && (
+                        {(enhancedSocialAvailability?.handle || socialAvailability?.handle) && (
                             <p className="text-xs text-slate-500 mb-3">
-                                Checking handle: <span className="font-mono font-bold">@{socialAvailability.handle}</span>
+                                Checking handle: <span className="font-mono font-bold">@{enhancedSocialAvailability?.handle || socialAvailability?.handle}</span>
                             </p>
                         )}
                         
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {/* Enhanced Summary Stats */}
+                        {enhancedSummary.acquisition_cost_range && enhancedSummary.acquisition_cost_range !== "$0" && (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                <div className="p-3 bg-slate-50 rounded-lg text-center">
+                                    <div className="text-lg font-bold text-slate-700">{enhancedSummary.total_checked || socialHandles.length}</div>
+                                    <div className="text-xs text-slate-500">Platforms Checked</div>
+                                </div>
+                                <div className="p-3 bg-emerald-50 rounded-lg text-center">
+                                    <div className="text-lg font-bold text-emerald-700">{enhancedSummary.available_count || availableSocials}</div>
+                                    <div className="text-xs text-slate-500">Available</div>
+                                </div>
+                                <div className="p-3 bg-amber-50 rounded-lg text-center">
+                                    <div className="text-lg font-bold text-amber-700">{enhancedSocialAvailability?.score_impact || 0}</div>
+                                    <div className="text-xs text-slate-500">Score Impact</div>
+                                </div>
+                                <div className="p-3 bg-violet-50 rounded-lg text-center">
+                                    <div className="text-sm font-bold text-violet-700">{enhancedSummary.acquisition_cost_range}</div>
+                                    <div className="text-xs text-slate-500">Acquisition Est.</div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Platform Grid with Enhanced Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {socialHandles.map((s, i) => (
-                                <div key={i} className={`p-3 rounded-lg border flex items-center justify-between ${getStatusStyle(s)}`}>
-                                    <div className="flex items-center gap-2">
-                                        {getStatusIcon(s)}
-                                        <span className="text-xs font-bold text-slate-700 capitalize">{s.platform || s.name}</span>
+                                <div key={i} className={`p-3 rounded-lg border ${getStatusStyle(s)}`}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            {getStatusIcon(s)}
+                                            <span className="text-sm font-bold text-slate-700 capitalize">{s.platform || s.name}</span>
+                                        </div>
+                                        <Badge className={`text-xs ${getBadgeStyle(s)}`}>
+                                            {s.risk_level || s.status || (s.available ? 'Available' : 'Taken')}
+                                        </Badge>
                                     </div>
-                                    <Badge className={`text-xs ${getBadgeStyle(s)}`}>
-                                        {s.status || (s.available ? 'Available' : 'Taken')}
-                                    </Badge>
+                                    
+                                    {/* Enhanced Account Details */}
+                                    {s.account_details && s.account_details.analysis_available && (
+                                        <div className="text-xs text-slate-500 space-y-1 mt-2 pt-2 border-t border-slate-200">
+                                            {s.account_details.is_verified && (
+                                                <div className="flex items-center gap-1">
+                                                    <CheckCircle className="w-3 h-3 text-blue-500" />
+                                                    <span className="text-blue-600 font-medium">Verified Account</span>
+                                                </div>
+                                            )}
+                                            {s.account_details.follower_count && (
+                                                <div>Followers: <span className="font-medium">{s.account_details.follower_count.toLocaleString()}</span></div>
+                                            )}
+                                            {s.account_details.posting_frequency && s.account_details.posting_frequency !== 'UNKNOWN' && (
+                                                <div>Activity: <span className="font-medium">{s.account_details.posting_frequency}</span></div>
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Acquisition Viability */}
+                                    {s.acquisition_viability && !s.available && (
+                                        <div className="text-xs mt-2 pt-2 border-t border-slate-200">
+                                            {s.acquisition_viability.estimated_cost && s.acquisition_viability.estimated_cost !== 'N/A' && (
+                                                <div className="text-slate-600">
+                                                    Est. Cost: <span className="font-medium text-violet-600">{s.acquisition_viability.estimated_cost}</span>
+                                                </div>
+                                            )}
+                                            {s.acquisition_viability.success_probability && (
+                                                <div className="text-slate-500">
+                                                    Success: {s.acquisition_viability.success_probability}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
                         
                         {/* Recommendation */}
-                        {socialAvailability?.recommendation && (
-                            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                <p className="text-xs text-blue-700"><MarkdownText text={socialAvailability.recommendation} /></p>
+                        {(enhancedSocialAvailability?.recommendation || socialAvailability?.recommendation) && (
+                            <div className={`mt-4 p-3 rounded-lg border ${
+                                enhancedSummary.critical_conflicts > 0 ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
+                            }`}>
+                                <p className={`text-xs ${enhancedSummary.critical_conflicts > 0 ? 'text-red-700' : 'text-blue-700'}`}>
+                                    <MarkdownText text={enhancedSocialAvailability?.recommendation || socialAvailability?.recommendation} />
+                                </p>
                             </div>
                         )}
                     </div>
