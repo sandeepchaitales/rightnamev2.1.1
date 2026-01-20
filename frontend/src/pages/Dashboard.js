@@ -2221,20 +2221,21 @@ const TrademarkResearchSection = ({ trademarkResearch, registrationTimeline, mit
                 </PrintCard>
             )}
             
-            {/* Registration Timeline */}
-            {registrationTimeline && (
+            {/* Registration Timeline - 🆕 ENHANCED WITH REALISTIC COSTS */}
+            {(registrationTimeline || realisticRegistrationCosts) && (
                 <PrintCard>
                     <div className="bg-white rounded-2xl p-6 border border-blue-200">
                         <SubSectionHeader icon={Calendar} title="Registration Timeline & Costs" color="blue" />
                         
                         <div className="mb-4">
-                            <div className="text-2xl font-bold text-blue-700">{registrationTimeline.estimated_duration}</div>
+                            <div className="text-2xl font-bold text-blue-700">{realisticRegistrationCosts?.estimated_duration || registrationTimeline?.estimated_duration}</div>
                             <div className="text-sm text-slate-500">Estimated registration duration</div>
                         </div>
                         
-                        {registrationTimeline.stages && registrationTimeline.stages.length > 0 && (
+                        {/* Stages */}
+                        {(realisticRegistrationCosts?.stages || registrationTimeline?.stages)?.length > 0 && (
                             <div className="space-y-2 mb-4">
-                                {registrationTimeline.stages.map((stage, i) => (
+                                {(realisticRegistrationCosts?.stages || registrationTimeline?.stages).map((stage, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                                         <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm">
                                             {i + 1}
@@ -2251,26 +2252,105 @@ const TrademarkResearchSection = ({ trademarkResearch, registrationTimeline, mit
                             </div>
                         )}
                         
+                        {/* 🆕 REALISTIC TIERED OPPOSITION COSTS */}
+                        {realisticRegistrationCosts?.opposition_defense_cost && typeof realisticRegistrationCosts.opposition_defense_cost === 'object' && (
+                            <div className="mb-4">
+                                <p className="text-xs font-bold text-slate-500 uppercase mb-3">OPPOSITION DEFENSE COST SCENARIOS</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {Object.entries(realisticRegistrationCosts.opposition_defense_cost).map(([key, scenario], i) => (
+                                        <div key={i} className={`p-3 rounded-lg border ${
+                                            key.includes('appeal') || key.includes('ttab') ? 'bg-red-50 border-red-200' :
+                                            key.includes('settlement') ? 'bg-amber-50 border-amber-200' :
+                                            'bg-emerald-50 border-emerald-200'
+                                        }`}>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="font-bold text-slate-700 text-sm capitalize">{key.replace(/_/g, ' ')}</span>
+                                                <Badge className={`text-xs ${
+                                                    scenario.probability >= 30 ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                    {scenario.probability}% likely
+                                                </Badge>
+                                            </div>
+                                            <div className={`text-lg font-black ${
+                                                key.includes('appeal') || key.includes('ttab') ? 'text-red-700' :
+                                                key.includes('settlement') ? 'text-amber-700' :
+                                                'text-emerald-700'
+                                            }`}>
+                                                {scenario.cost}
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">{scenario.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Summary Costs */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {registrationTimeline.filing_cost && (
+                            {(realisticRegistrationCosts?.filing_cost_per_class || registrationTimeline?.filing_cost) && (
                                 <div className="p-3 bg-emerald-50 rounded-lg">
-                                    <div className="text-xs text-slate-500">Filing Cost</div>
-                                    <div className="font-bold text-emerald-700">{registrationTimeline.filing_cost}</div>
+                                    <div className="text-xs text-slate-500">Filing Cost/Class</div>
+                                    <div className="font-bold text-emerald-700">{realisticRegistrationCosts?.filing_cost_per_class || registrationTimeline?.filing_cost}</div>
                                 </div>
                             )}
-                            {registrationTimeline.opposition_defense_cost && (
+                            {realisticRegistrationCosts?.expected_value_cost && (
+                                <div className="p-3 bg-violet-50 rounded-lg">
+                                    <div className="text-xs text-slate-500">Expected Value Cost</div>
+                                    <div className="font-bold text-violet-700">{realisticRegistrationCosts.expected_value_cost}</div>
+                                    <div className="text-xs text-slate-400">Probability-weighted</div>
+                                </div>
+                            )}
+                            {realisticRegistrationCosts?.total_worst_case && (
+                                <div className="p-3 bg-red-50 rounded-lg">
+                                    <div className="text-xs text-slate-500">Worst Case</div>
+                                    <div className="font-bold text-red-700">{realisticRegistrationCosts.total_worst_case}</div>
+                                    <div className="text-xs text-slate-400">If appeals required</div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Filing Basis Strategy - NEW */}
+                        {realisticRegistrationCosts?.filing_basis_strategy && (
+                            <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Briefcase className="w-4 h-4 text-slate-600" />
+                                    <span className="font-bold text-slate-700">Filing Basis: {realisticRegistrationCosts.filing_basis_strategy.recommended_basis}</span>
+                                </div>
+                                <p className="text-sm text-slate-600 mb-3">{realisticRegistrationCosts.filing_basis_strategy.rationale}</p>
+                                
+                                {realisticRegistrationCosts.filing_basis_strategy.critical_milestones && (
+                                    <div className="space-y-2">
+                                        {realisticRegistrationCosts.filing_basis_strategy.critical_milestones.map((milestone, i) => (
+                                            <div key={i} className="flex items-center justify-between text-xs p-2 bg-white rounded border border-slate-100">
+                                                <span className="font-medium text-slate-700">{milestone.milestone}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-slate-500">{milestone.deadline}</span>
+                                                    {milestone.cost && (
+                                                        <Badge variant="outline" className="text-xs">{milestone.cost}</Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* Fallback to old format if no realistic costs */}
+                        {!realisticRegistrationCosts && registrationTimeline?.opposition_defense_cost && typeof registrationTimeline.opposition_defense_cost === 'string' && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                                 <div className="p-3 bg-amber-50 rounded-lg">
                                     <div className="text-xs text-slate-500">Opposition Defense</div>
                                     <div className="font-bold text-amber-700">{registrationTimeline.opposition_defense_cost}</div>
                                 </div>
-                            )}
-                            {registrationTimeline.total_estimated_cost && (
-                                <div className="p-3 bg-red-50 rounded-lg">
-                                    <div className="text-xs text-slate-500">Total Estimated</div>
-                                    <div className="font-bold text-red-700">{registrationTimeline.total_estimated_cost}</div>
-                                </div>
-                            )}
-                        </div>
+                                {registrationTimeline.total_estimated_cost && (
+                                    <div className="p-3 bg-red-50 rounded-lg">
+                                        <div className="text-xs text-slate-500">Total Estimated</div>
+                                        <div className="font-bold text-red-700">{registrationTimeline.total_estimated_cost}</div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </PrintCard>
             )}
