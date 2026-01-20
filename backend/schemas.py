@@ -524,6 +524,11 @@ class BrandScore(BaseModel):
     positioning_fit: Optional[str] = Field(default="Positioning analysis pending")
     # McKinsey Three-Question Framework Analysis
     mckinsey_analysis: Optional[McKinseyFrameworkAnalysis] = Field(default=None, description="Deep dive brand DNA analysis")
+    # 🆕 NEW ENHANCED FEATURES
+    nice_classification_strategy: Optional[Dict[str, Any]] = Field(default=None, description="Multi-class NICE filing strategy")
+    dupont_analysis: Optional[Dict[str, Any]] = Field(default=None, description="DuPont 13-Factor likelihood of confusion analysis")
+    enhanced_social_availability: Optional[Dict[str, Any]] = Field(default=None, description="Enhanced social availability with activity analysis")
+    realistic_registration_costs: Optional[Dict[str, Any]] = Field(default=None, description="Realistic tiered opposition costs")
 
 class BrandEvaluationRequest(BaseModel):
     brand_names: List[str]
