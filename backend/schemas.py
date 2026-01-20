@@ -130,6 +130,110 @@ class SocialAvailability(BaseModel):
     available_platforms: List[str] = Field(default=[], description="List of available platforms")
     taken_platforms: List[str] = Field(default=[], description="List of taken platforms")
     recommendation: Optional[str] = None
+    # Enhanced fields for activity analysis
+    summary: Optional[Dict[str, Any]] = Field(default=None, description="Enhanced summary with risk breakdown")
+    score_impact: Optional[int] = Field(default=0, description="Impact on overall brand score")
+    impact_explanation: Optional[str] = Field(default=None, description="Explanation of score impact")
+
+
+# ============================================================================
+# 🆕 NEW SCHEMAS FOR ENHANCED FEATURES
+# ============================================================================
+
+class DuPontFactor(BaseModel):
+    """Single DuPont factor analysis"""
+    score: float = Field(default=5.0, ge=0, le=10)
+    weight: str = Field(default="MEDIUM", description="HIGH/MEDIUM/LOW")
+    analysis: str = Field(default="")
+
+class DuPontAnalysis(BaseModel):
+    """DuPont 13-Factor Likelihood of Confusion Analysis"""
+    brand_name: str
+    conflict_name: str
+    dupont_factors: Optional[Dict[str, DuPontFactor]] = Field(default=None)
+    weighted_likelihood_score: float = Field(default=0.0, ge=0, le=10)
+    legal_conclusion: str = Field(default="")
+    verdict_impact: str = Field(default="GO", description="GO/CONDITIONAL GO/NO-GO/REJECT")
+
+class DuPontAnalysisResult(BaseModel):
+    """Full DuPont analysis result for all conflicts"""
+    has_analysis: bool = Field(default=False)
+    highest_risk_conflict: Optional[DuPontAnalysis] = None
+    overall_dupont_verdict: str = Field(default="GO")
+    all_conflict_analyses: Optional[List[DuPontAnalysis]] = Field(default=[])
+    analysis_summary: str = Field(default="")
+
+class NICEClassInfo(BaseModel):
+    """NICE class information"""
+    class_number: int
+    description: str
+    term: Optional[str] = None
+    rationale: Optional[str] = None
+    priority: Optional[str] = None
+
+class MultiClassNICEStrategy(BaseModel):
+    """Multi-class NICE filing strategy"""
+    primary_class: NICEClassInfo
+    secondary_classes: List[NICEClassInfo] = Field(default=[])
+    total_classes_recommended: int = Field(default=1)
+    filing_strategy: str = Field(default="")
+    expansion_classes: Optional[List[NICEClassInfo]] = Field(default=[])
+
+class OppositionDefenseScenario(BaseModel):
+    """Opposition defense cost scenario"""
+    cost: str
+    description: str
+    probability: int = Field(default=25, ge=0, le=100)
+
+class RealisticRegistrationTimeline(BaseModel):
+    """Enhanced registration timeline with realistic costs"""
+    country: str
+    estimated_duration: str = Field(default="14-24 months")
+    stages: List[Dict[str, str]] = Field(default=[])
+    filing_cost_per_class: str
+    total_filing_cost: str
+    opposition_defense_cost: Dict[str, OppositionDefenseScenario] = Field(default={})
+    expected_value_cost: str
+    total_worst_case: str
+    filing_basis_strategy: Optional[Dict[str, Any]] = None
+
+class EnhancedSocialAccount(BaseModel):
+    """Enhanced social account details"""
+    is_verified: bool = Field(default=False)
+    is_business_account: bool = Field(default=False)
+    follower_count: Optional[int] = None
+    posting_frequency: str = Field(default="UNKNOWN")
+    engagement_estimate: str = Field(default="UNKNOWN")
+    analysis_available: bool = Field(default=False)
+
+class AcquisitionViability(BaseModel):
+    """Social handle acquisition viability"""
+    can_acquire: Optional[bool] = None
+    reason: Optional[str] = None
+    estimated_cost: str = Field(default="UNKNOWN")
+    approach: str = Field(default="")
+    success_probability: Optional[str] = None
+
+class EnhancedSocialHandleResult(BaseModel):
+    """Enhanced social handle check result with activity analysis"""
+    platform: str
+    handle: str
+    status: str
+    available: Optional[bool] = None
+    url: Optional[str] = None
+    account_details: Optional[EnhancedSocialAccount] = None
+    risk_level: str = Field(default="UNKNOWN", description="NONE/LOW/MEDIUM/HIGH/FATAL")
+    acquisition_viability: Optional[AcquisitionViability] = None
+
+class EnhancedSocialAvailability(BaseModel):
+    """Enhanced social availability with activity analysis"""
+    handle: str
+    platforms: List[EnhancedSocialHandleResult] = Field(default=[])
+    summary: Dict[str, Any] = Field(default={})
+    recommendation: str = Field(default="")
+    score_impact: int = Field(default=0)
+    impact_explanation: str = Field(default="")
+
 
 class ConflictItem(BaseModel):
     name: str
