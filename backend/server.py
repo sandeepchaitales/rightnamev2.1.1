@@ -10446,23 +10446,41 @@ BRAND: {brand}
                             "same_class_conflict": pc.found_conflict.get("same_class", True)
                         })
             
-            # From trademark research
+            # From trademark research - WITH PROPER NICE CLASS COMPARISON
             if brand_score.trademark_research:
                 tr = brand_score.trademark_research
+                # Get user's NICE class for comparison
+                user_nice_class = None
+                if brand_score.nice_classification_strategy:
+                    user_nice_class = brand_score.nice_classification_strategy.get('primary_class', {}).get('class_number')
+                elif tr and hasattr(tr, 'nice_classification') and tr.nice_classification:
+                    user_nice_class = tr.nice_classification.get('class_number') if isinstance(tr.nice_classification, dict) else getattr(tr.nice_classification, 'class_number', None)
+                elif isinstance(tr, dict) and tr.get('nice_classification'):
+                    user_nice_class = tr['nice_classification'].get('class_number')
+                
                 if hasattr(tr, 'trademark_conflicts') and tr.trademark_conflicts:
                     for tc in tr.trademark_conflicts:
                         conflict_name = tc.name if hasattr(tc, 'name') else tc.get('name', 'Unknown')
+                        conflict_class = tc.class_number if hasattr(tc, 'class_number') else tc.get('class_number')
+                        # Only same_class_conflict=True if NICE classes actually match
+                        is_same_class = (conflict_class == user_nice_class) if (conflict_class and user_nice_class) else False
                         all_conflicts.append({
                             "name": conflict_name,
                             "category": request.category,
-                            "same_class_conflict": True
+                            "same_class_conflict": is_same_class,
+                            "conflict_class": conflict_class,
+                            "user_class": user_nice_class
                         })
                 elif isinstance(tr, dict) and tr.get('trademark_conflicts'):
                     for tc in tr['trademark_conflicts']:
+                        conflict_class = tc.get('class_number')
+                        is_same_class = (conflict_class == user_nice_class) if (conflict_class and user_nice_class) else False
                         all_conflicts.append({
                             "name": tc.get('name', 'Unknown'),
                             "category": request.category,
-                            "same_class_conflict": True
+                            "same_class_conflict": is_same_class,
+                            "conflict_class": conflict_class,
+                            "user_class": user_nice_class
                         })
             
             # Apply DuPont analysis if conflicts exist
