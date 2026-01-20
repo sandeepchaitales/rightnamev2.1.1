@@ -8,7 +8,7 @@ import json
 import time
 
 def test_brand_audit_quick():
-    url = "https://brand-checker-5.preview.emergentagent.com/api/brand-audit"
+    url = "https://brand-checker-6.preview.emergentagent.com/api/brand-audit"
     payload = {
         "brand_name": "QuickTest",
         "brand_website": "https://quicktest.com",
