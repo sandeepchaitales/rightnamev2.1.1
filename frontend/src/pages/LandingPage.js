@@ -1151,10 +1151,6 @@ const LandingPage = () => {
               {
                 q: "Do I need to hire a trademark attorney after using RIGHTNAME?",
                 a: "While RIGHTNAME provides thorough preliminary screening, we recommend consulting a trademark attorney before filing for trademark registration. Our reports help you identify strong candidates and potential issues, making your attorney consultation more efficient and cost-effective."
-              },
-              {
-                q: "Is there a money-back guarantee?",
-                a: "We stand behind the quality of our reports. If you're not satisfied with the depth of analysis provided, contact us within 7 days for a full refund. Our reports are designed to give you the confidence to make informed naming decisions."
               }
             ].map((faq, index) => (
               <FAQItem
