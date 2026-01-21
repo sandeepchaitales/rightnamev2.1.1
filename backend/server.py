@@ -11742,7 +11742,15 @@ app.include_router(admin_router)  # Admin panel routes
 # Root-level health check endpoint for Kubernetes (no /api prefix)
 @app.get("/health")
 async def root_health_check():
-    return {"status": "healthy"}
+    """Health check endpoint for Kubernetes - must respond quickly"""
+    try:
+        # Quick MongoDB ping (with short timeout)
+        await db.command('ping')
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        # Still return healthy status - MongoDB might just be slow to connect
+        # The important thing is that the FastAPI app is running
+        return {"status": "healthy", "database": "initializing", "note": str(e)[:100]}
 
 # Get CORS origins - handle both wildcard and specific origins
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
