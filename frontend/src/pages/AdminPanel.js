@@ -4,7 +4,9 @@ import {
   Shield, LogOut, Settings, FileText, Cpu, BarChart3, 
   History, TestTube, Save, RefreshCw, Eye, EyeOff,
   Check, X, ChevronDown, ChevronRight, Clock, Zap,
-  AlertTriangle, Info, Edit3, Copy, Trash2
+  AlertTriangle, Info, Edit3, Copy, Trash2, Search,
+  Download, TrendingUp, Filter, Calendar, Globe,
+  CheckCircle, XCircle, MinusCircle, ChevronLeft
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
