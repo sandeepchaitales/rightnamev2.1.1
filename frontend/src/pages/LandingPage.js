@@ -390,7 +390,7 @@ const LandingPage = () => {
       
       <Helmet>
         <title>RIGHTNAME | AI-Powered Brand Name Evaluation & Trademark Check</title>
-        <meta name="description" content="Evaluate brand names instantly with AI. Check trademark conflicts, domain availability, social handles & get a consulting-grade NameScore report in 60 seconds. First report FREE!" />
+        <meta name="description" content="Evaluate brand names instantly with AI. Check trademark conflicts, domain availability, social handles & get a consulting-grade RightName Score report in 60 seconds. Starting at $29 per report." />
         <link rel="canonical" href="https://rightname.ai" />
       </Helmet>
       
