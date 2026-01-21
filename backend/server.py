@@ -9720,7 +9720,8 @@ BRAND: {brand}
                         brand_score["country_competitor_analysis"] = generate_country_competitor_analysis(
                             request.countries, 
                             request.category or category_for_fallback, 
-                            brand_name_for_fallback
+                            brand_name_for_fallback,
+                            request.industry
                         )
                 
                 # Use LLM research cultural_analysis if available
