@@ -9953,7 +9953,7 @@ BRAND: {brand}
                     "poison_words": [],
                     "reasoning": "Alternative names generated based on brand analysis",
                     "suggestions": [
-                        {"name": f"{brand_name[:4]}ora", "score": 75, "rationale": "Softer feminine ending for beauty sector"},
+                        {"name": f"{brand_name[:4]}ora", "score": 75, "rationale": f"Softer ending suitable for {category} sector"},
                         {"name": f"{brand_name[:5]}ix", "score": 72, "rationale": "Modern tech-inspired suffix"},
                         {"name": f"Neo{brand_name[:4]}", "score": 70, "rationale": "Innovation-focused prefix"}
                     ]
