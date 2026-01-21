@@ -7943,7 +7943,8 @@ class BrandEvaluationTester:
             "industry": "Technology & Software",
             "countries": ["India", "USA", "UK", "Japan"],
             "positioning": "Premium",
-            "product_type": "Digital"
+            "product_type": "Digital",
+            "market_scope": "Multi-Country"
         }
         
         try:
