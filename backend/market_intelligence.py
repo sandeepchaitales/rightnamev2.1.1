@@ -1079,7 +1079,8 @@ def _apply_fallback_data(
         intelligence.competitors = competitors
         intelligence.x_axis_label = fallback_data.get("axis_x", intelligence.x_axis_label)
         intelligence.y_axis_label = fallback_data.get("axis_y", intelligence.y_axis_label)
-        _apply_fallback_strategy(intelligence, fallback_data, brand_name)
+        # Pass competitors as competitor_data to enable smart fallback
+        _apply_fallback_strategy(intelligence, fallback_data, brand_name, {"competitors": competitors})
         logger.info(f"✅ FALLBACK APPLIED for {intelligence.country}: {len(competitors)} competitors ({[c.get('name') for c in competitors[:2]]}...)")
     else:
         # Ultimate fallback - generic data
