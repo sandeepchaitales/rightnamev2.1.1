@@ -750,22 +750,33 @@ RESPOND IN JSON FORMAT:
 }'''
 
 async def initialize_admin(db_ref):
-    """Initialize admin user if not exists"""
+    """Initialize admin user if not exists - with race condition protection for multi-worker deployments"""
     global db
     db = db_ref
     
-    # Check if admin exists
-    admin = await db.admins.find_one({"email": "chaibunkcafe@gmail.com"})
-    
-    if not admin:
-        # Create admin
-        password_hash = pwd_context.hash("Sandy@2614")
-        await db.admins.insert_one({
-            "email": "chaibunkcafe@gmail.com",
-            "password_hash": password_hash,
-            "role": "super_admin",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-        logging.info("✅ Admin user created: chaibunkcafe@gmail.com")
-    else:
-        logging.info("✅ Admin user already exists")
+    try:
+        # Check if admin exists
+        admin = await db.admins.find_one({"email": "chaibunkcafe@gmail.com"})
+        
+        if not admin:
+            # Use upsert to prevent race condition when multiple workers start simultaneously
+            password_hash = pwd_context.hash("Sandy@2614")
+            result = await db.admins.update_one(
+                {"email": "chaibunkcafe@gmail.com"},
+                {"$setOnInsert": {
+                    "email": "chaibunkcafe@gmail.com",
+                    "password_hash": password_hash,
+                    "role": "super_admin",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }},
+                upsert=True
+            )
+            if result.upserted_id:
+                logging.info("✅ Admin user created: chaibunkcafe@gmail.com")
+            else:
+                logging.info("✅ Admin user already exists (concurrent creation)")
+        else:
+            logging.info("✅ Admin user already exists")
+    except Exception as e:
+        # Don't fail startup if admin initialization fails - it's not critical
+        logging.warning(f"⚠️ Admin initialization warning (non-critical): {e}")
