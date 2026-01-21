@@ -136,10 +136,11 @@ function AdminLogin({ onLogin }) {
 
 // ============ MAIN ADMIN DASHBOARD ============
 function AdminDashboard({ token, onLogout }) {
-  const [activeTab, setActiveTab] = useState('prompts');
+  const [activeTab, setActiveTab] = useState('evaluations');
   const [loading, setLoading] = useState(false);
 
   const tabs = [
+    { id: 'evaluations', label: 'Evaluations', icon: BarChart3 },
     { id: 'prompts', label: 'System Prompts', icon: FileText },
     { id: 'models', label: 'Model Settings', icon: Cpu },
     { id: 'analytics', label: 'Usage Analytics', icon: BarChart3 },
