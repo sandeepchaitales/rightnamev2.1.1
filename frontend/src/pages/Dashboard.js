@@ -2749,6 +2749,7 @@ const Dashboard = () => {
             console.log('[EVAL Dashboard] Full data:', location.state.data);
             console.log('[EVAL Dashboard] brand_scores:', location.state.data?.brand_scores);
             console.log('[EVAL Dashboard] First brand dimensions:', location.state.data?.brand_scores?.[0]?.dimensions);
+            console.log('[EVAL Dashboard] 🔍 DUPONT_ANALYSIS:', location.state.data?.brand_scores?.[0]?.dupont_analysis);
             
             setReportData(location.state.data);
             setQueryData(location.state.query);
@@ -2762,6 +2763,7 @@ const Dashboard = () => {
                 const parsedReport = JSON.parse(savedReport);
                 console.log('[EVAL Dashboard] Loaded from localStorage:', parsedReport);
                 console.log('[EVAL Dashboard] First brand dimensions from storage:', parsedReport?.brand_scores?.[0]?.dimensions);
+                console.log('[EVAL Dashboard] 🔍 DUPONT_ANALYSIS from storage:', parsedReport?.brand_scores?.[0]?.dupont_analysis);
                 setReportData(parsedReport);
                 setQueryData(JSON.parse(savedQuery));
             }
