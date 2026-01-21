@@ -1922,18 +1922,20 @@ def get_category_key(category: str, industry: str = None) -> str:
     logging.warning(f"⚠️ CATEGORY NOT MAPPED: '{category}' (industry: '{industry}') → using 'default'")
     return "default"
 
-def get_market_data_for_category_country(category: str, country: str) -> dict:
+def get_market_data_for_category_country(category: str, country: str, industry: str = None) -> dict:
     """Get market data for specific category and country combination.
     
-    CRITICAL FIX: Case-insensitive country matching to handle "INDIA" vs "India"
+    IMPROVED:
+    - Case-insensitive country matching
+    - Industry as secondary lookup
+    - Neutral default fallback (no more beauty hardcode)
     """
-    category_key = get_category_key(category)
+    category_key = get_category_key(category, industry)
     
     # Get category-specific data
     category_data = CATEGORY_COUNTRY_MARKET_DATA.get(category_key, {})
     
     # CASE-INSENSITIVE country matching
-    # Create a lowercase lookup map for country names
     country_lower = country.lower().strip() if country else ""
     country_lookup = {k.lower(): k for k in category_data.keys()}
     
@@ -1943,25 +1945,44 @@ def get_market_data_for_category_country(category: str, country: str) -> dict:
         logging.info(f"✅ Country matched: '{country}' → '{actual_key}' (category: {category_key})")
         return category_data[actual_key]
     elif "default" in category_data:
-        logging.warning(f"⚠️ Country '{country}' not found in {category_key} data, using default")
+        logging.warning(f"⚠️ Country '{country}' not found in {category_key} data, using category default")
         return category_data["default"]
     
-    # Fallback to beauty default (original behavior) if category not found
-    logging.warning(f"⚠️ Category '{category_key}' not found, using beauty default")
-    return CATEGORY_COUNTRY_MARKET_DATA.get("beauty", {}).get("default", {
+    # NEUTRAL DEFAULT FALLBACK (no more beauty hardcode!)
+    logging.warning(f"⚠️ Category '{category_key}' has no data for '{country}', using NEUTRAL default")
+    return _get_neutral_default_market_data(category, country)
+
+
+def _get_neutral_default_market_data(category: str, country: str) -> dict:
+    """
+    Generate a NEUTRAL, category-agnostic default market data template.
+    This replaces the old beauty-hardcoded fallback.
+    
+    The content is generic enough to work for ANY industry while still being useful.
+    """
+    # Determine currency based on country
+    currency_map = {
+        "india": "₹", "usa": "$", "uk": "£", "japan": "¥", "china": "¥",
+        "thailand": "฿", "singapore": "S$", "uae": "AED", "germany": "€",
+        "france": "€", "australia": "A$", "canada": "C$", "brazil": "R$"
+    }
+    country_lower = country.lower().strip() if country else ""
+    currency = currency_map.get(country_lower, "$")
+    
+    return {
         "competitors": [
-            {"name": "Market Leader 1", "x_coordinate": 75, "y_coordinate": 70, "quadrant": "Premium Established"},
-            {"name": "Market Leader 2", "x_coordinate": 50, "y_coordinate": 60, "quadrant": "Mass Market"},
-            {"name": "Regional Player", "x_coordinate": 60, "y_coordinate": 55, "quadrant": "Local Champion"},
-            {"name": "Challenger Brand", "x_coordinate": 45, "y_coordinate": 75, "quadrant": "Emerging Disruptor"}
+            {"name": "Market Leader", "x_coordinate": 80, "y_coordinate": 75, "quadrant": "Premium Established"},
+            {"name": "Value Champion", "x_coordinate": 35, "y_coordinate": 55, "quadrant": "Affordable Quality"},
+            {"name": "Innovation Player", "x_coordinate": 60, "y_coordinate": 80, "quadrant": "Modern Disruptor"},
+            {"name": "Regional Specialist", "x_coordinate": 50, "y_coordinate": 45, "quadrant": "Local Expert"}
         ],
         "user_position": {"x": 65, "y": 72, "quadrant": "Accessible Premium"},
-        "axis_x": "Price: Budget → Premium",
+        "axis_x": f"Price: {currency}Budget → {currency}Premium",
         "axis_y": "Positioning: Traditional → Modern",
-        "white_space": "Market analysis indicates opportunities in the premium accessible segment. Consumer trends favor innovative, authentic brands with clear differentiation.",
-        "strategic_advantage": "As a new entrant, the brand can leverage digital-first strategies and agile positioning to capture underserved market segments.",
-        "entry_recommendation": "Phased market entry: Phase 1 (Digital validation), Phase 2 (Strategic partnerships), Phase 3 (Scale operations). Focus on building authentic brand story and community."
-    })
+        "white_space": f"Market analysis for {category} in {country} indicates opportunities in underserved segments. Focus on differentiation through innovation, customer experience, and authentic brand positioning. Digital-first strategies offer cost-effective market entry.",
+        "strategic_advantage": f"As a new entrant in the {category} space, the brand can leverage agile operations, modern technology stack, and customer-centric approaches to capture market share from established players.",
+        "entry_recommendation": f"Phased market entry for {country}: Phase 1 (6 months) - Digital validation and customer discovery. Phase 2 (12 months) - Strategic partnerships and channel development. Phase 3 (18+ months) - Scale operations and market expansion. Key success factors: strong unit economics, customer retention, and brand building."
+    }
 
 def generate_country_competitor_analysis(countries: list, category: str, brand_name: str) -> list:
     """Generate RESEARCHED competitor analysis for ALL user-selected countries (max 4)
