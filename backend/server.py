@@ -2012,7 +2012,7 @@ def generate_country_competitor_analysis(countries: list, category: str, brand_n
         display_name = country_name.title() if country_name else "Unknown"
         
         # Get CATEGORY-SPECIFIC market data for this country
-        market_data = get_market_data_for_category_country(category, country_name)
+        market_data = get_market_data_for_category_country(category, country_name, industry)
         logging.info(f"📊 Market data for {display_name} {flag} ({category_key}): {len(market_data.get('competitors', []))} competitors")
         
         # Build the analysis
