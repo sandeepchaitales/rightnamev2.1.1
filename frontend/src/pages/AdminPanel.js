@@ -651,7 +651,7 @@ function EvaluationsTab({ token }) {
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-50 rounded-lg p-3">
-                  <p className="text-xs text-slate-500">NameScore</p>
+                  <p className="text-xs text-slate-500">RightName Score</p>
                   <p className="text-2xl font-bold text-violet-600">{selectedEval.namescore || 'N/A'}</p>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-3">
