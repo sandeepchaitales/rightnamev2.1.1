@@ -1862,22 +1862,64 @@ INDUSTRY_TO_CATEGORY = {
     "media & entertainment": "media",
 }
 
-def get_category_key(category: str) -> str:
-    """Normalize category input to match our data structure"""
+def get_category_key(category: str, industry: str = None) -> str:
+    """
+    Normalize category input to match our data structure.
+    
+    IMPROVED LOGIC:
+    1. Direct exact match on category
+    2. Word-boundary substring match on category (prevents "app" matching "apparel")
+    3. Industry as secondary lookup (NEW)
+    4. Fallback to "default"
+    
+    Args:
+        category: User's category input (e.g., "brand evaluation tool")
+        industry: User's industry input (e.g., "Technology & Software") - SECONDARY LOOKUP
+    """
+    import re
+    
     if not category:
+        # Try industry if category is empty
+        if industry:
+            industry_lower = industry.lower().strip()
+            if industry_lower in INDUSTRY_TO_CATEGORY:
+                result = INDUSTRY_TO_CATEGORY[industry_lower]
+                logging.info(f"📁 CATEGORY from INDUSTRY: '{industry}' → '{result}'")
+                return result
         return "default"
     
     category_lower = category.lower().strip()
     
-    # Check direct mapping
+    # Step 1: Check direct exact mapping
     if category_lower in CATEGORY_MAPPING:
+        logging.info(f"📁 CATEGORY EXACT MATCH: '{category}' → '{CATEGORY_MAPPING[category_lower]}'")
         return CATEGORY_MAPPING[category_lower]
     
-    # Check if any mapped key is contained in the category
-    for key, value in CATEGORY_MAPPING.items():
-        if key in category_lower:
-            return value
+    # Step 2: Word-boundary substring match (prevents "app" matching "apparel")
+    # Sort by key length descending to prefer longer matches first
+    sorted_keys = sorted(CATEGORY_MAPPING.keys(), key=len, reverse=True)
+    for key in sorted_keys:
+        # Use word boundary regex to prevent partial matches
+        pattern = r'\b' + re.escape(key) + r'\b'
+        if re.search(pattern, category_lower):
+            logging.info(f"📁 CATEGORY WORD MATCH: '{category}' contains '{key}' → '{CATEGORY_MAPPING[key]}'")
+            return CATEGORY_MAPPING[key]
     
+    # Step 3: Try industry as secondary lookup (NEW)
+    if industry:
+        industry_lower = industry.lower().strip()
+        # Direct match on industry
+        if industry_lower in INDUSTRY_TO_CATEGORY:
+            result = INDUSTRY_TO_CATEGORY[industry_lower]
+            logging.info(f"📁 CATEGORY from INDUSTRY (secondary): '{industry}' → '{result}'")
+            return result
+        # Substring match on industry
+        for ind_key, ind_value in INDUSTRY_TO_CATEGORY.items():
+            if ind_key in industry_lower or industry_lower in ind_key:
+                logging.info(f"📁 CATEGORY from INDUSTRY SUBSTRING: '{industry}' matches '{ind_key}' → '{ind_value}'")
+                return ind_value
+    
+    logging.warning(f"⚠️ CATEGORY NOT MAPPED: '{category}' (industry: '{industry}') → using 'default'")
     return "default"
 
 def get_market_data_for_category_country(category: str, country: str) -> dict:
