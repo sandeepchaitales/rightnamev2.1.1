@@ -875,22 +875,196 @@ async def research_country_market(
 def _apply_fallback_strategy(
     intelligence: MarketIntelligence,
     fallback_data: Dict[str, Any],
-    brand_name: str
+    brand_name: str,
+    competitor_data: Dict[str, Any] = None
 ):
-    """Apply fallback strategic analysis when LLM white space fails"""
+    """
+    Apply fallback strategic analysis when LLM white space fails.
+    
+    IMPROVED: If competitor_data exists (LLM successfully got competitors),
+    generate white space FROM that data instead of using category-mapped fallback
+    which could be mismatched (e.g., beauty data for tech category).
+    """
+    # PRIORITY 1: Generate from competitor_data if available
+    if competitor_data and competitor_data.get("competitors"):
+        logger.info(f"🧠 SMART FALLBACK: Generating white space from {len(competitor_data.get('competitors', []))} competitors")
+        smart_analysis = _generate_smart_white_space_from_competitors(
+            intelligence.category,
+            intelligence.country,
+            brand_name,
+            competitor_data
+        )
+        if smart_analysis:
+            intelligence.white_space_analysis = smart_analysis.get("white_space_analysis", "")
+            intelligence.strategic_advantage = smart_analysis.get("strategic_advantage", "")
+            intelligence.market_entry_recommendation = smart_analysis.get("market_entry_recommendation", "")
+            intelligence.user_brand_position = smart_analysis.get("user_brand_position", {
+                "x_coordinate": 65, "y_coordinate": 72,
+                "quadrant": "Accessible Premium",
+                "rationale": f"Positioning for {brand_name} in {intelligence.country}"
+            })
+            logger.info(f"✅ SMART FALLBACK SUCCESS for {intelligence.country}")
+            return
+        logger.warning(f"⚠️ Smart fallback failed, using generic fallback")
+    
+    # PRIORITY 2: Use fallback_data if available (category-mapped)
     if fallback_data:
         intelligence.white_space_analysis = fallback_data.get("white_space", 
-            f"Market analysis indicates opportunities in the {intelligence.category} sector.")
+            f"Market analysis indicates opportunities in the {intelligence.category} sector in {intelligence.country}.")
         intelligence.strategic_advantage = fallback_data.get("strategic_advantage",
-            f"As a new entrant, {brand_name} can leverage digital-first strategies.")
+            f"As a new entrant, {brand_name} can leverage digital-first strategies and modern approaches.")
         intelligence.market_entry_recommendation = fallback_data.get("entry_recommendation",
-            "Phased entry recommended: Phase 1 (E-commerce), Phase 2 (Retail), Phase 3 (Scale).")
+            f"Phased entry for {intelligence.country}: Phase 1 (E-commerce), Phase 2 (Partnerships), Phase 3 (Scale).")
         intelligence.user_brand_position = {
             "x_coordinate": fallback_data.get("user_position", {}).get("x", 65),
             "y_coordinate": fallback_data.get("user_position", {}).get("y", 72),
             "quadrant": fallback_data.get("user_position", {}).get("quadrant", "Accessible Premium"),
             "rationale": f"Positioning for {brand_name} in {intelligence.country}"
         }
+    else:
+        # PRIORITY 3: Generic fallback
+        intelligence.white_space_analysis = f"Market analysis for {intelligence.category} in {intelligence.country} indicates opportunities in underserved segments."
+        intelligence.strategic_advantage = f"As a new entrant, {brand_name} can leverage innovation and customer-centric approaches."
+        intelligence.market_entry_recommendation = f"Phased market entry for {intelligence.country}: Phase 1 (Digital validation), Phase 2 (Strategic partnerships), Phase 3 (Scale operations)."
+        intelligence.user_brand_position = {
+            "x_coordinate": 65, "y_coordinate": 72,
+            "quadrant": "Accessible Premium",
+            "rationale": f"Default positioning for {brand_name}"
+        }
+
+
+def _generate_smart_white_space_from_competitors(
+    category: str,
+    country: str,
+    brand_name: str,
+    competitor_data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """
+    Generate white space analysis from competitor data using:
+    1. Quick LLM mini-prompt (5 second timeout)
+    2. Code-based analysis if LLM fails
+    
+    This ensures we use ACTUAL competitor names and positions, not mismatched category data.
+    """
+    competitors = competitor_data.get("competitors", [])
+    if not competitors:
+        return None
+    
+    # Extract competitor info for analysis
+    competitor_names = [c.get("name", "Unknown") for c in competitors[:5]]
+    competitor_positions = [(c.get("name"), c.get("x_coordinate", 50), c.get("y_coordinate", 50)) for c in competitors[:5]]
+    
+    # Identify market gaps based on competitor positions
+    # Find quadrants that are underserved
+    positions = [(c.get("x_coordinate", 50), c.get("y_coordinate", 50)) for c in competitors]
+    avg_x = sum(p[0] for p in positions) / len(positions) if positions else 50
+    avg_y = sum(p[1] for p in positions) / len(positions) if positions else 50
+    
+    # Determine white space quadrant
+    if avg_x > 60 and avg_y > 60:
+        # Competitors clustered in Premium/Modern - opportunity in Affordable/Traditional or Affordable/Modern
+        white_space_quadrant = "Affordable Quality" if avg_y > 70 else "Value Innovation"
+        recommended_x, recommended_y = 40, 65
+        gap_description = "affordable yet quality-focused"
+    elif avg_x < 40:
+        # Competitors clustered in Budget - opportunity in Premium
+        white_space_quadrant = "Premium Differentiation"
+        recommended_x, recommended_y = 70, 75
+        gap_description = "premium, experience-focused"
+    else:
+        # Mixed - find the least crowded area
+        white_space_quadrant = "Accessible Premium"
+        recommended_x, recommended_y = 65, 72
+        gap_description = "accessible premium"
+    
+    # Try LLM mini-prompt with short timeout
+    try:
+        if LlmChat and EMERGENT_KEY:
+            smart_result = asyncio.run(_quick_llm_white_space(
+                category, country, brand_name, competitor_names, white_space_quadrant
+            ))
+            if smart_result:
+                smart_result["user_brand_position"] = {
+                    "x_coordinate": recommended_x,
+                    "y_coordinate": recommended_y,
+                    "quadrant": white_space_quadrant,
+                    "rationale": f"Positioned in {gap_description} segment to differentiate from {', '.join(competitor_names[:3])}"
+                }
+                return smart_result
+    except Exception as e:
+        logger.warning(f"Quick LLM white space failed: {e}")
+    
+    # CODE-BASED FALLBACK: Generate from competitor analysis
+    logger.info(f"📊 CODE-BASED WHITE SPACE: Generating from {len(competitors)} competitors")
+    
+    competitor_list = ", ".join(competitor_names[:4])
+    
+    return {
+        "white_space_analysis": f"Analysis of {category} market in {country} reveals competitive clustering around {competitor_list}. **Opportunity exists in the {gap_description} segment** where current players have limited presence. Market gap identified for brands offering differentiated value proposition targeting underserved customer segments.",
+        "strategic_advantage": f"'{brand_name}' can establish differentiation by positioning in the {white_space_quadrant} quadrant, distinct from established players ({competitor_list}). First-mover advantage in {gap_description} positioning, combined with modern digital-first approach, enables sustainable competitive moat.",
+        "market_entry_recommendation": f"Market entry strategy for {country}: **Phase 1 (0-6 months)** - Digital presence, customer validation, and early traction against {competitor_names[0] if competitor_names else 'incumbents'}. **Phase 2 (6-12 months)** - Channel partnerships and market expansion. **Phase 3 (12+ months)** - Scale operations and defend positioning against competitive response.",
+        "user_brand_position": {
+            "x_coordinate": recommended_x,
+            "y_coordinate": recommended_y,
+            "quadrant": white_space_quadrant,
+            "rationale": f"Positioned in {gap_description} segment to differentiate from {competitor_list}"
+        }
+    }
+
+
+async def _quick_llm_white_space(
+    category: str,
+    country: str,
+    brand_name: str,
+    competitor_names: List[str],
+    suggested_quadrant: str
+) -> Optional[Dict[str, Any]]:
+    """
+    Quick LLM call with 5-second timeout to generate white space from competitors.
+    """
+    if not LlmChat or not EMERGENT_KEY:
+        return None
+    
+    competitors_str = ", ".join(competitor_names[:4])
+    
+    prompt = f"""Generate 3 SHORT strategic insights for a brand entering the {category} market in {country}.
+
+COMPETITORS: {competitors_str}
+BRAND: {brand_name}
+SUGGESTED POSITION: {suggested_quadrant}
+
+Return JSON:
+{{"white_space_analysis": "2 sentences on market gap, mention specific competitors",
+"strategic_advantage": "2 sentences on how {brand_name} can win",
+"market_entry_recommendation": "3-phase entry plan, 2-3 sentences"}}
+
+Be specific. Use competitor names. Return ONLY valid JSON."""
+
+    try:
+        chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
+        user_msg = UserMessage(prompt)
+        
+        response = await asyncio.wait_for(
+            chat.send_message(user_msg),
+            timeout=5  # SHORT TIMEOUT
+        )
+        
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            import re
+            response_text = re.sub(r'^```json?\s*', '', response_text)
+            response_text = re.sub(r'\s*```$', '', response_text)
+        
+        result = json.loads(response_text)
+        logger.info(f"✅ Quick LLM white space SUCCESS for {country}")
+        return result
+        
+    except asyncio.TimeoutError:
+        logger.warning(f"Quick LLM white space timed out for {country}")
+        return None
+    except Exception as e:
+        logger.warning(f"Quick LLM white space error: {e}")
+        return None
 
 
 def _apply_fallback_data(
