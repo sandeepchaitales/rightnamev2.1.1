@@ -9,6 +9,8 @@ import BlogPage from "./pages/BlogPage";
 import BrandAuditLanding from "./pages/BrandAuditLanding";
 import BrandAuditDashboard from "./pages/BrandAuditDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 import { AuthProvider } from "./contexts/AuthContext";
 import AuthModal from "./components/AuthModal";
 import { Toaster } from "@/components/ui/sonner";
@@ -32,6 +34,8 @@ function AppRouter() {
       <Route path="/brand-audit" element={<BrandAuditLanding />} />
       <Route path="/brand-audit/results" element={<BrandAuditDashboard />} />
       <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/payment/success" element={<PaymentSuccess />} />
+      <Route path="/payment/cancel" element={<PaymentCancel />} />
     </Routes>
   );
 }
