@@ -194,6 +194,7 @@ function AdminDashboard({ token, onLogout }) {
 
         {/* Tab Content */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+          {activeTab === 'evaluations' && <EvaluationsTab token={token} />}
           {activeTab === 'prompts' && <PromptsTab token={token} />}
           {activeTab === 'models' && <ModelsTab token={token} />}
           {activeTab === 'analytics' && <AnalyticsTab token={token} />}
