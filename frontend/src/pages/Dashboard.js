@@ -1810,6 +1810,11 @@ const LockedSection = ({ title, onUnlock }) => (
 
 // ============ TRADEMARK RESEARCH SECTION (NEW - Perplexity-Level Analysis) ============
 const TrademarkResearchSection = ({ trademarkResearch, registrationTimeline, mitigationStrategies, niceClassificationStrategy, realisticRegistrationCosts, dupontAnalysis }) => {
+    // DEBUG: Log DuPont analysis data
+    console.log('🔍 TrademarkResearchSection - dupontAnalysis:', dupontAnalysis);
+    console.log('🔍 dupontAnalysis exists:', !!dupontAnalysis);
+    console.log('🔍 has_analysis:', dupontAnalysis?.has_analysis);
+    
     if (!trademarkResearch) return null;
     
     const getRiskColor = (level) => {
