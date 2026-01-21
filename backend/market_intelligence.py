@@ -857,7 +857,8 @@ async def research_country_market(
                 intelligence.research_quality = "HIGH"
             else:
                 intelligence.research_quality = "MEDIUM"
-                _apply_fallback_strategy(intelligence, fallback_data, brand_name)
+                # PASS competitor_data to generate smart white space from actual competitors
+                _apply_fallback_strategy(intelligence, fallback_data, brand_name, competitor_data)
         else:
             # Research failed, use fallback
             logger.warning(f"⚠️ Research failed for {country}, using fallback data")
