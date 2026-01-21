@@ -2741,7 +2741,7 @@ async def llm_first_country_analysis(
         # Use hardcoded fallback directly
         logging.info(f"⚡ Using hardcoded data (LLM research disabled)")
         return (
-            generate_country_competitor_analysis(countries, category, brand_name),
+            generate_country_competitor_analysis(countries, category, brand_name, None),
             generate_cultural_analysis(countries, brand_name, category, classification)
         )
     
@@ -2820,7 +2820,7 @@ async def llm_first_country_analysis(
     except Exception as e:
         logging.error(f"❌ LLM-first research failed: {e}, using hardcoded fallback")
         return (
-            generate_country_competitor_analysis(countries, category, brand_name),
+            generate_country_competitor_analysis(countries, category, brand_name, None),
             generate_cultural_analysis(countries, brand_name, category, classification)
         )
 
