@@ -11741,6 +11741,10 @@ async def logout(request: Request, response: Response):
 
 app.include_router(api_router)
 app.include_router(admin_router)  # Admin panel routes
+app.include_router(payment_router)  # Payment routes
+
+# Initialize payment routes with database
+set_payment_db(db)
 
 # Root-level health check endpoint for Kubernetes (no /api prefix)
 @app.get("/health")
