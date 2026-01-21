@@ -1984,14 +1984,14 @@ def _get_neutral_default_market_data(category: str, country: str) -> dict:
         "entry_recommendation": f"Phased market entry for {country}: Phase 1 (6 months) - Digital validation and customer discovery. Phase 2 (12 months) - Strategic partnerships and channel development. Phase 3 (18+ months) - Scale operations and market expansion. Key success factors: strong unit economics, customer retention, and brand building."
     }
 
-def generate_country_competitor_analysis(countries: list, category: str, brand_name: str) -> list:
+def generate_country_competitor_analysis(countries: list, category: str, brand_name: str, industry: str = None) -> list:
     """Generate RESEARCHED competitor analysis for ALL user-selected countries (max 4)
     Now category-aware - uses different competitor data based on industry category
     """
     result = []
     
     # Log the category being used
-    category_key = get_category_key(category)
+    category_key = get_category_key(category, industry)
     logging.info(f"📊 CATEGORY-AWARE MARKET DATA: Category '{category}' mapped to '{category_key}'")
     
     # Ensure we process up to 4 countries
