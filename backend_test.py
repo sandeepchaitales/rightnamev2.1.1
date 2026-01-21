@@ -7935,6 +7935,156 @@ class BrandEvaluationTester:
             self.log_test("Backend Logs - Exception", False, str(e))
             return False
 
+    def test_white_space_category_mismatch_fix(self):
+        """Test WHITE SPACE CATEGORY MISMATCH FIX for RIGHTNAME.AI brand evaluation API"""
+        payload = {
+            "brand_names": ["rightname"],
+            "category": "brand evaluation tool",
+            "industry": "Technology & Software",
+            "countries": ["India", "USA", "UK", "Japan"],
+            "positioning": "Premium",
+            "product_type": "Digital"
+        }
+        
+        try:
+            print(f"\n🔧 Testing WHITE SPACE CATEGORY MISMATCH FIX...")
+            print(f"Brand: rightname")
+            print(f"Category: brand evaluation tool")
+            print(f"Industry: Technology & Software")
+            print(f"Expected: Technology-related white space analysis (NOT beauty market data)")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=180  # Extended timeout for comprehensive analysis
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            # Verification 1: API returns 200 OK (not timeout)
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("White Space Fix - API Response", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("White Space Fix - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                fix_issues = []
+                
+                # Get the full response as text for analysis
+                response_text = json.dumps(data, indent=2)
+                
+                # Verification 3: White Space Analysis should NOT contain beauty terms
+                beauty_terms = ["beauty", "masstige", "cosmetics", "skincare", "$20-50"]
+                found_beauty_terms = []
+                
+                for term in beauty_terms:
+                    if term.lower() in response_text.lower():
+                        found_beauty_terms.append(term)
+                
+                if found_beauty_terms:
+                    fix_issues.append(f"White Space Analysis contains beauty terms: {found_beauty_terms}")
+                    print(f"❌ Found beauty terms: {found_beauty_terms}")
+                else:
+                    print(f"✅ No beauty terms found in White Space Analysis")
+                
+                # Verification 4: White Space Analysis SHOULD mention technology-related terms
+                tech_terms = ["technology", "software", "digital", "platform", "saas", "tech", "evaluation", "tool"]
+                found_tech_terms = []
+                
+                for term in tech_terms:
+                    if term.lower() in response_text.lower():
+                        found_tech_terms.append(term)
+                
+                if len(found_tech_terms) < 2:  # Should have at least 2 tech-related terms
+                    fix_issues.append(f"White Space Analysis should contain more technology terms, found: {found_tech_terms}")
+                    print(f"⚠️ Limited technology terms found: {found_tech_terms}")
+                else:
+                    print(f"✅ Technology terms found: {found_tech_terms}")
+                
+                # Verification 5: Strategic Advantage should be technology/digital focused
+                strategic_advantage = brand.get("strategic_advantage", "")
+                if strategic_advantage:
+                    if any(beauty_term in strategic_advantage.lower() for beauty_term in ["beauty", "dtc", "cosmetics"]):
+                        fix_issues.append(f"Strategic Advantage contains beauty/DTC terms instead of technology focus")
+                        print(f"❌ Strategic Advantage has beauty/DTC focus")
+                    elif any(tech_term in strategic_advantage.lower() for tech_term in ["technology", "digital", "software", "platform"]):
+                        print(f"✅ Strategic Advantage has technology/digital focus")
+                    else:
+                        print(f"⚠️ Strategic Advantage focus unclear")
+                
+                # Verification 6: Check all 4 country markets for beauty data
+                country_analysis = brand.get("country_competitor_analysis", [])
+                if country_analysis:
+                    for country_data in country_analysis:
+                        country_name = country_data.get("country", "Unknown")
+                        country_text = json.dumps(country_data)
+                        
+                        # Check for beauty competitors in country data
+                        beauty_competitors = ["nykaa", "glossier", "sephora", "ulta", "fenty"]
+                        found_beauty_competitors = [comp for comp in beauty_competitors if comp.lower() in country_text.lower()]
+                        
+                        if found_beauty_competitors:
+                            fix_issues.append(f"Country {country_name} shows beauty competitors: {found_beauty_competitors}")
+                            print(f"❌ {country_name} has beauty competitors: {found_beauty_competitors}")
+                        else:
+                            print(f"✅ {country_name} - No beauty competitors found")
+                
+                # Check for white space analysis field specifically
+                white_space_analysis = None
+                
+                # Look for white space in various possible locations
+                if "white_space_analysis" in brand:
+                    white_space_analysis = brand["white_space_analysis"]
+                elif "market_analysis" in brand:
+                    market_analysis = brand["market_analysis"]
+                    if isinstance(market_analysis, dict) and "white_space" in market_analysis:
+                        white_space_analysis = market_analysis["white_space"]
+                
+                if white_space_analysis:
+                    print(f"✅ Found White Space Analysis section")
+                    
+                    # Check specifically for beauty market data in white space
+                    white_space_text = str(white_space_analysis).lower()
+                    if "global beauty market" in white_space_text or "masstige segment" in white_space_text:
+                        fix_issues.append("White Space Analysis still contains 'Global beauty market' or 'masstige segment' text")
+                        print(f"❌ White Space still has beauty market hardcoded text")
+                    else:
+                        print(f"✅ White Space Analysis does not contain hardcoded beauty text")
+                else:
+                    print(f"⚠️ White Space Analysis section not found in expected locations")
+                
+                # Summary of verification results
+                if fix_issues:
+                    self.log_test("White Space Category Mismatch Fix", False, "; ".join(fix_issues))
+                    return False
+                
+                self.log_test("White Space Category Mismatch Fix", True, 
+                            f"All verifications passed. Response time: {response_time:.2f}s, Tech terms: {len(found_tech_terms)}, No beauty terms found")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("White Space Fix - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("White Space Fix - Timeout", False, "Request timed out after 180 seconds")
+            return False
+        except Exception as e:
+            self.log_test("White Space Fix - Exception", False, str(e))
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Backend API Tests...")
