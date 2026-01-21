@@ -44,6 +44,9 @@ from market_intelligence import (
     format_cultural_intelligence_for_response
 )
 
+# Import Payment Routes
+from payment_routes import payment_router, set_db as set_payment_db
+
 # Import Emergent Integration
 try:
     from emergentintegrations.llm.chat import LlmChat, UserMessage
