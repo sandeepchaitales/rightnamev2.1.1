@@ -1003,7 +1003,7 @@ const LandingPage = () => {
               number="3"
               icon={Target}
               title="Get Your Report"
-              description="Receive a consulting-grade NameScore report with actionable recommendations and risk assessment."
+              description="Receive a consulting-grade RightName Score report with actionable recommendations and risk assessment."
               color="bg-gradient-to-br from-orange-500 to-orange-600"
             />
           </div>
