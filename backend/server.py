@@ -2756,7 +2756,7 @@ async def llm_first_country_analysis(
         for country in countries[:4]:
             country_name = country.get('name') if isinstance(country, dict) else str(country)
             country_lower = country_name.lower().strip() if country_name else ""
-            fallback_market[country_name] = get_market_data_for_category_country(category, country_name)
+            fallback_market[country_name] = get_market_data_for_category_country(category, country_name, None)
             fallback_cultural[country_name] = cultural_data_lower.get(country_lower, COUNTRY_CULTURAL_DATA["default"])
         
         # Execute LLM-first research WITH POSITIONING
