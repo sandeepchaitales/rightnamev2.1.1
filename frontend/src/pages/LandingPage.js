@@ -15,11 +15,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Loader2, Sparkles, ShieldCheck, Globe2, BrainCircuit, Search, ArrowRight, Zap, AlertCircle, LogIn, LogOut, User, CheckCircle, Star, Rocket, Target, Trophy, Heart, TrendingUp, Users, Building2, Briefcase, ChevronDown, ChevronUp, FileText, Clock, DollarSign, MessageSquare, Quote, BarChart3, Menu, X } from "lucide-react";
+import { Loader2, Sparkles, ShieldCheck, Globe2, BrainCircuit, Search, ArrowRight, Zap, AlertCircle, LogIn, LogOut, User, CheckCircle, Star, Rocket, Target, Trophy, Heart, TrendingUp, Users, Building2, Briefcase, ChevronDown, ChevronUp, FileText, Clock, DollarSign, MessageSquare, Quote, BarChart3, Menu, X, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { ReportCarousel } from '../components/ReportPreview';
 import Footer from '../components/Footer';
 import ElegantLoader from '../components/ElegantLoader';
+import PricingSection from '../components/PricingSection';
 
 // Dynamic Cycling "Trusted By" Component
 const TrustedByCycler = () => {
