@@ -8033,8 +8033,17 @@ class BrandEvaluationTester:
                         country_text = json.dumps(country_data)
                         
                         # Check for beauty competitors in country data
-                        beauty_competitors = ["nykaa", "glossier", "sephora", "ulta", "fenty"]
-                        found_beauty_competitors = [comp for comp in beauty_competitors if comp.lower() in country_text.lower()]
+                        beauty_competitors = ["nykaa", "glossier", "sephora", "ulta beauty", "fenty"]
+                        found_beauty_competitors = []
+                        
+                        for comp in beauty_competitors:
+                            # Look for the competitor as a standalone name, not as substring
+                            if comp.lower() in country_text.lower():
+                                # Additional check to make sure it's not a substring of another word
+                                import re
+                                pattern = r'\b' + re.escape(comp.lower()) + r'\b'
+                                if re.search(pattern, country_text.lower()):
+                                    found_beauty_competitors.append(comp)
                         
                         if found_beauty_competitors:
                             fix_issues.append(f"Country {country_name} shows beauty competitors: {found_beauty_competitors}")
