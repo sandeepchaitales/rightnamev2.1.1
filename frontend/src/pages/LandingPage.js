@@ -21,6 +21,7 @@ import { ReportCarousel } from '../components/ReportPreview';
 import Footer from '../components/Footer';
 import ElegantLoader from '../components/ElegantLoader';
 import PricingSection from '../components/PricingSection';
+import CaseStudiesSection from '../components/CaseStudiesSection';
 
 // Dynamic Cycling "Trusted By" Component
 const TrustedByCycler = () => {
