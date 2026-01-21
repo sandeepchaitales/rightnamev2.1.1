@@ -88,10 +88,14 @@ async def lifespan(app: FastAPI):
     # Startup
     logging.info("Application starting... MongoDB pool initialized")
     
-    # Initialize admin panel
-    set_db(db)
-    await initialize_admin(db)
-    logging.info("✅ Admin panel initialized")
+    # Initialize admin panel - wrapped in try/except for resilience
+    try:
+        set_db(db)
+        await initialize_admin(db)
+        logging.info("✅ Admin panel initialized")
+    except Exception as e:
+        # Don't fail startup - admin panel is not critical for health checks
+        logging.warning(f"⚠️ Admin initialization warning (app still functional): {e}")
     
     yield
     # Shutdown - cleanup connections
