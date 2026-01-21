@@ -1263,6 +1263,9 @@ const LandingPage = () => {
         </div>
       </div>
       
+      {/* Case Studies / Sample Reports Section */}
+      <CaseStudiesSection />
+      
       {/* Pricing Section */}
       <div id="pricing" className="bg-gradient-to-br from-slate-50 via-white to-violet-50">
         <PricingSection brandNames={formData.brand_names?.split(',').map(n => n.trim()).filter(n => n) || []} />
