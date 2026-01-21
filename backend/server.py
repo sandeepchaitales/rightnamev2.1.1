@@ -1788,9 +1788,16 @@ CATEGORY_MAPPING = {
     "beauty": "beauty", "cosmetics": "beauty", "skincare": "beauty", "makeup": "beauty",
     "personal care": "beauty", "haircare": "beauty", "fragrance": "beauty",
     
-    # Technology & SaaS
+    # Technology & SaaS (EXPANDED)
     "technology": "technology", "tech": "technology", "saas": "technology", "software": "technology",
     "it": "technology", "app": "technology", "ai": "technology", "fintech": "technology",
+    "tool": "technology", "platform": "technology", "digital": "technology", "analytics": "technology",
+    "automation": "technology", "cloud": "technology", "data": "technology", "cyber": "technology",
+    "machine learning": "technology", "ml": "technology", "startup": "technology", "b2b": "technology",
+    "enterprise": "technology", "api": "technology", "devops": "technology", "iot": "technology",
+    "blockchain": "technology", "web3": "technology", "crypto": "technology", "nft": "technology",
+    "ecommerce": "technology", "e-commerce": "technology", "marketplace": "technology",
+    "evaluation": "technology", "assessment": "technology", "analyzer": "technology",
     
     # Food & Beverage
     "food": "food", "beverage": "food", "food & beverage": "food", "f&b": "food",
@@ -1801,11 +1808,58 @@ CATEGORY_MAPPING = {
     "finance": "finance", "banking": "finance", "payments": "finance", "insurance": "finance",
     "investment": "finance", "lending": "finance", "wealth": "finance",
     
-    # Fashion & Apparel (NEW)
+    # Fashion & Apparel
     "fashion": "fashion", "apparel": "fashion", "clothing": "fashion", "streetwear": "fashion",
     "fashion & apparel": "fashion", "footwear": "fashion", "shoes": "fashion",
     "accessories": "fashion", "luxury fashion": "fashion", "sportswear": "fashion",
-    "athleisure": "fashion", "denim": "fashion", "activewear": "fashion"
+    "athleisure": "fashion", "denim": "fashion", "activewear": "fashion",
+    
+    # Healthcare & Medical
+    "healthcare": "healthcare", "health": "healthcare", "medical": "healthcare", "doctor": "healthcare",
+    "hospital": "healthcare", "clinic": "healthcare", "pharma": "healthcare", "pharmaceutical": "healthcare",
+    "wellness": "healthcare", "fitness": "healthcare", "telemedicine": "healthcare", "healthtech": "healthcare",
+    
+    # Education & EdTech
+    "education": "education", "edtech": "education", "learning": "education", "training": "education",
+    "courses": "education", "tutoring": "education", "school": "education", "university": "education",
+    
+    # Travel & Tourism
+    "travel": "travel", "tourism": "travel", "booking": "travel", "flights": "travel",
+    "vacation": "travel", "trips": "travel", "adventure": "travel",
+    
+    # Real Estate
+    "real estate": "realestate", "property": "realestate", "housing": "realestate", "rental": "realestate",
+    "proptech": "realestate",
+    
+    # Media & Entertainment
+    "media": "media", "entertainment": "media", "streaming": "media", "gaming": "media",
+    "content": "media", "video": "media", "music": "media", "podcast": "media"
+}
+
+# INDUSTRY to CATEGORY mapping (secondary lookup)
+INDUSTRY_TO_CATEGORY = {
+    "technology & software": "technology",
+    "technology": "technology",
+    "software": "technology",
+    "information technology": "technology",
+    "it services": "technology",
+    "saas": "technology",
+    "hospitality": "hotels",
+    "hotels & resorts": "hotels",
+    "beauty & cosmetics": "beauty",
+    "cosmetics": "beauty",
+    "food & beverage": "food",
+    "food service": "food",
+    "financial services": "finance",
+    "banking & finance": "finance",
+    "fashion & retail": "fashion",
+    "retail": "fashion",
+    "healthcare": "healthcare",
+    "health & wellness": "healthcare",
+    "education": "education",
+    "travel & tourism": "travel",
+    "real estate": "realestate",
+    "media & entertainment": "media",
 }
 
 def get_category_key(category: str) -> str:
