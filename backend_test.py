@@ -1175,6 +1175,416 @@ class BrandEvaluationTester:
             self.log_test("ACTUAL USPTO Costs - Exception", False, str(e))
             return False
 
+    def test_admin_login(self):
+        """Test admin login endpoint"""
+        payload = {
+            "email": "chaibunkcafe@gmail.com",
+            "password": "Sandy@2614"
+        }
+        
+        try:
+            print(f"\n🔐 Testing Admin Login...")
+            response = requests.post(
+                f"{self.api_url}/admin/login",
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ["success", "token", "message", "admin_email"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Login - Response Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                if not data["success"]:
+                    self.log_test("Admin Login - Success Flag", False, f"success=false: {data.get('message', '')}")
+                    return False
+                
+                if not data["token"]:
+                    self.log_test("Admin Login - Token", False, "No token returned")
+                    return False
+                
+                if data["admin_email"] != "chaibunkcafe@gmail.com":
+                    self.log_test("Admin Login - Email", False, f"Wrong email: {data['admin_email']}")
+                    return False
+                
+                # Store token for subsequent tests
+                self.admin_token = data["token"]
+                
+                self.log_test("Admin Login", True, f"Login successful, token received")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Login", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Login", False, str(e))
+            return False
+
+    def test_admin_login_invalid_credentials(self):
+        """Test admin login with invalid credentials"""
+        payload = {
+            "email": "chaibunkcafe@gmail.com",
+            "password": "wrongpassword"
+        }
+        
+        try:
+            print(f"\n🔐 Testing Admin Login - Invalid Credentials...")
+            response = requests.post(
+                f"{self.api_url}/admin/login",
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 401:
+                self.log_test("Admin Login - Invalid Credentials", True, "Correctly rejected invalid credentials")
+                return True
+            else:
+                self.log_test("Admin Login - Invalid Credentials", False, f"Expected 401, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Login - Invalid Credentials", False, str(e))
+            return False
+
+    def test_admin_evaluations_stats(self):
+        """Test GET /api/admin/evaluations/stats endpoint"""
+        if not self.admin_token:
+            self.log_test("Admin Evaluations Stats", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n📊 Testing Admin Evaluations Stats...")
+            response = requests.get(
+                f"{self.api_url}/admin/evaluations/stats?days=30",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check required top-level fields
+                required_fields = ["summary", "verdict_breakdown", "score_distribution", "top_categories", "top_countries", "daily_trend"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Evaluations Stats - Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Check summary structure
+                summary = data.get("summary", {})
+                summary_fields = ["total_evaluations", "evaluations_in_period", "average_score", "average_processing_time", "early_stopped_count"]
+                missing_summary = [field for field in summary_fields if field not in summary]
+                
+                if missing_summary:
+                    self.log_test("Admin Evaluations Stats - Summary", False, f"Missing summary fields: {missing_summary}")
+                    return False
+                
+                # Validate data types
+                if not isinstance(summary["total_evaluations"], int):
+                    self.log_test("Admin Evaluations Stats - Data Types", False, "total_evaluations should be int")
+                    return False
+                
+                if not isinstance(data["verdict_breakdown"], dict):
+                    self.log_test("Admin Evaluations Stats - Data Types", False, "verdict_breakdown should be dict")
+                    return False
+                
+                if not isinstance(data["daily_trend"], list):
+                    self.log_test("Admin Evaluations Stats - Data Types", False, "daily_trend should be list")
+                    return False
+                
+                print(f"✅ Stats Summary: {summary['total_evaluations']} total evaluations, avg score: {summary['average_score']}")
+                self.log_test("Admin Evaluations Stats", True, f"All fields present, {summary['total_evaluations']} total evaluations")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Evaluations Stats", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Evaluations Stats", False, str(e))
+            return False
+
+    def test_admin_evaluations_list(self):
+        """Test GET /api/admin/evaluations endpoint with pagination"""
+        if not self.admin_token:
+            self.log_test("Admin Evaluations List", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n📋 Testing Admin Evaluations List...")
+            response = requests.get(
+                f"{self.api_url}/admin/evaluations?page=1&limit=10",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check required fields
+                required_fields = ["evaluations", "pagination"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Admin Evaluations List - Structure", False, f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Check pagination structure
+                pagination = data.get("pagination", {})
+                pagination_fields = ["page", "limit", "total", "total_pages"]
+                missing_pagination = [field for field in pagination_fields if field not in pagination]
+                
+                if missing_pagination:
+                    self.log_test("Admin Evaluations List - Pagination", False, f"Missing pagination fields: {missing_pagination}")
+                    return False
+                
+                # Check evaluations array
+                evaluations = data.get("evaluations", [])
+                if not isinstance(evaluations, list):
+                    self.log_test("Admin Evaluations List - Evaluations Type", False, "evaluations should be list")
+                    return False
+                
+                # If we have evaluations, check structure of first one
+                if evaluations:
+                    first_eval = evaluations[0]
+                    eval_fields = ["report_id", "brand_name", "category", "industry", "countries", "namescore", "verdict", "created_at"]
+                    missing_eval_fields = [field for field in eval_fields if field not in first_eval]
+                    
+                    if missing_eval_fields:
+                        self.log_test("Admin Evaluations List - Evaluation Fields", False, f"Missing evaluation fields: {missing_eval_fields}")
+                        return False
+                    
+                    print(f"✅ Found {len(evaluations)} evaluations, first: {first_eval.get('brand_name')} ({first_eval.get('verdict')})")
+                
+                self.log_test("Admin Evaluations List", True, f"Retrieved {len(evaluations)} evaluations with proper pagination")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Evaluations List", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Evaluations List", False, str(e))
+            return False
+
+    def test_admin_evaluations_search(self):
+        """Test GET /api/admin/evaluations with search filter"""
+        if not self.admin_token:
+            self.log_test("Admin Evaluations Search", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n🔍 Testing Admin Evaluations Search...")
+            response = requests.get(
+                f"{self.api_url}/admin/evaluations?search=right",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check structure
+                if "evaluations" not in data:
+                    self.log_test("Admin Evaluations Search - Structure", False, "Missing evaluations field")
+                    return False
+                
+                evaluations = data.get("evaluations", [])
+                
+                # Check if search worked (should filter results)
+                if evaluations:
+                    # Check if any evaluation contains "right" in brand name
+                    found_match = False
+                    for eval_item in evaluations:
+                        brand_name = eval_item.get("brand_name", "").lower()
+                        if "right" in brand_name:
+                            found_match = True
+                            print(f"✅ Found matching brand: {eval_item.get('brand_name')}")
+                            break
+                    
+                    if not found_match:
+                        print(f"⚠️ No exact matches found, but search returned {len(evaluations)} results")
+                
+                self.log_test("Admin Evaluations Search", True, f"Search returned {len(evaluations)} results")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Evaluations Search", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Evaluations Search", False, str(e))
+            return False
+
+    def test_admin_evaluations_verdict_filter(self):
+        """Test GET /api/admin/evaluations with verdict filter"""
+        if not self.admin_token:
+            self.log_test("Admin Evaluations Verdict Filter", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n⚖️ Testing Admin Evaluations Verdict Filter...")
+            response = requests.get(
+                f"{self.api_url}/admin/evaluations?verdict=GO",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check structure
+                if "evaluations" not in data:
+                    self.log_test("Admin Evaluations Verdict Filter - Structure", False, "Missing evaluations field")
+                    return False
+                
+                evaluations = data.get("evaluations", [])
+                
+                # Check if verdict filter worked
+                if evaluations:
+                    # Check if all evaluations have GO verdict
+                    non_go_verdicts = []
+                    for eval_item in evaluations:
+                        verdict = eval_item.get("verdict", "")
+                        if not verdict.startswith("GO"):
+                            non_go_verdicts.append(verdict)
+                    
+                    if non_go_verdicts:
+                        self.log_test("Admin Evaluations Verdict Filter - Filter Logic", False, f"Found non-GO verdicts: {non_go_verdicts}")
+                        return False
+                    
+                    print(f"✅ All {len(evaluations)} results have GO verdict")
+                
+                self.log_test("Admin Evaluations Verdict Filter", True, f"Verdict filter returned {len(evaluations)} GO results")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Evaluations Verdict Filter", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Evaluations Verdict Filter", False, str(e))
+            return False
+
+    def test_admin_evaluations_csv_export(self):
+        """Test GET /api/admin/evaluations/export/csv endpoint"""
+        if not self.admin_token:
+            self.log_test("Admin Evaluations CSV Export", False, "No admin token available")
+            return False
+            
+        try:
+            print(f"\n📄 Testing Admin Evaluations CSV Export...")
+            response = requests.get(
+                f"{self.api_url}/admin/evaluations/export/csv",
+                headers={'Authorization': f'Bearer {self.admin_token}'},
+                timeout=30  # CSV generation might take longer
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                # Check content type
+                content_type = response.headers.get('content-type', '')
+                if 'text/csv' not in content_type:
+                    self.log_test("Admin Evaluations CSV Export - Content Type", False, f"Expected text/csv, got {content_type}")
+                    return False
+                
+                # Check Content-Disposition header
+                content_disposition = response.headers.get('content-disposition', '')
+                if 'attachment' not in content_disposition or 'filename=' not in content_disposition:
+                    self.log_test("Admin Evaluations CSV Export - Headers", False, f"Missing proper Content-Disposition header: {content_disposition}")
+                    return False
+                
+                # Check CSV content
+                csv_content = response.text
+                if not csv_content:
+                    self.log_test("Admin Evaluations CSV Export - Content", False, "Empty CSV content")
+                    return False
+                
+                # Check CSV header row
+                lines = csv_content.split('\n')
+                if not lines:
+                    self.log_test("Admin Evaluations CSV Export - Format", False, "No lines in CSV")
+                    return False
+                
+                header = lines[0]
+                expected_columns = ["Report ID", "Brand Name", "Category", "Industry", "Countries", "NameScore", "Verdict"]
+                missing_columns = []
+                for col in expected_columns:
+                    if col not in header:
+                        missing_columns.append(col)
+                
+                if missing_columns:
+                    self.log_test("Admin Evaluations CSV Export - Columns", False, f"Missing columns: {missing_columns}")
+                    return False
+                
+                print(f"✅ CSV exported with {len(lines)-1} data rows")
+                self.log_test("Admin Evaluations CSV Export", True, f"CSV exported successfully with proper headers and {len(lines)-1} rows")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("Admin Evaluations CSV Export", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Evaluations CSV Export", False, str(e))
+            return False
+
+    def test_admin_endpoints_without_auth(self):
+        """Test that admin endpoints require authentication"""
+        endpoints_to_test = [
+            "/admin/evaluations/stats",
+            "/admin/evaluations",
+            "/admin/evaluations/export/csv"
+        ]
+        
+        all_passed = True
+        
+        for endpoint in endpoints_to_test:
+            try:
+                print(f"\n🔒 Testing {endpoint} without auth...")
+                response = requests.get(
+                    f"{self.api_url}{endpoint}",
+                    timeout=10
+                )
+                
+                if response.status_code == 401:
+                    print(f"✅ {endpoint} correctly requires authentication")
+                else:
+                    print(f"❌ {endpoint} should return 401, got {response.status_code}")
+                    all_passed = False
+                    
+            except Exception as e:
+                print(f"❌ Error testing {endpoint}: {e}")
+                all_passed = False
+        
+        if all_passed:
+            self.log_test("Admin Endpoints Auth Required", True, "All admin endpoints correctly require authentication")
+        else:
+            self.log_test("Admin Endpoints Auth Required", False, "Some admin endpoints don't require authentication")
+        
+        return all_passed
+
     def test_new_classification_system_check_my_meal(self):
         """Test Case 1: NEW SINGLE CLASSIFICATION SYSTEM - Check My Meal for Doctor Appointment App"""
         payload = {
