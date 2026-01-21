@@ -208,6 +208,500 @@ function AdminDashboard({ token, onLogout }) {
   );
 }
 
+// ============ EVALUATIONS TAB - TRACKING DASHBOARD ============
+function EvaluationsTab({ token }) {
+  const [stats, setStats] = useState(null);
+  const [evaluations, setEvaluations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, total_pages: 0 });
+  const [search, setSearch] = useState('');
+  const [verdictFilter, setVerdictFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [selectedEval, setSelectedEval] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Fetch stats
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/admin/evaluations/stats?days=30`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch stats:', err);
+    }
+  }, [token]);
+
+  // Fetch evaluations
+  const fetchEvaluations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: pagination.page,
+        limit: pagination.limit,
+      });
+      if (search) params.append('search', search);
+      if (verdictFilter) params.append('verdict', verdictFilter);
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+
+      const response = await fetch(`${BACKEND_URL}/api/admin/evaluations?${params}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEvaluations(data.evaluations);
+        setPagination(prev => ({ ...prev, ...data.pagination }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch evaluations:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, pagination.page, pagination.limit, search, verdictFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
+    fetchEvaluations();
+  }, [fetchEvaluations]);
+
+  // Handle search with debounce
+  const handleSearch = (value) => {
+    setSearch(value);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  // Export to CSV
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      if (verdictFilter) params.append('verdict', verdictFilter);
+
+      const response = await fetch(`${BACKEND_URL}/api/admin/evaluations/export/csv?${params}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `evaluations_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Delete evaluation
+  const handleDelete = async (reportId) => {
+    if (!window.confirm('Are you sure you want to delete this evaluation?')) return;
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/admin/evaluations/${reportId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        fetchEvaluations();
+        fetchStats();
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
+  };
+
+  // Verdict badge component
+  const VerdictBadge = ({ verdict }) => {
+    const config = {
+      'GO': { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle },
+      'REJECT': { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle },
+      'NO-GO': { bg: 'bg-orange-100', text: 'text-orange-700', icon: XCircle },
+      'CONDITIONAL GO': { bg: 'bg-amber-100', text: 'text-amber-700', icon: MinusCircle },
+    };
+    const v = verdict?.toUpperCase() || 'N/A';
+    const cfg = config[v] || { bg: 'bg-slate-100', text: 'text-slate-600', icon: MinusCircle };
+    const Icon = cfg.icon;
+    
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
+        <Icon className="w-3 h-3" />
+        {verdict || 'N/A'}
+      </span>
+    );
+  };
+
+  // Stats cards
+  const StatCard = ({ title, value, subtitle, icon: Icon, color }) => (
+    <div className={`bg-gradient-to-br ${color} rounded-xl p-4 text-white`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-white/80 text-sm">{title}</p>
+          <p className="text-2xl font-bold mt-1">{value}</p>
+          {subtitle && <p className="text-white/70 text-xs mt-1">{subtitle}</p>}
+        </div>
+        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">📊 Evaluation Tracking Dashboard</h2>
+          <p className="text-sm text-slate-500">Track all brand evaluations over time</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { fetchStats(); fetchEvaluations(); }}
+            className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <StatCard 
+            title="Total Evaluations" 
+            value={stats.summary?.total_evaluations || 0}
+            subtitle={`${stats.summary?.evaluations_in_period || 0} in last 30 days`}
+            icon={BarChart3}
+            color="from-violet-500 to-purple-600"
+          />
+          <StatCard 
+            title="Average Score" 
+            value={stats.summary?.average_score || 0}
+            subtitle="Out of 100"
+            icon={TrendingUp}
+            color="from-emerald-500 to-teal-600"
+          />
+          <StatCard 
+            title="GO Verdicts" 
+            value={stats.verdict_breakdown?.GO || 0}
+            subtitle={`${stats.verdict_breakdown?.REJECT || 0} rejected`}
+            icon={CheckCircle}
+            color="from-blue-500 to-cyan-600"
+          />
+          <StatCard 
+            title="Avg Processing" 
+            value={`${stats.summary?.average_processing_time || 0}s`}
+            subtitle="Per evaluation"
+            icon={Clock}
+            color="from-amber-500 to-orange-600"
+          />
+        </div>
+      )}
+
+      {/* Verdict Breakdown Mini Chart */}
+      {stats?.verdict_breakdown && (
+        <div className="bg-slate-50 rounded-xl p-4 mb-6">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">Verdict Distribution</h3>
+          <div className="flex gap-4 flex-wrap">
+            {Object.entries(stats.verdict_breakdown).map(([verdict, count]) => (
+              <div key={verdict} className="flex items-center gap-2">
+                <VerdictBadge verdict={verdict} />
+                <span className="text-sm text-slate-600 font-medium">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Search & Filters */}
+      <div className="bg-slate-50 rounded-xl p-4 mb-6">
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by brand name..."
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+          </div>
+
+          {/* Verdict Filter */}
+          <select
+            value={verdictFilter}
+            onChange={(e) => { setVerdictFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
+            className="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <option value="">All Verdicts</option>
+            <option value="GO">GO</option>
+            <option value="REJECT">REJECT</option>
+            <option value="NO-GO">NO-GO</option>
+            <option value="CONDITIONAL">CONDITIONAL GO</option>
+          </select>
+
+          {/* Toggle Date Filters */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${showFilters ? 'bg-violet-50 border-violet-300 text-violet-700' : 'border-slate-200 text-slate-600'}`}
+          >
+            <Calendar className="w-4 h-4" />
+            Date Filter
+          </button>
+        </div>
+
+        {/* Expanded Date Filters */}
+        {showFilters && (
+          <div className="flex gap-3 mt-3 pt-3 border-t border-slate-200">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">From</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
+                className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">To</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
+                className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+              />
+            </div>
+            <button
+              onClick={() => { setDateFrom(''); setDateTo(''); setVerdictFilter(''); setSearch(''); }}
+              className="self-end px-3 py-2 text-sm text-slate-500 hover:text-slate-700"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Evaluations Table */}
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        {loading ? (
+          <div className="p-8 text-center text-slate-500">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+            Loading evaluations...
+          </div>
+        ) : evaluations.length === 0 ? (
+          <div className="p-8 text-center text-slate-500">
+            No evaluations found
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Brand</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Category</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Countries</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Score</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Verdict</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {evaluations.map((eval_item) => (
+                    <tr key={eval_item.report_id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-800">{eval_item.brand_name || 'N/A'}</div>
+                        {eval_item.industry && (
+                          <div className="text-xs text-slate-500">{eval_item.industry}</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-slate-600">{eval_item.category || 'N/A'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {(eval_item.countries || []).slice(0, 3).map((c, i) => (
+                            <span key={i} className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">
+                              <Globe className="w-3 h-3 mr-1" />
+                              {typeof c === 'object' ? c.name : c}
+                            </span>
+                          ))}
+                          {(eval_item.countries || []).length > 3 && (
+                            <span className="text-xs text-slate-400">+{eval_item.countries.length - 3}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`text-lg font-bold ${
+                          eval_item.namescore >= 70 ? 'text-emerald-600' : 
+                          eval_item.namescore >= 50 ? 'text-amber-600' : 'text-red-600'
+                        }`}>
+                          {eval_item.namescore || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <VerdictBadge verdict={eval_item.verdict} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-slate-600">
+                          {eval_item.created_at ? new Date(eval_item.created_at).toLocaleDateString() : 'N/A'}
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {eval_item.processing_time ? `${Math.round(eval_item.processing_time)}s` : ''}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setSelectedEval(eval_item)}
+                            className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(eval_item.report_id)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
+              <div className="text-sm text-slate-500">
+                Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                  disabled={pagination.page <= 1}
+                  className="px-3 py-1 text-sm border border-slate-200 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="px-3 py-1 text-sm bg-violet-600 text-white rounded">
+                  {pagination.page}
+                </span>
+                <button
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                  disabled={pagination.page >= pagination.total_pages}
+                  className="px-3 py-1 text-sm border border-slate-200 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Detail Modal */}
+      {selectedEval && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">{selectedEval.brand_name}</h3>
+                <p className="text-sm text-slate-500">{selectedEval.category}</p>
+              </div>
+              <button
+                onClick={() => setSelectedEval(null)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-slate-500">NameScore</p>
+                  <p className="text-2xl font-bold text-violet-600">{selectedEval.namescore || 'N/A'}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-slate-500">Verdict</p>
+                  <VerdictBadge verdict={selectedEval.verdict} />
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-slate-500">Industry</p>
+                  <p className="text-sm font-medium text-slate-700">{selectedEval.industry || 'N/A'}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-slate-500">Positioning</p>
+                  <p className="text-sm font-medium text-slate-700">{selectedEval.positioning || 'N/A'}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-slate-500">Trademark Risk</p>
+                  <p className="text-sm font-medium text-slate-700">{selectedEval.trademark_risk || 'N/A'}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-slate-500">Processing Time</p>
+                  <p className="text-sm font-medium text-slate-700">{selectedEval.processing_time ? `${Math.round(selectedEval.processing_time)}s` : 'N/A'}</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="text-xs text-slate-500 mb-2">Countries</p>
+                <div className="flex flex-wrap gap-2">
+                  {(selectedEval.countries || []).map((c, i) => (
+                    <span key={i} className="inline-flex items-center px-3 py-1 bg-white border border-slate-200 rounded-full text-sm">
+                      <Globe className="w-3 h-3 mr-1 text-slate-400" />
+                      {typeof c === 'object' ? c.name : c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="text-xs text-slate-500 mb-1">Report ID</p>
+                <code className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded">{selectedEval.report_id}</code>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="text-xs text-slate-500 mb-1">Created At</p>
+                <p className="text-sm text-slate-700">{selectedEval.created_at ? new Date(selectedEval.created_at).toLocaleString() : 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ============ PROMPTS TAB ============
 function PromptsTab({ token }) {
   const [promptType, setPromptType] = useState('system');
