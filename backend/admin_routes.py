@@ -397,6 +397,329 @@ async def get_admin_logs(limit: int = 50, admin: dict = Depends(get_current_admi
     
     return {"logs": logs}
 
+# ============ EVALUATION TRACKING DASHBOARD ============
+
+class EvaluationFilters(BaseModel):
+    """Filters for evaluation search"""
+    search: Optional[str] = None  # Search by brand name
+    verdict: Optional[str] = None  # GO, REJECT, NO-GO, CONDITIONAL GO
+    category: Optional[str] = None
+    industry: Optional[str] = None
+    date_from: Optional[str] = None  # ISO date string
+    date_to: Optional[str] = None
+    min_score: Optional[int] = None
+    max_score: Optional[int] = None
+
+@admin_router.get("/evaluations")
+async def get_evaluations(
+    page: int = 1,
+    limit: int = 20,
+    search: Optional[str] = None,
+    verdict: Optional[str] = None,
+    category: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    admin: dict = Depends(get_current_admin)
+):
+    """
+    Get all evaluations with pagination, search, and filters.
+    This is the main endpoint for the evaluation tracking dashboard.
+    """
+    # Build query filter
+    query = {}
+    
+    # Search by brand name
+    if search:
+        query["$or"] = [
+            {"request.brand_names": {"$regex": search, "$options": "i"}},
+            {"brand_scores.brand_name": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Filter by verdict
+    if verdict:
+        query["brand_scores.verdict"] = {"$regex": f"^{verdict}", "$options": "i"}
+    
+    # Filter by category
+    if category:
+        query["request.category"] = {"$regex": category, "$options": "i"}
+    
+    # Filter by date range
+    if date_from:
+        query["created_at"] = query.get("created_at", {})
+        query["created_at"]["$gte"] = date_from
+    if date_to:
+        query["created_at"] = query.get("created_at", {})
+        query["created_at"]["$lte"] = date_to
+    
+    # Calculate skip for pagination
+    skip = (page - 1) * limit
+    
+    # Sort direction
+    sort_direction = -1 if sort_order == "desc" else 1
+    
+    # Get total count for pagination
+    total_count = await db.evaluations.count_documents(query)
+    
+    # Get evaluations
+    cursor = db.evaluations.find(query).sort(sort_by, sort_direction).skip(skip).limit(limit)
+    
+    evaluations = []
+    async for doc in cursor:
+        doc.pop('_id', None)
+        
+        # Extract key fields for the table view
+        brand_scores = doc.get("brand_scores", [{}])
+        first_score = brand_scores[0] if brand_scores else {}
+        request = doc.get("request", {})
+        
+        evaluations.append({
+            "report_id": doc.get("report_id"),
+            "brand_name": first_score.get("brand_name") or (request.get("brand_names", [""])[0] if request.get("brand_names") else ""),
+            "category": request.get("category", "N/A"),
+            "industry": request.get("industry", "N/A"),
+            "countries": request.get("countries", []),
+            "positioning": request.get("positioning", "N/A"),
+            "namescore": first_score.get("namescore"),
+            "verdict": first_score.get("verdict", "N/A"),
+            "trademark_risk": first_score.get("trademark_research", {}).get("overall_risk", "N/A") if first_score.get("trademark_research") else "N/A",
+            "created_at": doc.get("created_at"),
+            "processing_time": doc.get("processing_time_seconds"),
+            "early_stopped": doc.get("early_stopped", False),
+            "rejection_reason": doc.get("rejection_reason")
+        })
+    
+    return {
+        "evaluations": evaluations,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_count,
+            "total_pages": (total_count + limit - 1) // limit
+        }
+    }
+
+@admin_router.get("/evaluations/stats")
+async def get_evaluation_stats(
+    days: int = 30,
+    admin: dict = Depends(get_current_admin)
+):
+    """
+    Get comprehensive statistics for the evaluation tracking dashboard.
+    """
+    start_date = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    
+    # Total evaluations
+    total = await db.evaluations.count_documents({})
+    total_in_period = await db.evaluations.count_documents({"created_at": {"$gte": start_date}})
+    
+    # Verdict breakdown
+    verdict_pipeline = [
+        {"$unwind": "$brand_scores"},
+        {"$group": {"_id": "$brand_scores.verdict", "count": {"$sum": 1}}}
+    ]
+    verdict_results = await db.evaluations.aggregate(verdict_pipeline).to_list(10)
+    verdict_breakdown = {r["_id"]: r["count"] for r in verdict_results if r["_id"]}
+    
+    # Score distribution
+    score_pipeline = [
+        {"$unwind": "$brand_scores"},
+        {"$match": {"brand_scores.namescore": {"$exists": True, "$ne": None}}},
+        {"$bucket": {
+            "groupBy": "$brand_scores.namescore",
+            "boundaries": [0, 30, 50, 70, 85, 101],
+            "default": "other",
+            "output": {"count": {"$sum": 1}}
+        }}
+    ]
+    score_results = await db.evaluations.aggregate(score_pipeline).to_list(10)
+    score_distribution = {
+        "0-29 (Poor)": 0, "30-49 (Below Avg)": 0, "50-69 (Average)": 0,
+        "70-84 (Good)": 0, "85-100 (Excellent)": 0
+    }
+    boundary_labels = ["0-29 (Poor)", "30-49 (Below Avg)", "50-69 (Average)", "70-84 (Good)", "85-100 (Excellent)"]
+    for i, r in enumerate(score_results):
+        if i < len(boundary_labels):
+            score_distribution[boundary_labels[i]] = r["count"]
+    
+    # Average score
+    avg_score_pipeline = [
+        {"$unwind": "$brand_scores"},
+        {"$match": {"brand_scores.namescore": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": None, "avg_score": {"$avg": "$brand_scores.namescore"}}}
+    ]
+    avg_result = await db.evaluations.aggregate(avg_score_pipeline).to_list(1)
+    avg_score = round(avg_result[0]["avg_score"], 1) if avg_result else 0
+    
+    # Category breakdown (top 10)
+    category_pipeline = [
+        {"$match": {"request.category": {"$exists": True}}},
+        {"$group": {"_id": "$request.category", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    category_results = await db.evaluations.aggregate(category_pipeline).to_list(10)
+    top_categories = [{"category": r["_id"], "count": r["count"]} for r in category_results if r["_id"]]
+    
+    # Daily trend (last 30 days)
+    daily_pipeline = [
+        {"$match": {"created_at": {"$gte": start_date}}},
+        {"$group": {
+            "_id": {"$substr": ["$created_at", 0, 10]},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    daily_results = await db.evaluations.aggregate(daily_pipeline).to_list(31)
+    daily_trend = [{"date": r["_id"], "evaluations": r["count"]} for r in daily_results]
+    
+    # Average processing time
+    time_pipeline = [
+        {"$match": {"processing_time_seconds": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": None, "avg_time": {"$avg": "$processing_time_seconds"}}}
+    ]
+    time_result = await db.evaluations.aggregate(time_pipeline).to_list(1)
+    avg_processing_time = round(time_result[0]["avg_time"], 1) if time_result else 0
+    
+    # Early stopped (rejected) count
+    early_stopped = await db.evaluations.count_documents({"early_stopped": True})
+    
+    # Country popularity
+    country_pipeline = [
+        {"$match": {"request.countries": {"$exists": True}}},
+        {"$unwind": "$request.countries"},
+        {"$group": {"_id": "$request.countries", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    country_results = await db.evaluations.aggregate(country_pipeline).to_list(10)
+    top_countries = []
+    for r in country_results:
+        country = r["_id"]
+        if isinstance(country, dict):
+            country = country.get("name", str(country))
+        top_countries.append({"country": country, "count": r["count"]})
+    
+    return {
+        "summary": {
+            "total_evaluations": total,
+            "evaluations_in_period": total_in_period,
+            "average_score": avg_score,
+            "average_processing_time": avg_processing_time,
+            "early_stopped_count": early_stopped
+        },
+        "verdict_breakdown": verdict_breakdown,
+        "score_distribution": score_distribution,
+        "top_categories": top_categories,
+        "top_countries": top_countries,
+        "daily_trend": daily_trend
+    }
+
+@admin_router.get("/evaluations/{report_id}")
+async def get_evaluation_detail(report_id: str, admin: dict = Depends(get_current_admin)):
+    """Get full details of a single evaluation"""
+    evaluation = await db.evaluations.find_one({"report_id": report_id})
+    
+    if not evaluation:
+        raise HTTPException(status_code=404, detail="Evaluation not found")
+    
+    evaluation.pop('_id', None)
+    return evaluation
+
+@admin_router.delete("/evaluations/{report_id}")
+async def delete_evaluation(report_id: str, admin: dict = Depends(get_current_admin)):
+    """Delete an evaluation"""
+    result = await db.evaluations.delete_one({"report_id": report_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Evaluation not found")
+    
+    # Log the deletion
+    await db.admin_logs.insert_one({
+        "action": "evaluation_deleted",
+        "admin_email": admin["email"],
+        "report_id": report_id,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"success": True, "message": f"Evaluation {report_id} deleted"}
+
+@admin_router.get("/evaluations/export/csv")
+async def export_evaluations_csv(
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    verdict: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """Export evaluations to CSV format"""
+    from fastapi.responses import StreamingResponse
+    import io
+    import csv
+    
+    # Build query
+    query = {}
+    if date_from:
+        query["created_at"] = query.get("created_at", {})
+        query["created_at"]["$gte"] = date_from
+    if date_to:
+        query["created_at"] = query.get("created_at", {})
+        query["created_at"]["$lte"] = date_to
+    if verdict:
+        query["brand_scores.verdict"] = {"$regex": f"^{verdict}", "$options": "i"}
+    
+    # Get evaluations
+    cursor = db.evaluations.find(query).sort("created_at", -1)
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header row
+    writer.writerow([
+        "Report ID", "Brand Name", "Category", "Industry", "Countries",
+        "Positioning", "NameScore", "Verdict", "Trademark Risk",
+        "Created At", "Processing Time (s)", "Early Stopped"
+    ])
+    
+    # Data rows
+    async for doc in cursor:
+        brand_scores = doc.get("brand_scores", [{}])
+        first_score = brand_scores[0] if brand_scores else {}
+        request = doc.get("request", {})
+        countries = request.get("countries", [])
+        countries_str = ", ".join([c.get("name", str(c)) if isinstance(c, dict) else str(c) for c in countries])
+        
+        writer.writerow([
+            doc.get("report_id", ""),
+            first_score.get("brand_name", ""),
+            request.get("category", ""),
+            request.get("industry", ""),
+            countries_str,
+            request.get("positioning", ""),
+            first_score.get("namescore", ""),
+            first_score.get("verdict", ""),
+            first_score.get("trademark_research", {}).get("overall_risk", "") if first_score.get("trademark_research") else "",
+            doc.get("created_at", ""),
+            doc.get("processing_time_seconds", ""),
+            doc.get("early_stopped", False)
+        ])
+    
+    # Log export
+    await db.admin_logs.insert_one({
+        "action": "evaluations_exported",
+        "admin_email": admin["email"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "filters": {"date_from": date_from, "date_to": date_to, "verdict": verdict}
+    })
+    
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=evaluations_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"}
+    )
+
 # ============ HELPER FUNCTIONS ============
 
 async def get_early_stopping_prompt_default():
