@@ -1121,20 +1121,12 @@ const LandingPage = () => {
                 a: "RIGHTNAME uses real-time web searches of trademark databases, phonetic similarity algorithms, DuPont 13-Factor likelihood of confusion analysis, and AI analysis to identify potential conflicts. While it provides comprehensive preliminary screening, we recommend consulting a trademark attorney for official legal advice before registration."
               },
               {
-                q: "Can I evaluate multiple brand names at once?",
-                a: "Yes! Our Founder's Pack ($49) lets you validate 3 brand names with side-by-side comparison and recommendations to help you choose the best option. Most founders have 2-3 finalists - this pack is perfect for that."
-              },
-              {
                 q: "Which countries do you support?",
                 a: "We support trademark analysis for 15+ countries including USA, India, UK, Canada, Australia, Germany, France, Japan, China, Brazil, UAE, Singapore, and more. Each report includes country-specific registration costs and timelines."
               },
               {
                 q: "What is RightName Score and how is it calculated?",
                 a: "RightName Score is our proprietary index (0-100) that evaluates brand names across 8 dimensions: Brand Distinctiveness, Cultural Resonance, Premiumisation Potential, Scalability, Trademark Safety, Consumer Perception, Digital Readiness, and Future-Proofing. Higher scores indicate stronger brand name candidates."
-              },
-              {
-                q: "What is the DuPont 13-Factor Analysis?",
-                a: "The DuPont test is the legal standard used by courts to determine 'likelihood of confusion' between trademarks. Our AI analyzes all 13 factors including similarity of marks, similarity of goods/services, strength of marks, and more - giving you the same analysis that trademark attorneys use."
               },
               {
                 q: "What is the difference between GO, CAUTION, and REJECT verdicts?",
