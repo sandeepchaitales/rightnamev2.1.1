@@ -1102,11 +1102,15 @@ const LandingPage = () => {
             {[
               {
                 q: "What is RIGHTNAME?",
-                a: "RIGHTNAME is an AI-powered brand name evaluation tool that provides consulting-grade analysis of brand names. It checks trademark conflicts, domain availability, social media handles, and generates a comprehensive NameScore report in under 60 seconds."
+                a: "RIGHTNAME is an AI-powered brand name evaluation tool that provides consulting-grade analysis of brand names. It checks trademark conflicts, domain availability, social media handles, and generates a comprehensive RightName Score report in under 60 seconds."
               },
               {
                 q: "What does a RIGHTNAME report include?",
-                a: "Each report includes: NameScore Index (0-100), Trademark Risk Matrix, Domain Availability Check, Social Handle Availability, Competitive Landscape Analysis, Cultural & Linguistic Analysis, Registration Timeline & Costs, Mitigation Strategies, and Alternative Name Suggestions."
+                a: "Each report includes: RightName Score (0-100), Trademark Risk Matrix with DuPont 13-Factor Analysis, Domain Availability Check, Social Handle Availability, Competitive Landscape Analysis, Cultural & Linguistic Analysis, Registration Timeline & Costs, Mitigation Strategies, and Alternative Name Suggestions."
+              },
+              {
+                q: "How much does a report cost?",
+                a: "We offer two pricing options: Single Report at $29 for validating one brand name, or the Founder's Pack at $49 for 3 reports - perfect for comparing your finalist names. The Founder's Pack saves you $38 compared to buying individually."
               },
               {
                 q: "How long does it take to generate a report?",
@@ -1114,23 +1118,23 @@ const LandingPage = () => {
               },
               {
                 q: "Is RIGHTNAME accurate for trademark checking?",
-                a: "RIGHTNAME uses real-time web searches of trademark databases, phonetic similarity algorithms, and AI analysis to identify potential conflicts. While it provides comprehensive preliminary screening, we recommend consulting a trademark attorney for official legal advice before registration."
+                a: "RIGHTNAME uses real-time web searches of trademark databases, phonetic similarity algorithms, DuPont 13-Factor likelihood of confusion analysis, and AI analysis to identify potential conflicts. While it provides comprehensive preliminary screening, we recommend consulting a trademark attorney for official legal advice before registration."
               },
               {
                 q: "Can I evaluate multiple brand names at once?",
-                a: "Yes! Each report can analyze up to 3 brand name options with side-by-side comparison and recommendations to help you choose the best option."
+                a: "Yes! Our Founder's Pack ($49) lets you validate 3 brand names with side-by-side comparison and recommendations to help you choose the best option. Most founders have 2-3 finalists - this pack is perfect for that."
               },
               {
                 q: "Which countries do you support?",
                 a: "We support trademark analysis for 15+ countries including USA, India, UK, Canada, Australia, Germany, France, Japan, China, Brazil, UAE, Singapore, and more. Each report includes country-specific registration costs and timelines."
               },
               {
-                q: "What is a NameScore and how is it calculated?",
-                a: "NameScore is a proprietary index (0-100) that evaluates brand names across 8 dimensions: Brand Distinctiveness, Cultural Resonance, Premiumisation Potential, Scalability, Trademark Safety, Consumer Perception, Digital Readiness, and Future-Proofing. Higher scores indicate stronger brand name candidates."
+                q: "What is RightName Score and how is it calculated?",
+                a: "RightName Score is our proprietary index (0-100) that evaluates brand names across 8 dimensions: Brand Distinctiveness, Cultural Resonance, Premiumisation Potential, Scalability, Trademark Safety, Consumer Perception, Digital Readiness, and Future-Proofing. Higher scores indicate stronger brand name candidates."
               },
               {
-                q: "How does RIGHTNAME detect trademark conflicts?",
-                a: "Our AI uses multiple methods: exact match searches in trademark databases, phonetic similarity algorithms (Soundex, Metaphone), Jaro-Winkler string matching, and semantic analysis. We check for conflicts across registered trademarks, company names, domain registrations, and app store listings."
+                q: "What is the DuPont 13-Factor Analysis?",
+                a: "The DuPont test is the legal standard used by courts to determine 'likelihood of confusion' between trademarks. Our AI analyzes all 13 factors including similarity of marks, similarity of goods/services, strength of marks, and more - giving you the same analysis that trademark attorneys use."
               },
               {
                 q: "What is the difference between GO, CAUTION, and REJECT verdicts?",
@@ -1142,11 +1146,15 @@ const LandingPage = () => {
               },
               {
                 q: "What makes RIGHTNAME different from free trademark search tools?",
-                a: "Free tools only check exact matches. RIGHTNAME provides comprehensive analysis including phonetic similarities, visual similarities, semantic conflicts, domain availability, social handle checks, competitive landscape mapping, and AI-powered risk assessment - similar to what a $50,000 brand consultancy delivers."
+                a: "Free tools only check exact matches. RIGHTNAME provides comprehensive analysis including phonetic similarities, visual similarities, semantic conflicts, DuPont 13-Factor analysis, domain availability, social handle checks, competitive landscape mapping, and AI-powered risk assessment - similar to what a $50,000 brand consultancy delivers, for just $29-49."
               },
               {
                 q: "Do I need to hire a trademark attorney after using RIGHTNAME?",
                 a: "While RIGHTNAME provides thorough preliminary screening, we recommend consulting a trademark attorney before filing for trademark registration. Our reports help you identify strong candidates and potential issues, making your attorney consultation more efficient and cost-effective."
+              },
+              {
+                q: "Is there a money-back guarantee?",
+                a: "We stand behind the quality of our reports. If you're not satisfied with the depth of analysis provided, contact us within 7 days for a full refund. Our reports are designed to give you the confidence to make informed naming decisions."
               }
             ].map((faq, index) => (
               <FAQItem
