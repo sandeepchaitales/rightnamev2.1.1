@@ -9948,7 +9948,7 @@ BRAND: {brand}
                     "seo_potential": "HIGH" if len(brand_name) <= 12 else "MEDIUM",
                     "recommendation": f"Strong potential for building digital presence with '{brand_name}'"
                 },
-                "country_competitor_analysis": fallback_competitors if fallback_competitors else generate_country_competitor_analysis(request.countries, category, brand_name),
+                "country_competitor_analysis": fallback_competitors if fallback_competitors else generate_country_competitor_analysis(request.countries, category, brand_name, request.industry),
                 "alternative_names": {
                     "poison_words": [],
                     "reasoning": "Alternative names generated based on brand analysis",
