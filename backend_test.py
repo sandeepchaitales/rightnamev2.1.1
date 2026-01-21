@@ -8631,6 +8631,28 @@ class BrandEvaluationTester:
             
             # Test getting usage analytics
             self.test_admin_get_usage_analytics()
+            
+            # PRIORITY: Test NEW MONGODB EVALUATION TRACKING DASHBOARD (as requested in review)
+            print("\n📊 NEW MONGODB EVALUATION TRACKING DASHBOARD TESTS")
+            print("=" * 80)
+            
+            # Test dashboard statistics
+            self.test_admin_evaluations_stats()
+            
+            # Test evaluations list with pagination
+            self.test_admin_evaluations_list()
+            
+            # Test search functionality
+            self.test_admin_evaluations_search()
+            
+            # Test verdict filtering
+            self.test_admin_evaluations_verdict_filter()
+            
+            # Test CSV export
+            self.test_admin_evaluations_csv_export()
+            
+            # Test authentication requirements
+            self.test_admin_endpoints_without_auth()
         else:
             print("❌ Admin login failed, skipping admin-dependent tests")
         
