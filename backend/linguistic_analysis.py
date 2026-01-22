@@ -184,12 +184,8 @@ async def analyze_brand_linguistics(
     try:
         logging.info(f"🔤 Linguistic Analysis: Analyzing '{brand_name}' for '{full_category}'")
         
-        # Call LLM
-        chat = LlmChat(
-            api_key=EMERGENT_KEY,
-            model="gpt-4o-mini",  # Cost-effective for this analysis
-            temperature=0.3  # Lower temperature for more factual responses
-        )
+        # Call LLM - correct initialization pattern
+        chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
         
         response = await chat.send_async(
             message=prompt,
