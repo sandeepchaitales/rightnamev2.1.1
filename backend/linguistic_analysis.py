@@ -393,7 +393,7 @@ def _get_fallback_response(brand_name: str, business_category: str, error: str =
             "distinctiveness_level": "Unknown",
             "reasoning": "Classification unavailable"
         },
-        "similar_successful_brands": [],
+        "similar_successful_brands": CATEGORY_BRAND_EXAMPLES.get(get_category_key(business_category), CATEGORY_BRAND_EXAMPLES["default"])[:2],
         "potential_concerns": [],
         "executive_summary": "Linguistic analysis could not be completed. Manual review recommended.",
         "_analysis_version": "1.0",
