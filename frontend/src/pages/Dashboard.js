@@ -1830,8 +1830,15 @@ const LinguisticAnalysisSection = ({ linguisticAnalysis, brandClassification }) 
     const newCategory = classificationData?.category;
     const overrideReason = classificationData?.override_reason;
     
-    // Fallback: if no override data, use the name_type from linguistic analysis
-    const displayCategory = newCategory || (hasMeaning ? 'SUGGESTIVE' : 'FANCIFUL');
+    // CRITICAL: If has meaning, it CANNOT be FANCIFUL (FANCIFUL = no meaning in ANY language)
+    // This is a frontend safety check - backend should already handle this
+    let displayCategory = newCategory || (hasMeaning ? 'SUGGESTIVE' : 'FANCIFUL');
+    
+    // Override FANCIFUL if we have linguistic meaning - this is a safety fallback
+    if (hasMeaning && displayCategory === 'FANCIFUL') {
+        displayCategory = alignment.alignment_score >= 6 ? 'SUGGESTIVE' : 'ARBITRARY';
+    }
+    
     const displayReason = overrideReason || (hasMeaning 
         ? `Has clear linguistic meaning in ${(ling.languages_detected || []).join(', ')} that suggests the product/service`
         : 'Coined/invented term with no existing meaning');
