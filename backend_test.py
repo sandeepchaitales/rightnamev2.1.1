@@ -9590,12 +9590,42 @@ class BrandEvaluationTester:
             self.log_test("User Reports Link - Authenticated", False, "No session cookies available")
             return False
         
-        # Use the report_id from previous test if available, otherwise use dummy
-        report_id = self.test_report_id if self.test_report_id else "test-report-123"
+        # First, generate a report to get a real report_id
+        print(f"\n🔗 Testing User Reports Link - Authenticated Access...")
+        print(f"Step 1: Generating a report to get a valid report_id...")
+        
+        payload = {
+            "brand_names": ["LinkTestBrand"],
+            "category": "Technology",
+            "positioning": "Premium",
+            "market_scope": "Single Country",
+            "countries": ["USA"]
+        }
         
         try:
-            print(f"\n🔗 Testing User Reports Link - Authenticated Access...")
-            print(f"Using report_id: {report_id}")
+            # Generate report first
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                cookies=self.session_cookies,
+                timeout=120
+            )
+            
+            if response.status_code != 200:
+                self.log_test("User Reports Link - Generate Report", False, f"Failed to generate report: {response.status_code}")
+                return False
+            
+            data = response.json()
+            if "report_id" not in data:
+                self.log_test("User Reports Link - Report ID", False, "No report_id in response")
+                return False
+            
+            report_id = data["report_id"]
+            print(f"✅ Generated report with ID: {report_id}")
+            
+            # Now test linking the report
+            print(f"Step 2: Testing link endpoint with real report_id...")
             
             response = requests.post(
                 f"{self.api_url}/user/reports/link?report_id={report_id}",
@@ -9636,7 +9666,7 @@ class BrandEvaluationTester:
                 self.log_test("User Reports Link - Authentication Failed", False, "Authentication failed despite having cookies")
                 return False
             elif response.status_code == 404:
-                self.log_test("User Reports Link - Endpoint Missing", False, "Endpoint not found (404) - may not be implemented")
+                self.log_test("User Reports Link - Report Not Found", False, f"Report {report_id} not found in database")
                 return False
             else:
                 error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
