@@ -9345,6 +9345,26 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         logging.info(f"   Protectability: {brand_classification['protectability']}")
         # ==================== END MASTER CLASSIFICATION ====================
         
+        # ==================== UNIVERSAL LINGUISTIC ANALYSIS ====================
+        # Analyze brand name for meaning in ANY world language using LLM
+        # This is done FIRST to provide context for trademark search and cultural fit
+        logging.info(f"🔤 Starting Universal Linguistic Analysis for '{brand}'...")
+        try:
+            linguistic_analysis = await analyze_brand_linguistics(
+                brand_name=brand,
+                business_category=request.category or "Business",
+                industry=request.industry or ""
+            )
+            logging.info(f"🔤 Linguistic Analysis Complete for '{brand}':")
+            logging.info(f"   Has Meaning: {linguistic_analysis.get('has_linguistic_meaning', False)}")
+            if linguistic_analysis.get('has_linguistic_meaning'):
+                logging.info(f"   Languages: {linguistic_analysis.get('linguistic_analysis', {}).get('languages_detected', [])}")
+                logging.info(f"   Business Alignment: {linguistic_analysis.get('business_alignment', {}).get('alignment_score', 'N/A')}/10")
+        except Exception as e:
+            logging.error(f"🔤 Linguistic Analysis failed for '{brand}': {e}")
+            linguistic_analysis = None
+        # ==================== END LINGUISTIC ANALYSIS ====================
+        
         # Create all tasks for this brand (pass classification to trademark research)
         tasks = [
             gather_domain_data(brand),
@@ -9374,7 +9394,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             "visibility": processed_results[3],
             "multi_domain": processed_results[4],
             "social": processed_results[5],
-            "classification": brand_classification  # Store classification for later use
+            "classification": brand_classification,  # Store classification for later use
+            "linguistic_analysis": linguistic_analysis  # Store linguistic analysis
         }
     
     parallel_time = time_module.time() - parallel_start
