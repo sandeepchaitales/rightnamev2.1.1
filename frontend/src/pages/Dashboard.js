@@ -3455,6 +3455,24 @@ const Dashboard = () => {
                     <QuickDimensionsGrid dimensions={brand.dimensions} />
                 </section>
 
+                {/* ==================== PAGE 2.5: UNIVERSAL LINGUISTIC ANALYSIS ==================== */}
+                {brand.universal_linguistic_analysis && (
+                    <section className="print-new-page">
+                        <SectionHeader 
+                            icon={Languages} 
+                            title="Universal Linguistic Analysis" 
+                            subtitle="Meaning in any world language & business alignment" 
+                            color="violet" 
+                            badge="NEW" 
+                        />
+                        {isAuthenticated ? (
+                            <LinguisticAnalysisSection linguisticAnalysis={brand.universal_linguistic_analysis} />
+                        ) : (
+                            <LockedSection title="Universal Linguistic Analysis" onUnlock={handleRegister} />
+                        )}
+                    </section>
+                )}
+
                 {/* ==================== PAGE 3: FINAL ASSESSMENT + STRATEGY SNAPSHOT ==================== */}
                 <section className="page-3-content">
                     {/* Final Assessment */}
