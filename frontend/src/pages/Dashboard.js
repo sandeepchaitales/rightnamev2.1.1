@@ -1808,6 +1808,265 @@ const LockedSection = ({ title, onUnlock }) => (
     </div>
 );
 
+// ============ UNIVERSAL LINGUISTIC ANALYSIS SECTION ============
+const LinguisticAnalysisSection = ({ linguisticAnalysis }) => {
+    if (!linguisticAnalysis || linguisticAnalysis._analyzed_by === 'fallback') return null;
+    
+    const hasMeaning = linguisticAnalysis.has_linguistic_meaning;
+    const ling = linguisticAnalysis.linguistic_analysis || {};
+    const cultural = linguisticAnalysis.cultural_significance || {};
+    const alignment = linguisticAnalysis.business_alignment || {};
+    const classification = linguisticAnalysis.classification || {};
+    const confidence = linguisticAnalysis.confidence_assessment || {};
+    const concerns = linguisticAnalysis.potential_concerns || [];
+    const similarBrands = linguisticAnalysis.similar_successful_brands || [];
+    
+    const getAlignmentColor = (score) => {
+        if (score >= 8) return 'emerald';
+        if (score >= 5) return 'amber';
+        return 'red';
+    };
+    
+    const alignmentScore = alignment.alignment_score || 0;
+    const alignmentColor = getAlignmentColor(alignmentScore);
+    
+    return (
+        <div className="space-y-6">
+            {/* Main Analysis Card */}
+            <div className={`rounded-2xl border-2 ${hasMeaning ? 'border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50' : 'border-slate-200 bg-slate-50'} p-6`}>
+                <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-xl ${hasMeaning ? 'bg-violet-100' : 'bg-slate-100'} flex items-center justify-center`}>
+                            <span className="text-2xl">{hasMeaning ? '🌍' : '✨'}</span>
+                        </div>
+                        <div>
+                            <h3 className="font-black text-lg text-slate-900">
+                                {hasMeaning ? 'Name Has Linguistic Meaning' : 'Truly Coined Name'}
+                            </h3>
+                            <p className="text-sm text-slate-600">
+                                {hasMeaning 
+                                    ? `Origin: ${(ling.languages_detected || []).join(', ') || 'Multiple languages'}`
+                                    : 'No existing meaning in any known language'}
+                            </p>
+                        </div>
+                    </div>
+                    <Badge className={`${hasMeaning ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-700'} font-bold`}>
+                        {classification.name_type || 'Unknown'}
+                    </Badge>
+                </div>
+                
+                {/* Meaning Breakdown */}
+                {hasMeaning && ling.decomposition?.can_be_decomposed && (
+                    <div className="bg-white rounded-xl p-4 mb-4 border border-violet-100">
+                        <SubSectionHeader icon={Languages} title="Morphological Breakdown" color="violet" />
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                            {(ling.decomposition.parts || []).map((part, idx) => {
+                                const partInfo = ling.decomposition.part_meanings?.[part] || {};
+                                return (
+                                    <div key={idx} className="flex items-center">
+                                        <div className="bg-violet-100 text-violet-800 font-bold px-3 py-1.5 rounded-lg text-sm">
+                                            {part}
+                                            <span className="text-violet-600 font-normal ml-1">
+                                                = {typeof partInfo === 'object' ? partInfo.meaning : partInfo}
+                                            </span>
+                                        </div>
+                                        {idx < (ling.decomposition.parts || []).length - 1 && (
+                                            <span className="mx-2 text-slate-400">+</span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {ling.decomposition.combined_meaning && (
+                            <p className="text-sm">
+                                <span className="font-bold text-slate-700">Combined Meaning:</span>{' '}
+                                <span className="text-slate-600">"{ling.decomposition.combined_meaning}"</span>
+                            </p>
+                        )}
+                    </div>
+                )}
+                
+                {/* Cultural Significance */}
+                {hasMeaning && cultural.has_cultural_reference && (
+                    <div className="bg-white rounded-xl p-4 mb-4 border border-amber-100">
+                        <SubSectionHeader icon={BookOpen} title="Cultural & Historical Significance" color="amber" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase font-bold mb-1">Reference Type</p>
+                                <p className="font-bold text-slate-800 flex items-center gap-2">
+                                    <span className="text-lg">
+                                        {cultural.reference_type === 'Mythological' ? '🏛️' : 
+                                         cultural.reference_type === 'Religious' ? '🙏' :
+                                         cultural.reference_type === 'Historical' ? '📜' : '📚'}
+                                    </span>
+                                    {cultural.reference_type}
+                                </p>
+                            </div>
+                            {cultural.source_text_or_origin && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Source</p>
+                                    <p className="font-bold text-slate-800">{cultural.source_text_or_origin}</p>
+                                </div>
+                            )}
+                            {cultural.sentiment && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Sentiment</p>
+                                    <Badge className={`${
+                                        cultural.sentiment === 'Sacred' || cultural.sentiment === 'Heroic' ? 'bg-amber-100 text-amber-700' :
+                                        cultural.sentiment === 'Auspicious' ? 'bg-emerald-100 text-emerald-700' :
+                                        'bg-slate-100 text-slate-700'
+                                    }`}>
+                                        {cultural.sentiment}
+                                    </Badge>
+                                </div>
+                            )}
+                            {cultural.regions_of_recognition?.length > 0 && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Recognized In</p>
+                                    <p className="text-sm text-slate-700">{cultural.regions_of_recognition.join(', ')}</p>
+                                </div>
+                            )}
+                        </div>
+                        {cultural.details && (
+                            <p className="mt-3 text-sm text-slate-600 bg-amber-50 p-3 rounded-lg">
+                                {cultural.details}
+                            </p>
+                        )}
+                    </div>
+                )}
+                
+                {/* Business Alignment Score */}
+                <div className={`bg-white rounded-xl p-4 border ${
+                    alignmentColor === 'emerald' ? 'border-emerald-200' :
+                    alignmentColor === 'amber' ? 'border-amber-200' : 'border-red-200'
+                }`}>
+                    <SubSectionHeader icon={Target} title="Business Alignment Analysis" color={alignmentColor} />
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <p className="text-3xl font-black text-slate-900">{alignmentScore}<span className="text-lg text-slate-400">/10</span></p>
+                            <p className={`text-sm font-bold ${
+                                alignmentColor === 'emerald' ? 'text-emerald-600' :
+                                alignmentColor === 'amber' ? 'text-amber-600' : 'text-red-600'
+                            }`}>{alignment.alignment_level || 'Unknown'}</p>
+                        </div>
+                        <div className="w-24 h-24">
+                            <div className="relative w-full h-full">
+                                <svg className="w-full h-full transform -rotate-90">
+                                    <circle cx="48" cy="48" r="40" stroke="#e2e8f0" strokeWidth="8" fill="none" />
+                                    <circle 
+                                        cx="48" cy="48" r="40" 
+                                        stroke={alignmentColor === 'emerald' ? '#10b981' : alignmentColor === 'amber' ? '#f59e0b' : '#ef4444'}
+                                        strokeWidth="8" 
+                                        fill="none"
+                                        strokeDasharray={`${alignmentScore * 25.13} 251.3`}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    {alignment.thematic_connection && (
+                        <p className="text-sm text-slate-600 mb-2">
+                            <span className="font-bold">Thematic Connection:</span> {alignment.thematic_connection}
+                        </p>
+                    )}
+                    {alignment.explanation && (
+                        <p className="text-sm text-slate-500 italic">{alignment.explanation}</p>
+                    )}
+                    
+                    {/* Regional Understanding */}
+                    {alignment.customer_understanding && (
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                            {alignment.customer_understanding.instant_recognition_regions?.length > 0 && (
+                                <div className="bg-emerald-50 rounded-lg p-3">
+                                    <p className="text-xs font-bold text-emerald-700 mb-1 flex items-center gap-1">
+                                        <CheckCircle className="w-3 h-3" /> Instant Recognition
+                                    </p>
+                                    <p className="text-xs text-emerald-600">
+                                        {alignment.customer_understanding.instant_recognition_regions.join(', ')}
+                                    </p>
+                                </div>
+                            )}
+                            {alignment.customer_understanding.needs_explanation_regions?.length > 0 && (
+                                <div className="bg-amber-50 rounded-lg p-3">
+                                    <p className="text-xs font-bold text-amber-700 mb-1 flex items-center gap-1">
+                                        <Info className="w-3 h-3" /> Needs Explanation
+                                    </p>
+                                    <p className="text-xs text-amber-600">
+                                        {alignment.customer_understanding.needs_explanation_regions.join(', ')}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+            
+            {/* Potential Concerns */}
+            {concerns.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <SubSectionHeader icon={AlertTriangle} title="Potential Concerns" color="red" />
+                    <div className="space-y-2">
+                        {concerns.map((concern, idx) => (
+                            <div key={idx} className="flex items-start gap-2 text-sm">
+                                <Badge className={`shrink-0 ${
+                                    concern.severity === 'High' ? 'bg-red-100 text-red-700' :
+                                    concern.severity === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-slate-100 text-slate-700'
+                                }`}>{concern.severity}</Badge>
+                                <div>
+                                    <span className="font-bold text-slate-700">{concern.concern_type}:</span>{' '}
+                                    <span className="text-slate-600">{concern.details}</span>
+                                    {concern.language_or_region && (
+                                        <span className="text-slate-400 ml-1">({concern.language_or_region})</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            
+            {/* Similar Successful Brands */}
+            {similarBrands.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <SubSectionHeader icon={Sparkles} title="Similar Successful Brand Patterns" color="blue" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {similarBrands.slice(0, 3).map((brand, idx) => (
+                            <div key={idx} className="bg-white rounded-lg p-3 border border-blue-100">
+                                <p className="font-bold text-slate-800">{brand.brand}</p>
+                                <p className="text-xs text-blue-600 mb-1">{brand.meaning_origin}</p>
+                                <p className="text-xs text-slate-500">{brand.industry}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            
+            {/* Executive Summary */}
+            {linguisticAnalysis.executive_summary && (
+                <div className="bg-gradient-to-r from-violet-100 to-fuchsia-100 rounded-xl p-4 border border-violet-200">
+                    <p className="text-sm text-slate-700">
+                        <span className="font-bold">💡 Summary:</span> {linguisticAnalysis.executive_summary}
+                    </p>
+                </div>
+            )}
+            
+            {/* Confidence Badge */}
+            <div className="flex items-center justify-end gap-2 text-xs text-slate-400">
+                <span>Analysis Confidence:</span>
+                <Badge className={`${
+                    confidence.overall_confidence === 'High' ? 'bg-emerald-100 text-emerald-700' :
+                    confidence.overall_confidence === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                    'bg-slate-100 text-slate-700'
+                }`}>{confidence.overall_confidence || 'Unknown'}</Badge>
+                <span className="text-slate-300">|</span>
+                <span>{confidence.meaning_certainty || 'Unknown'}</span>
+            </div>
+        </div>
+    );
+};
+
 // ============ TRADEMARK RESEARCH SECTION (NEW - Perplexity-Level Analysis) ============
 const TrademarkResearchSection = ({ trademarkResearch, registrationTimeline, mitigationStrategies, niceClassificationStrategy, realisticRegistrationCosts, dupontAnalysis }) => {
     // DEBUG: Log DuPont analysis data
