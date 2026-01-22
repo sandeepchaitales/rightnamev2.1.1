@@ -11,6 +11,7 @@ import BrandAuditDashboard from "./pages/BrandAuditDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import MyReports from "./pages/MyReports";
 import { AuthProvider } from "./contexts/AuthContext";
 import AuthModal from "./components/AuthModal";
 import { Toaster } from "@/components/ui/sonner";
