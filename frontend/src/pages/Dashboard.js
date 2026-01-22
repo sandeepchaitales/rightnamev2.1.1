@@ -1904,6 +1904,45 @@ const LinguisticAnalysisSection = ({ linguisticAnalysis, brandClassification }) 
                     </div>
                 )}
                 
+                {/* TRADEMARK CLASSIFICATION (AUTO-DETERMINED) */}
+                {hasMeaning && (
+                    <div className="bg-white rounded-xl p-4 mb-4 border-2 border-blue-200">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-lg">🏷️</span>
+                            <h4 className="font-black text-slate-800 uppercase tracking-wide text-sm">
+                                Trademark Classification (Auto-Determined)
+                            </h4>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                            {hasOverride ? (
+                                <>
+                                    <Badge className={`${getClassificationColor(newCategory)} font-black text-base px-4 py-1.5 border-2`}>
+                                        {newCategory}
+                                    </Badge>
+                                    <span className="text-slate-400 font-medium">(not {originalCategory?.toLowerCase()})</span>
+                                </>
+                            ) : (
+                                <Badge className={`${getClassificationColor(newCategory || brandClassification?.category)} font-black text-base px-4 py-1.5 border-2`}>
+                                    {newCategory || brandClassification?.category || 'UNKNOWN'}
+                                </Badge>
+                            )}
+                        </div>
+                        
+                        {hasOverride && overrideReason && (
+                            <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
+                                <span className="font-bold text-blue-700">Reason:</span> {overrideReason}
+                            </p>
+                        )}
+                        
+                        {hasMeaning && !hasOverride && (
+                            <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
+                                <span className="font-bold text-blue-700">Reason:</span> Has clear linguistic meaning that hints at the product category
+                            </p>
+                        )}
+                    </div>
+                )}
+                
                 {/* Cultural Significance */}
                 {hasMeaning && cultural.has_cultural_reference && (
                     <div className="bg-white rounded-xl p-4 mb-4 border border-amber-100">
