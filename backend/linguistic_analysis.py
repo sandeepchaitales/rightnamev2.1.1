@@ -19,6 +19,106 @@ except ImportError:
 
 EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# CATEGORY-SPECIFIC SUCCESSFUL BRAND EXAMPLES
+# Used to validate LLM responses and provide fallback examples
+# ═══════════════════════════════════════════════════════════════════════════════
+CATEGORY_BRAND_EXAMPLES = {
+    "tea": [
+        {"brand": "Teavana", "meaning_origin": "Tea + Nirvana - Sanskrit/English compound", "industry": "Tea", "why_similar_pattern": "Combines product (tea) with aspirational concept"},
+        {"brand": "Tea Nation", "meaning_origin": "Descriptive English compound", "industry": "Tea", "why_similar_pattern": "Direct category reference with scale indicator"},
+        {"brand": "Chaayos", "meaning_origin": "Chai (Hindi: tea) + suffix", "industry": "Tea", "why_similar_pattern": "Local language root with modern suffix"},
+        {"brand": "Tata Tea", "meaning_origin": "Company name + product", "industry": "Tea", "why_similar_pattern": "Heritage brand with clear category"},
+    ],
+    "coffee": [
+        {"brand": "Starbucks", "meaning_origin": "Literary reference (Moby Dick character)", "industry": "Coffee", "why_similar_pattern": "Evocative name with maritime heritage"},
+        {"brand": "Blue Tokai", "meaning_origin": "Color + Indian coffee region", "industry": "Coffee", "why_similar_pattern": "Geographic origin reference"},
+        {"brand": "Nescafe", "meaning_origin": "Nestle + Cafe compound", "industry": "Coffee", "why_similar_pattern": "Parent brand + category fusion"},
+    ],
+    "hotel": [
+        {"brand": "Taj Hotels", "meaning_origin": "Taj Mahal reference - symbol of grandeur", "industry": "Hotels", "why_similar_pattern": "Heritage/cultural monument association"},
+        {"brand": "Marriott", "meaning_origin": "Founder's surname", "industry": "Hotels", "why_similar_pattern": "Personal name conveying trust"},
+        {"brand": "Lemon Tree", "meaning_origin": "Nature imagery - freshness", "industry": "Hotels", "why_similar_pattern": "Evocative natural element"},
+    ],
+    "technology": [
+        {"brand": "Microsoft", "meaning_origin": "Microcomputer + Software compound", "industry": "Technology", "why_similar_pattern": "Technical compound describing core business"},
+        {"brand": "Infosys", "meaning_origin": "Information + Systems", "industry": "Technology", "why_similar_pattern": "Descriptive tech compound"},
+        {"brand": "Zoho", "meaning_origin": "Coined/invented word", "industry": "Technology", "why_similar_pattern": "Short, memorable coined name"},
+    ],
+    "food": [
+        {"brand": "Haldiram's", "meaning_origin": "Founder's name", "industry": "Food", "why_similar_pattern": "Personal name building trust in food"},
+        {"brand": "MTR", "meaning_origin": "Mavalli Tiffin Rooms acronym", "industry": "Food", "why_similar_pattern": "Location + offering abbreviated"},
+        {"brand": "Bikanervala", "meaning_origin": "Bikaner (city) + wala (from)", "industry": "Food", "why_similar_pattern": "Geographic origin indicator"},
+    ],
+    "beauty": [
+        {"brand": "Nykaa", "meaning_origin": "Sanskrit 'Nayaka' - actress/heroine", "industry": "Beauty", "why_similar_pattern": "Sanskrit root with beauty connotation"},
+        {"brand": "Lakme", "meaning_origin": "French opera character (goddess of beauty)", "industry": "Beauty", "why_similar_pattern": "Literary/mythological beauty reference"},
+        {"brand": "Mamaearth", "meaning_origin": "Mama + Earth - nurturing nature", "industry": "Beauty", "why_similar_pattern": "Emotional + natural compound"},
+    ],
+    "finance": [
+        {"brand": "PayPal", "meaning_origin": "Pay + Pal - friendly payment", "industry": "Finance", "why_similar_pattern": "Function + approachability compound"},
+        {"brand": "Razorpay", "meaning_origin": "Razor (sharp/efficient) + Pay", "industry": "Finance", "why_similar_pattern": "Efficiency descriptor + function"},
+        {"brand": "PhonePe", "meaning_origin": "Phone + Pe (Hindi: on)", "industry": "Finance", "why_similar_pattern": "Device + local language suffix"},
+    ],
+    "default": [
+        {"brand": "Apple", "meaning_origin": "Common fruit - arbitrary use", "industry": "Technology", "why_similar_pattern": "Simple word in unrelated context"},
+        {"brand": "Amazon", "meaning_origin": "World's largest river", "industry": "E-commerce", "why_similar_pattern": "Geographic feature suggesting scale"},
+        {"brand": "Nike", "meaning_origin": "Greek goddess of victory", "industry": "Sports", "why_similar_pattern": "Mythological victory reference"},
+    ]
+}
+
+def get_category_key(category: str) -> str:
+    """Map category to brand examples key"""
+    category_lower = category.lower()
+    if any(word in category_lower for word in ["tea", "chai"]):
+        return "tea"
+    elif any(word in category_lower for word in ["coffee", "cafe", "espresso"]):
+        return "coffee"
+    elif any(word in category_lower for word in ["hotel", "hospitality", "resort", "lodge"]):
+        return "hotel"
+    elif any(word in category_lower for word in ["tech", "software", "saas", "app", "digital"]):
+        return "technology"
+    elif any(word in category_lower for word in ["food", "restaurant", "snack", "sweet"]):
+        return "food"
+    elif any(word in category_lower for word in ["beauty", "cosmetic", "skincare", "makeup"]):
+        return "beauty"
+    elif any(word in category_lower for word in ["finance", "payment", "bank", "fintech"]):
+        return "finance"
+    return "default"
+
+def validate_and_fix_similar_brands(similar_brands: list, category: str) -> list:
+    """
+    Validate that similar brands are from the correct category.
+    If LLM returned wrong category examples, replace with correct ones.
+    """
+    if not similar_brands:
+        # Return category-appropriate defaults
+        category_key = get_category_key(category)
+        return CATEGORY_BRAND_EXAMPLES.get(category_key, CATEGORY_BRAND_EXAMPLES["default"])[:2]
+    
+    category_key = get_category_key(category)
+    category_lower = category.lower()
+    
+    # Check if any returned brands are from wrong category
+    wrong_category_brands = []
+    for brand_info in similar_brands:
+        brand_industry = (brand_info.get("industry") or "").lower()
+        # Check for common mismatches
+        if "tea" in category_lower and "coffee" in brand_industry:
+            wrong_category_brands.append(brand_info)
+        elif "coffee" in category_lower and "tea" in brand_industry:
+            wrong_category_brands.append(brand_info)
+        elif "hotel" in category_lower and brand_industry not in ["hotel", "hotels", "hospitality"]:
+            wrong_category_brands.append(brand_info)
+    
+    # If more than half are wrong, replace all
+    if len(wrong_category_brands) > len(similar_brands) / 2:
+        logging.warning(f"🔄 SIMILAR BRANDS FIX: LLM returned wrong category examples for '{category}', replacing with correct ones")
+        return CATEGORY_BRAND_EXAMPLES.get(category_key, CATEGORY_BRAND_EXAMPLES["default"])[:2]
+    
+    # Otherwise return original (may have some good examples)
+    return similar_brands
+
 # Linguistic Analysis Prompt - Open-ended, not limited to specific languages
 LINGUISTIC_ANALYSIS_PROMPT = """You are a world-class multilingual linguist and brand naming expert with deep knowledge of etymology, morphology, and cultural linguistics across ALL world languages.
 
