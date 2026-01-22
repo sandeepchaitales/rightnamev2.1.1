@@ -6150,17 +6150,30 @@ def get_multi_class_nice_strategy(category: str) -> dict:
     
     # Default strategy for unknown categories
     basic_class = get_nice_classification(category)
+    primary_class_num = basic_class["class_number"]
+    
+    # Avoid duplicate classes - if primary is 35, use different secondary
+    if primary_class_num == 35:
+        secondary_classes = [
+            {"class_number": 42, "description": "Technology platform services", "rationale": "For digital/tech platforms", "priority": "If technology-based"},
+            {"class_number": 9, "description": "Software applications", "rationale": "For mobile/web apps", "priority": "If app-based"}
+        ]
+        filing_strategy = f"File Class 35 as primary for business services; add Class 42/9 for technology"
+    else:
+        secondary_classes = [
+            {"class_number": 35, "description": "Business services, advertising", "rationale": "General business protection", "priority": "Consider for retail/marketing"}
+        ]
+        filing_strategy = f"File Class {primary_class_num} as primary; evaluate Class 35 for business expansion"
+    
     return {
         "primary_class": {
-            "class_number": basic_class["class_number"],
+            "class_number": primary_class_num,
             "description": basic_class["class_description"],
             "term": f"Services related to {category}"
         },
-        "secondary_classes": [
-            {"class_number": 35, "description": "Business services, advertising", "rationale": "General business protection", "priority": "Consider for retail/marketing"}
-        ],
+        "secondary_classes": secondary_classes,
         "total_classes_recommended": 2,
-        "filing_strategy": f"File Class {basic_class['class_number']} as primary; evaluate Class 35 for business expansion",
+        "filing_strategy": filing_strategy,
         "expansion_classes": []
     }
 
