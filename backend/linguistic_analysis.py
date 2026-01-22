@@ -187,10 +187,10 @@ async def analyze_brand_linguistics(
         # Call LLM - correct initialization pattern
         chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
         
-        response = await chat.send_async(
-            message=prompt,
-            context="You are a multilingual linguistic analyst. Return ONLY valid JSON, no markdown formatting."
-        )
+        # Build the full message with context
+        full_message = f"CONTEXT: You are a multilingual linguistic analyst. Return ONLY valid JSON, no markdown formatting.\n\n{prompt}"
+        
+        response = await chat.send_message(full_message)
         
         # Parse response
         response_text = response.strip()
