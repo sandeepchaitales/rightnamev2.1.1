@@ -2711,64 +2711,155 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         calculated_final = score_data.get("calculation", {}).get("final_score", 7.0)
         risk_verdict = score_data.get("risk_verdict", "CAUTION")
         
-        # Build comprehensive cultural notes - NO FORMULA (kept internal, shown via score_breakdown)
+        # Build comprehensive cultural notes
         cultural_notes_parts = []
         
-        # Part 1: Classification info at top
-        cultural_notes_parts.append(f"**🏷️ TRADEMARK CLASSIFICATION: {classification.get('category', 'Unknown')}**")
-        cultural_notes_parts.append(f"Distinctiveness: {classification.get('distinctiveness', 'Unknown')} | Protectability: {classification.get('protectability', 'Unknown')}")
-        if classification.get('warning'):
-            cultural_notes_parts.append(f"\n{classification.get('warning')}\n")
-        cultural_notes_parts.append("---")
-        
-        # Part 2: Linguistic Decomposition Header
-        cultural_notes_parts.append(f"\n**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
-        
-        # Part 3: Morpheme Breakdown
-        decomposition = linguistic_analysis.get("decomposition", {})
-        if decomposition.get("morphemes"):
-            cultural_notes_parts.append("**MORPHEME BREAKDOWN:**")
-            for morpheme in decomposition["morphemes"]:
-                # Find this morpheme's analysis for this country
-                morpheme_data = None
-                for ma in country_linguistic.get("morpheme_analysis", []):
-                    if ma["morpheme"] == morpheme["text"]:
-                        morpheme_data = ma
-                        break
+        # ==================== USE UNIVERSAL LINGUISTIC DATA IF AVAILABLE ====================
+        if has_universal_linguistic and ling_insights:
+            # Part 1: Classification with override info
+            cultural_notes_parts.append(f"**🏷️ TRADEMARK CLASSIFICATION: {classification.get('category', 'Unknown')}**")
+            cultural_notes_parts.append(f"Distinctiveness: {classification.get('distinctiveness', 'Unknown')} | Protectability: {classification.get('protectability', 'Unknown')}")
+            if classification.get('linguistic_override'):
+                cultural_notes_parts.append(f"⚡ *Override: {classification.get('original_category')} → {classification.get('category')} (linguistic meaning found)*")
+            if classification.get('warning'):
+                cultural_notes_parts.append(f"\n{classification.get('warning')}\n")
+            cultural_notes_parts.append("---")
+            
+            # Part 2: Universal Linguistic Analysis
+            cultural_notes_parts.append(f"\n**🌍 UNIVERSAL LINGUISTIC ANALYSIS**\n")
+            
+            # Show meaning if found
+            if ling_insights.get("combined_meaning"):
+                cultural_notes_parts.append(f"**MEANING:** \"{ling_insights['combined_meaning']}\"")
+                cultural_notes_parts.append(f"**ORIGIN:** {', '.join(ling_insights.get('languages', ['Unknown']))}")
+                cultural_notes_parts.append(f"**NAME TYPE:** {ling_insights.get('name_type', 'Unknown')}")
+            
+            # Cultural significance
+            if ling_insights.get("cultural_ref_type"):
+                cultural_notes_parts.append(f"\n**CULTURAL SIGNIFICANCE:**")
+                cultural_notes_parts.append(f"• Type: {ling_insights['cultural_ref_type']}")
+                if ling_insights.get("source_origin"):
+                    cultural_notes_parts.append(f"• Source: {ling_insights['source_origin']}")
+                cultural_notes_parts.append(f"• Sentiment: {ling_insights.get('sentiment', 'Neutral')}")
+                if ling_insights.get("cultural_details"):
+                    cultural_notes_parts.append(f"• Details: {ling_insights['cultural_details'][:150]}...")
+            
+            cultural_notes_parts.append("---")
+            
+            # Part 3: Country-Specific Analysis based on linguistic data
+            cultural_notes_parts.append(f"\n**🎯 {display_name.upper()} MARKET FIT**\n")
+            
+            # Check if this country is in recognition regions
+            recognition_regions = [r.lower() for r in ling_insights.get("recognition_regions", [])]
+            instant_recognition = [r.lower() for r in ling_insights.get("instant_recognition", [])]
+            needs_explanation = [r.lower() for r in ling_insights.get("needs_explanation", [])]
+            
+            country_in_recognition = any(country_lower in r or r in country_lower for r in recognition_regions)
+            country_instant = any(country_lower in r or r in country_lower for r in instant_recognition)
+            country_needs_explanation = any(country_lower in r or r in country_lower for r in needs_explanation)
+            
+            if country_instant or country_in_recognition:
+                cultural_notes_parts.append(f"✅ **INSTANT RECOGNITION** - The name meaning is culturally significant in {display_name}.")
+                if ling_insights.get("combined_meaning"):
+                    cultural_notes_parts.append(f"Consumers will immediately connect \"{ling_insights['combined_meaning']}\" with ")
+                    if ling_insights.get("cultural_ref_type") == "Mythological":
+                        cultural_notes_parts.append(f"the {ling_insights.get('source_origin', 'cultural heritage')}.")
+                    else:
+                        cultural_notes_parts.append(f"the {ling_insights.get('name_type', 'meaning').lower()} origin.")
+                if ling_insights.get("religious_sensitive"):
+                    cultural_notes_parts.append(f"⚠️ *Note: Religious/sacred connotations detected. May evoke strong positive OR negative reactions.*")
+            elif country_needs_explanation:
+                cultural_notes_parts.append(f"📖 **NEEDS EXPLANATION** - The name's meaning is not widely known in {display_name}.")
+                cultural_notes_parts.append(f"Consider educational marketing to convey the story behind \"{brand_name}\".")
+            else:
+                # Generic analysis for this country
+                if ling_insights.get("combined_meaning"):
+                    cultural_notes_parts.append(f"ℹ️ The name \"{brand_name}\" means \"{ling_insights['combined_meaning']}\" in {', '.join(ling_insights.get('languages', []))}.")
+                    cultural_notes_parts.append(f"Recognition level in {display_name}: May vary. Consider local market research.")
+            
+            # Check for concerns specific to this country
+            concerns_for_country = []
+            for concern in ling_insights.get("potential_concerns", []):
+                concern_region = concern.get("language_or_region", "").lower()
+                if country_lower in concern_region or concern_region in country_lower or concern_region == "global":
+                    concerns_for_country.append(concern)
+            
+            if concerns_for_country:
+                cultural_notes_parts.append(f"\n**⚠️ CONCERNS FOR {display_name.upper()}:**")
+                for concern in concerns_for_country:
+                    cultural_notes_parts.append(f"• [{concern.get('severity', 'Medium')}] {concern.get('concern_type', 'Issue')}: {concern.get('details', 'N/A')}")
+            
+            # Business alignment
+            cultural_notes_parts.append(f"\n**BUSINESS ALIGNMENT:** {ling_insights.get('alignment_score', 5)}/10 for {category}")
+            
+            # Part 4: Recommendation
+            if calculated_final < 5:
+                cultural_notes_parts.append("\n**RECOMMENDATION:** 🔴 CRITICAL - Significant cultural/linguistic concerns. Consult local experts.")
+            elif calculated_final < 7 or concerns_for_country:
+                cultural_notes_parts.append("\n**RECOMMENDATION:** 🟡 CAUTION - Some concerns identified. Local validation advised.")
+            else:
+                cultural_notes_parts.append("\n**RECOMMENDATION:** 🟢 SAFE - Name appears suitable. Proceed with standard clearance.")
                 
-                if morpheme_data:
-                    resonance_emoji = "🔴" if morpheme_data["resonance_level"] == "CRITICAL" else "🟡" if morpheme_data["resonance_level"] == "HIGH" else "🟢"
-                    cultural_notes_parts.append(f"• **{morpheme['text'].upper()}** ({morpheme['origin']}): {morpheme['meaning']}")
-                    cultural_notes_parts.append(f"  └─ {display_name} Resonance: {resonance_emoji} {morpheme_data['resonance_level']} - {morpheme_data['context']}")
-                else:
-                    cultural_notes_parts.append(f"• **{morpheme['text'].upper()}** ({morpheme['origin']}): {morpheme['meaning']}")
-        
-        # Part 3: Industry Fit
-        industry_fit = linguistic_analysis.get("industry_fit", {})
-        fit_emoji = "✅" if industry_fit.get("fit_level") == "HIGH" else "⚠️" if industry_fit.get("fit_level") == "LOW" else "➡️"
-        cultural_notes_parts.append(f"\n**INDUSTRY FIT:** {fit_emoji} {industry_fit.get('fit_level', 'NEUTRAL')}")
-        cultural_notes_parts.append(f"  {industry_fit.get('reasoning', 'No specific analysis')}")
-        
-        # Part 4: Risk Flags
-        risk_flags = country_linguistic.get("risk_flags", [])
-        if risk_flags:
-            cultural_notes_parts.append("\n**⚠️ RISK FLAGS:**")
-            for flag_item in risk_flags:
-                cultural_notes_parts.append(f"• {flag_item}")
-        
-        # Part 5: Brand Classification
-        cultural_notes_parts.append(f"\n**BRAND TYPE:** {linguistic_analysis.get('brand_type', 'Modern/Coined')}")
-        
-        # Part 6: Country-Specific Recommendation based on CALCULATED score
-        if calculated_final < 5:
-            cultural_notes_parts.append("\n**RECOMMENDATION:** 🔴 CRITICAL - Significant cultural/linguistic barriers identified. Consult local experts before market entry.")
-        elif calculated_final < 7:
-            cultural_notes_parts.append("\n**RECOMMENDATION:** 🟡 CAUTION - Some concerns identified. Local linguistic validation strongly advised.")
         else:
-            cultural_notes_parts.append("\n**RECOMMENDATION:** 🟢 SAFE - Name appears suitable for this market. Proceed with standard clearance.")
-        
-        # Part 7: Original base cultural notes
-        cultural_notes_parts.append(f"\n---\n**LOCAL MARKET CONTEXT:**\n{base_cultural_data['cultural_notes']}")
+            # ==================== FALLBACK: OLD LINGUISTIC DECOMPOSITION ====================
+            linguistic_analysis = generate_linguistic_decomposition(brand_name, countries_to_process, category) if not has_universal_linguistic else {}
+            country_linguistic = linguistic_analysis.get("country_analysis", {}).get(display_name, {}) if linguistic_analysis else {}
+            
+            # Part 1: Classification info at top
+            cultural_notes_parts.append(f"**🏷️ TRADEMARK CLASSIFICATION: {classification.get('category', 'Unknown')}**")
+            cultural_notes_parts.append(f"Distinctiveness: {classification.get('distinctiveness', 'Unknown')} | Protectability: {classification.get('protectability', 'Unknown')}")
+            if classification.get('warning'):
+                cultural_notes_parts.append(f"\n{classification.get('warning')}\n")
+            cultural_notes_parts.append("---")
+            
+            # Part 2: Linguistic Decomposition Header
+            cultural_notes_parts.append(f"\n**🔤 LINGUISTIC ANALYSIS: {brand_name}**\n")
+            
+            # Part 3: Morpheme Breakdown
+            decomposition = linguistic_analysis.get("decomposition", {}) if linguistic_analysis else {}
+            if decomposition.get("morphemes"):
+                cultural_notes_parts.append("**MORPHEME BREAKDOWN:**")
+                for morpheme in decomposition["morphemes"]:
+                    # Find this morpheme's analysis for this country
+                    morpheme_data = None
+                    for ma in country_linguistic.get("morpheme_analysis", []):
+                        if ma["morpheme"] == morpheme["text"]:
+                            morpheme_data = ma
+                            break
+                    
+                    if morpheme_data:
+                        resonance_emoji = "🔴" if morpheme_data["resonance_level"] == "CRITICAL" else "🟡" if morpheme_data["resonance_level"] == "HIGH" else "🟢"
+                        cultural_notes_parts.append(f"• **{morpheme['text'].upper()}** ({morpheme['origin']}): {morpheme['meaning']}")
+                        cultural_notes_parts.append(f"  └─ {display_name} Resonance: {resonance_emoji} {morpheme_data['resonance_level']} - {morpheme_data['context']}")
+                    else:
+                        cultural_notes_parts.append(f"• **{morpheme['text'].upper()}** ({morpheme['origin']}): {morpheme['meaning']}")
+            
+            # Part 3: Industry Fit
+            industry_fit = linguistic_analysis.get("industry_fit", {}) if linguistic_analysis else {}
+            fit_emoji = "✅" if industry_fit.get("fit_level") == "HIGH" else "⚠️" if industry_fit.get("fit_level") == "LOW" else "➡️"
+            cultural_notes_parts.append(f"\n**INDUSTRY FIT:** {fit_emoji} {industry_fit.get('fit_level', 'NEUTRAL')}")
+            cultural_notes_parts.append(f"  {industry_fit.get('reasoning', 'No specific analysis')}")
+            
+            # Part 4: Risk Flags
+            risk_flags = country_linguistic.get("risk_flags", [])
+            if risk_flags:
+                cultural_notes_parts.append("\n**⚠️ RISK FLAGS:**")
+                for flag_item in risk_flags:
+                    cultural_notes_parts.append(f"• {flag_item}")
+            
+            # Part 5: Brand Classification
+            cultural_notes_parts.append(f"\n**BRAND TYPE:** {linguistic_analysis.get('brand_type', 'Modern/Coined') if linguistic_analysis else 'Unknown'}")
+            
+            # Part 6: Country-Specific Recommendation based on CALCULATED score
+            if calculated_final < 5:
+                cultural_notes_parts.append("\n**RECOMMENDATION:** 🔴 CRITICAL - Significant cultural/linguistic barriers identified. Consult local experts before market entry.")
+            elif calculated_final < 7:
+                cultural_notes_parts.append("\n**RECOMMENDATION:** 🟡 CAUTION - Some concerns identified. Local linguistic validation strongly advised.")
+            else:
+                cultural_notes_parts.append("\n**RECOMMENDATION:** 🟢 SAFE - Name appears suitable for this market. Proceed with standard clearance.")
+            
+            # Part 7: Original base cultural notes
+            cultural_notes_parts.append(f"\n---\n**LOCAL MARKET CONTEXT:**\n{base_cultural_data['cultural_notes']}")
         
         # Join all parts
         cultural_notes = "\n".join(cultural_notes_parts)
