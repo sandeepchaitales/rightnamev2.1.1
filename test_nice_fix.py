@@ -22,7 +22,7 @@ def test_nice_class_fix():
     try:
         # Start evaluation
         response = requests.post(
-            "https://rightname-enhance.preview.emergentagent.com/api/evaluate/start",
+            "https://session-summary-15.preview.emergentagent.com/api/evaluate/start",
             json=payload,
             headers={'Content-Type': 'application/json'},
             timeout=30
@@ -41,7 +41,7 @@ def test_nice_class_fix():
             time.sleep(4)
             
             status_response = requests.get(
-                f"https://rightname-enhance.preview.emergentagent.com/api/evaluate/status/{job_id}",
+                f"https://session-summary-15.preview.emergentagent.com/api/evaluate/status/{job_id}",
                 timeout=10
             )
             
