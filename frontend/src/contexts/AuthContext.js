@@ -30,13 +30,23 @@ export const AuthProvider = ({ children }) => {
 
     // Check authentication status on mount
     useEffect(() => {
-        // Check if returning from Google OAuth
+        // Check if returning from Google OAuth success
         if (window.location.hash.includes('auth_success=true')) {
             // Clear the hash
             window.history.replaceState(null, '', window.location.pathname);
             // Check auth status
             checkAuth();
-        } else {
+        } 
+        // Check if there's an auth error
+        else if (window.location.search.includes('auth_error=')) {
+            const params = new URLSearchParams(window.location.search);
+            const error = params.get('auth_error');
+            console.error('Google OAuth error:', error);
+            // Clear the error param
+            window.history.replaceState(null, '', window.location.pathname);
+            checkAuth();
+        }
+        else {
             checkAuth();
         }
     }, []);
