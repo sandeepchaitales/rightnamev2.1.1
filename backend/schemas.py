@@ -529,6 +529,8 @@ class BrandScore(BaseModel):
     dupont_analysis: Optional[Dict[str, Any]] = Field(default=None, description="DuPont 13-Factor likelihood of confusion analysis")
     enhanced_social_availability: Optional[Dict[str, Any]] = Field(default=None, description="Enhanced social availability with activity analysis")
     realistic_registration_costs: Optional[Dict[str, Any]] = Field(default=None, description="Realistic tiered opposition costs")
+    # 🔤 UNIVERSAL LINGUISTIC ANALYSIS
+    universal_linguistic_analysis: Optional[Dict[str, Any]] = Field(default=None, description="Universal linguistic analysis - meaning in any world language")
 
 class BrandEvaluationRequest(BaseModel):
     brand_names: List[str]
