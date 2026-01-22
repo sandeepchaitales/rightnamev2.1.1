@@ -1197,6 +1197,156 @@ def classify_brand_name_type(brand_name: str, decomposition: dict) -> str:
         "ARBITRARY": "Arbitrary",
         "FANCIFUL": "Coined/Invented"
     }
+
+
+def classify_brand_with_linguistic_override(
+    brand_name: str, 
+    industry: str, 
+    linguistic_analysis: dict = None
+) -> dict:
+    """
+    ENHANCED MASTER CLASSIFICATION FUNCTION
+    
+    Runs standard classification FIRST, then OVERRIDES based on linguistic analysis.
+    
+    Override Rules:
+    - If linguistic says "has_meaning=True" + "name_type=Mythological" → Cannot be FANCIFUL
+    - If linguistic says "has_meaning=True" + "name_type=Foreign-Language" → Check alignment
+    - If meaning aligns with business → SUGGESTIVE (hints at product via foreign meaning)
+    - If meaning unrelated to business → ARBITRARY (real word in unrelated context)
+    - If no meaning found → Trust original classification
+    
+    Args:
+        brand_name: The brand name to classify
+        industry: The industry/category
+        linguistic_analysis: Results from analyze_brand_linguistics()
+        
+    Returns:
+        dict with classification results (potentially overridden)
+    """
+    # Step 1: Run standard English-based classification
+    base_result = classify_brand_with_industry(brand_name, industry)
+    
+    # Step 2: Check if we have linguistic analysis with meaning
+    if not linguistic_analysis:
+        logging.info(f"🏷️ CLASSIFICATION (NO LINGUISTIC DATA): '{brand_name}' → {base_result['category']}")
+        return base_result
+    
+    has_meaning = linguistic_analysis.get("has_linguistic_meaning", False)
+    confidence = linguistic_analysis.get("confidence_assessment", {}).get("overall_confidence", "Low")
+    meaning_certainty = linguistic_analysis.get("confidence_assessment", {}).get("meaning_certainty", "None")
+    
+    # Only override if we have HIGH/MEDIUM confidence
+    if not has_meaning or confidence == "Low" or meaning_certainty in ["None", "Speculative"]:
+        logging.info(f"🏷️ CLASSIFICATION (LOW CONFIDENCE): '{brand_name}' → {base_result['category']} (linguistic: {has_meaning}, confidence: {confidence})")
+        # Still attach linguistic data for reference
+        base_result["linguistic_override"] = False
+        base_result["linguistic_data"] = {
+            "has_meaning": has_meaning,
+            "confidence": confidence
+        }
+        return base_result
+    
+    # Step 3: Extract linguistic classification
+    name_type = linguistic_analysis.get("classification", {}).get("name_type", "Unknown")
+    alignment_score = linguistic_analysis.get("business_alignment", {}).get("alignment_score", 5)
+    languages = linguistic_analysis.get("linguistic_analysis", {}).get("languages_detected", [])
+    combined_meaning = linguistic_analysis.get("linguistic_analysis", {}).get("decomposition", {}).get("combined_meaning", "")
+    cultural_ref = linguistic_analysis.get("cultural_significance", {}).get("has_cultural_reference", False)
+    
+    # Step 4: Determine override
+    original_category = base_result["category"]
+    new_category = original_category  # Default: no change
+    override_reason = None
+    
+    # RULE 1: Mythological/Heritage names → SUGGESTIVE (always)
+    # These suggest qualities through cultural/mythological association
+    if name_type in ["Mythological", "Heritage"]:
+        if original_category == "FANCIFUL":
+            new_category = "SUGGESTIVE"
+            override_reason = f"Name has {name_type} origin ({', '.join(languages)}): '{combined_meaning}'. Cannot be FANCIFUL."
+    
+    # RULE 2: Foreign-Language names → Check business alignment
+    elif name_type == "Foreign-Language":
+        if alignment_score >= 7:
+            # High alignment = meaning describes/relates to business → SUGGESTIVE
+            if original_category == "FANCIFUL":
+                new_category = "SUGGESTIVE"
+                override_reason = f"Foreign word meaning '{combined_meaning}' aligns with business (score: {alignment_score}/10)"
+        else:
+            # Low alignment = meaning unrelated to business → ARBITRARY
+            if original_category == "FANCIFUL":
+                new_category = "ARBITRARY"
+                override_reason = f"Foreign word meaning '{combined_meaning}' is unrelated to business (score: {alignment_score}/10)"
+    
+    # RULE 3: Compound/Portmanteau with meaning → SUGGESTIVE
+    elif name_type in ["Compound", "Portmanteau"]:
+        if original_category == "FANCIFUL":
+            new_category = "SUGGESTIVE"
+            override_reason = f"Compound name with meaningful parts: '{combined_meaning}'"
+    
+    # RULE 4: Evocative names → SUGGESTIVE
+    elif name_type == "Evocative":
+        if original_category in ["FANCIFUL", "ARBITRARY"]:
+            new_category = "SUGGESTIVE"
+            override_reason = f"Name evokes qualities: '{combined_meaning}'"
+    
+    # RULE 5: True-Coined → Keep FANCIFUL
+    elif name_type == "True-Coined":
+        # Linguistic analysis confirms it's truly invented
+        pass  # Keep original
+    
+    # Step 5: Apply override if needed
+    if new_category != original_category:
+        logging.info(f"🏷️ CLASSIFICATION OVERRIDE: '{brand_name}' → {original_category} → {new_category}")
+        logging.info(f"   Reason: {override_reason}")
+        
+        # Update result
+        base_result["category"] = new_category
+        base_result["linguistic_override"] = True
+        base_result["original_category"] = original_category
+        base_result["override_reason"] = override_reason
+        
+        # Update distinctiveness and protectability based on new category
+        category_attributes = {
+            "GENERIC": ("NONE", "UNPROTECTABLE"),
+            "DESCRIPTIVE": ("LOW", "WEAK"),
+            "SUGGESTIVE": ("MODERATE", "MODERATE"),
+            "ARBITRARY": ("HIGH", "STRONG"),
+            "FANCIFUL": ("HIGHEST", "STRONGEST")
+        }
+        
+        if new_category in category_attributes:
+            base_result["distinctiveness"], base_result["protectability"] = category_attributes[new_category]
+        
+        # Update reasoning
+        base_result["reasoning"] = f"'{brand_name}' was linguistically analyzed and found to have meaning in {', '.join(languages)}: '{combined_meaning}'. {override_reason}. Classification changed from {original_category} to {new_category}."
+        
+        # Add warning for SUGGESTIVE
+        if new_category == "SUGGESTIVE":
+            base_result["warning"] = "Suggestive marks (names that hint at the product through foreign/cultural meaning) are protectable but may face challenges from similar marks."
+    else:
+        base_result["linguistic_override"] = False
+        base_result["linguistic_data"] = {
+            "has_meaning": has_meaning,
+            "name_type": name_type,
+            "languages": languages,
+            "alignment_score": alignment_score
+        }
+        logging.info(f"🏷️ CLASSIFICATION (NO OVERRIDE NEEDED): '{brand_name}' → {original_category}")
+    
+    # Always attach linguistic insights for downstream use
+    base_result["linguistic_insights"] = {
+        "has_meaning": has_meaning,
+        "name_type": name_type,
+        "languages": languages,
+        "combined_meaning": combined_meaning,
+        "alignment_score": alignment_score,
+        "cultural_reference": cultural_ref,
+        "confidence": confidence
+    }
+    
+    return base_result
     
     return category_map.get(result["category"], "Descriptive/Composite")
 
