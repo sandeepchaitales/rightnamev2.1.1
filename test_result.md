@@ -105,6 +105,30 @@
 user_problem_statement: Build a consulting-grade brand name evaluation system named "RIGHTNAME" that analyzes brand names based on user inputs (category, positioning, market scope), produces a NameScore Index (0-100), and includes detailed analysis sections like Trademark Risk Matrix, Competitive Landscape, Domain Availability, and strategic verdict.
 
 backend:
+  - task: "GET /api/user/reports - User Reports List"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ USER REPORTS FEATURE TESTING COMPLETED: Successfully tested the NEW User Reports feature endpoints as requested in review. RESULTS: ✅ GET /api/user/reports Endpoint: WORKING PERFECTLY - Returns 401 Unauthorized when not authenticated (correct security), returns 200 OK with proper JSON structure when authenticated including 'reports' array and 'pagination' object with page, limit, total, total_pages fields. ✅ POST /api/user/reports/link Endpoint: WORKING PERFECTLY - Returns 401 Unauthorized when not authenticated (correct security), returns 200 OK when authenticated with valid report_id. Successfully tested linking a real generated report (report_6229d6cb9c7448e0) to authenticated user. ✅ Authentication Integration: Both endpoints properly integrate with session-based authentication system using cookies. ✅ Response Structure: All expected fields present and properly formatted. ✅ Security: Proper 401 responses for unauthenticated requests as expected. Both NEW User Reports endpoints are production-ready and working correctly with proper authentication and response structures."
+
+  - task: "POST /api/user/reports/link - Link Report to User"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ USER REPORTS LINK ENDPOINT TESTING COMPLETED: Successfully tested the POST /api/user/reports/link endpoint as requested in review. RESULTS: ✅ Unauthenticated Access: WORKING - Correctly returns 401 Unauthorized when called without authentication. ✅ Authenticated Access: WORKING - Returns 200 OK when called with valid session cookies and existing report_id. ✅ Report Linking: Successfully linked generated report (report_6229d6cb9c7448e0) to authenticated user. ✅ Error Handling: Returns 404 when report_id doesn't exist in database (proper validation). ✅ Integration: Properly integrates with existing authentication system and MongoDB evaluations collection. The endpoint correctly updates the report document with user_email and user_id fields for proper user association. Link endpoint is production-ready and functioning as designed."
+
   - task: "POST /api/admin/login - Admin Authentication"
     implemented: true
     working: true
