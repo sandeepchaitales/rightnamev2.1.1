@@ -30,7 +30,15 @@ export const AuthProvider = ({ children }) => {
 
     // Check authentication status on mount
     useEffect(() => {
-        checkAuth();
+        // Check if returning from Google OAuth
+        if (window.location.hash.includes('auth_success=true')) {
+            // Clear the hash
+            window.history.replaceState(null, '', window.location.pathname);
+            // Check auth status
+            checkAuth();
+        } else {
+            checkAuth();
+        }
     }, []);
 
     const checkAuth = async () => {
