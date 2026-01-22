@@ -44,6 +44,14 @@ from market_intelligence import (
     format_cultural_intelligence_for_response
 )
 
+# Import Universal Linguistic Analysis Module
+from linguistic_analysis import (
+    analyze_brand_linguistics,
+    format_linguistic_analysis_for_prompt,
+    get_linguistic_insights_for_trademark,
+    get_linguistic_insights_for_cultural_fit
+)
+
 # Import Payment Routes
 from payment_routes import payment_router, set_db as set_payment_db
 
