@@ -10791,9 +10791,10 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                 ),
                 "domain_analysis": {
                     "exact_match_status": "TAKEN" if not domain_available else "AVAILABLE",
-                    "risk_level": "LOW",
-                    "has_active_business": "UNKNOWN",
-                    "has_trademark": "UNKNOWN",
+                    "risk_level": "LOW" if trademark_risk <= 3 else ("MEDIUM" if trademark_risk <= 6 else "HIGH"),
+                    # Derive has_trademark from trademark_conflicts
+                    "has_active_business": "YES" if (isinstance(trademark_data, dict) and len(trademark_data.get("company_conflicts", [])) > 0) else "NO",
+                    "has_trademark": "YES" if (isinstance(trademark_data, dict) and len(trademark_data.get("trademark_conflicts", [])) > 0) else "NO",
                     "primary_domain": f"{brand_name.lower()}.com",
                     "available": domain_available,
                     "alternatives": [
