@@ -6026,6 +6026,81 @@ MULTI_CLASS_STRATEGY = {
         ],
         "total_recommended": 2,
         "filing_strategy": "Class 3 + Class 35 for comprehensive protection"
+    },
+    # Travel / Transportation
+    "travel": {
+        "primary": {"class_number": 39, "description": "Transport, travel arrangement services", "term": "Travel arrangement, transport services, tour operator services"},
+        "secondary": [
+            {"class_number": 43, "description": "Temporary accommodation booking", "rationale": "For hotel booking features", "priority": "If booking accommodation"},
+            {"class_number": 35, "description": "Travel agency services", "rationale": "For business operations", "priority": "For retail travel services"},
+            {"class_number": 9, "description": "Travel booking software", "rationale": "For mobile apps", "priority": "If app-based"}
+        ],
+        "total_recommended": 3,
+        "filing_strategy": "Class 39 immediately for core travel services; add Class 43 if booking hotels"
+    },
+    "sea": {
+        "primary": {"class_number": 39, "description": "Sea transport, ferry services, cruise services", "term": "Sea transport services, ferry services, cruise services"},
+        "secondary": [
+            {"class_number": 43, "description": "Accommodation services", "rationale": "For cruise accommodation", "priority": "For cruise ships"},
+            {"class_number": 35, "description": "Travel booking services", "rationale": "For booking platform", "priority": "For booking portals"},
+            {"class_number": 9, "description": "Booking application software", "rationale": "For mobile apps", "priority": "If app-based"}
+        ],
+        "total_recommended": 3,
+        "filing_strategy": "Class 39 primary for sea transport; add Class 9 for booking apps"
+    },
+    "cruise": {
+        "primary": {"class_number": 39, "description": "Cruise ship services, sea transport", "term": "Cruise ship services, passenger transport by sea"},
+        "secondary": [
+            {"class_number": 43, "description": "Temporary accommodation on cruise ships", "rationale": "For onboard accommodation", "priority": "Immediate"},
+            {"class_number": 41, "description": "Entertainment services", "rationale": "For onboard entertainment", "priority": "For cruise entertainment"}
+        ],
+        "total_recommended": 3,
+        "filing_strategy": "Class 39 + 43 essential for cruise operators"
+    },
+    "ferry": {
+        "primary": {"class_number": 39, "description": "Ferry transport services", "term": "Ferry services, passenger transport by water"},
+        "secondary": [
+            {"class_number": 35, "description": "Ferry booking services", "rationale": "For booking platform", "priority": "If operating booking portal"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 39 covers core ferry operations"
+    },
+    "transport": {
+        "primary": {"class_number": 39, "description": "Transport services", "term": "Transport services, logistics, delivery"},
+        "secondary": [
+            {"class_number": 35, "description": "Transport booking services", "rationale": "For booking platform", "priority": "If booking portal"},
+            {"class_number": 9, "description": "Transport booking software", "rationale": "For mobile apps", "priority": "If app-based"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 39 for transport operations"
+    },
+    "logistics": {
+        "primary": {"class_number": 39, "description": "Logistics and freight services", "term": "Logistics services, freight transport, warehousing"},
+        "secondary": [
+            {"class_number": 35, "description": "Supply chain management", "rationale": "For B2B logistics", "priority": "For enterprise logistics"},
+            {"class_number": 42, "description": "Logistics software platform", "rationale": "For tech platforms", "priority": "If SaaS logistics"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 39 for logistics operations"
+    },
+    "booking": {
+        "primary": {"class_number": 39, "description": "Travel booking and arrangement services", "term": "Travel arrangement services, booking services"},
+        "secondary": [
+            {"class_number": 43, "description": "Hotel booking services", "rationale": "For accommodation booking", "priority": "If booking hotels"},
+            {"class_number": 9, "description": "Booking application software", "rationale": "For mobile apps", "priority": "Immediate for apps"},
+            {"class_number": 35, "description": "Online booking platform services", "rationale": "For marketplace features", "priority": "For booking platforms"}
+        ],
+        "total_recommended": 3,
+        "filing_strategy": "Class 39 + Class 9 for travel booking apps"
+    },
+    "portal": {
+        "primary": {"class_number": 35, "description": "Online portal services, e-commerce", "term": "Online portal services, e-commerce platform services"},
+        "secondary": [
+            {"class_number": 42, "description": "Web portal hosting services", "rationale": "For platform infrastructure", "priority": "For tech platforms"},
+            {"class_number": 9, "description": "Portal software applications", "rationale": "For mobile apps", "priority": "If app-based"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class depends on portal type - combine with industry-specific class"
     }
 }
 
