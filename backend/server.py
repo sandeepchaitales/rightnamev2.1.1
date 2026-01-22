@@ -2696,9 +2696,6 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         # Get flag - CASE INSENSITIVE
         flag = flags_lower.get(country_lower, "🌍")
         
-        # Get linguistic analysis for this country
-        country_linguistic = linguistic_analysis.get("country_analysis", {}).get(display_name, {})
-        
         # ========== NEW: FORMULA-BASED CULTURAL SCORING ==========
         # Calculate using: Score = (Safety × 0.4) + (Fluency × 0.3) + (Vibe × 0.3)
         # PASS the classification to avoid duplicate calculation
