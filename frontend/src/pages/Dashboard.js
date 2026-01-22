@@ -1065,16 +1065,32 @@ const MarketIntelligenceSection = ({ domainAnalysis, visibilityAnalysis, cultura
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-slate-600">Active Trademark</span>
-                                        <Badge variant="outline">{domainAnalysis.has_trademark || 'UNKNOWN'}</Badge>
+                                        <Badge variant="outline" className={domainAnalysis.has_trademark === 'YES' ? 'bg-rose-100 text-rose-700 border-rose-300' : 'bg-emerald-100 text-emerald-700 border-emerald-300'}>
+                                            {domainAnalysis.has_trademark || 'UNKNOWN'}
+                                        </Badge>
                                     </div>
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-slate-600">Operating Business</span>
-                                        <Badge variant="outline">{domainAnalysis.has_active_business || 'UNKNOWN'}</Badge>
+                                        <Badge variant="outline" className={domainAnalysis.has_active_business === 'YES' ? 'bg-rose-100 text-rose-700 border-rose-300' : 'bg-emerald-100 text-emerald-700 border-emerald-300'}>
+                                            {domainAnalysis.has_active_business || 'UNKNOWN'}
+                                        </Badge>
                                     </div>
                                 </div>
-                                <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
-                                    <CheckCircle className="w-3 h-3" /> No trademark or active business found
-                                </p>
+                                {/* Dynamic message based on conflict status */}
+                                {domainAnalysis.has_trademark === 'YES' || domainAnalysis.has_active_business === 'YES' ? (
+                                    <p className="text-xs text-rose-600 mt-2 flex items-center gap-1">
+                                        <AlertTriangle className="w-3 h-3" /> 
+                                        {domainAnalysis.has_trademark === 'YES' && domainAnalysis.has_active_business === 'YES' 
+                                            ? 'Both trademark and active business found - HIGH RISK'
+                                            : domainAnalysis.has_trademark === 'YES' 
+                                                ? 'Existing trademark found - Review conflicts'
+                                                : 'Active business found - Review conflicts'}
+                                    </p>
+                                ) : (
+                                    <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                                        <CheckCircle className="w-3 h-3" /> No trademark or active business found
+                                    </p>
+                                )}
                             </div>
                         </div>
                         
