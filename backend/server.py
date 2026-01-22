@@ -11358,6 +11358,14 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                            f"Has Meaning: {has_meaning}, "
                            f"Alignment: {alignment_score}/10, "
                            f"Type: {name_type}")
+            
+            # Add brand classification with linguistic override data
+            brand_classification_data = all_brand_data.get(brand_name_for_matrix, {}).get("classification")
+            if brand_classification_data:
+                brand_score.brand_classification = brand_classification_data
+                if brand_classification_data.get("linguistic_override"):
+                    logging.info(f"🏷️ Added Classification Override for '{brand_name_for_matrix}': "
+                               f"{brand_classification_data.get('original_category')} → {brand_classification_data.get('category')}")
         except Exception as e:
             logging.error(f"Failed to add linguistic analysis: {e}")
         # ============ END UNIVERSAL LINGUISTIC ANALYSIS ============
