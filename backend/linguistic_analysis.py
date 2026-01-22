@@ -131,12 +131,13 @@ Compare the discovered meaning to the business category:
   }},
   "similar_successful_brands": [
     {{
-      "brand": "example brand",
+      "brand": "MUST be from SAME category as {business_category} - e.g., if analyzing a Tea Brand, give tea brand examples like 'Teavana', 'Tea Nation', 'Chaayos' - NOT coffee or unrelated brands",
       "meaning_origin": "what it means and from where",
-      "industry": "their industry",
-      "why_similar_pattern": "why this is a good comparison"
+      "industry": "MUST MATCH {business_category} exactly",
+      "why_similar_pattern": "why this naming pattern works for THIS specific category"
     }}
   ],
+  "_SIMILAR_BRANDS_RULE": "CRITICAL: Only provide brands from the EXACT SAME industry/category. For Tea Brand → tea examples. For Hotel → hotel examples. NEVER mix categories (no coffee brands for tea, no restaurants for hotels).",
   "potential_concerns": [
     {{
       "concern_type": "Negative-Meaning/Pronunciation/Cultural-Sensitivity/Religious",
