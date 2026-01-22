@@ -245,6 +245,156 @@ COUNTRY_FLAGS = {
     "Spain": "🇪🇸", "Netherlands": "🇳🇱", "Mexico": "🇲🇽", "Russia": "🇷🇺", "Global": "🌍"
 }
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# GLOBAL COMPETITORS DATABASE - International brands for "Global Overview"
+# These are WORLDWIDE/MULTINATIONAL brands, not country-specific
+# ═══════════════════════════════════════════════════════════════════════════════
+GLOBAL_COMPETITORS_BY_CATEGORY = {
+    "hotels": {
+        "competitors": [
+            {"name": "Marriott International", "x_coordinate": 75, "y_coordinate": 70, "quadrant": "Global Full-Service", "hq": "USA"},
+            {"name": "Hilton Worldwide", "x_coordinate": 70, "y_coordinate": 65, "quadrant": "Business Premium", "hq": "USA"},
+            {"name": "IHG (InterContinental)", "x_coordinate": 72, "y_coordinate": 68, "quadrant": "Upscale Portfolio", "hq": "UK"},
+            {"name": "Accor Group", "x_coordinate": 65, "y_coordinate": 72, "quadrant": "Lifestyle Diverse", "hq": "France"},
+            {"name": "Hyatt Hotels", "x_coordinate": 80, "y_coordinate": 75, "quadrant": "Luxury Lifestyle", "hq": "USA"},
+            {"name": "Wyndham Hotels", "x_coordinate": 40, "y_coordinate": 50, "quadrant": "Economy Scale", "hq": "USA"}
+        ],
+        "axis_x": "Price: Budget → Ultra-Luxury",
+        "axis_y": "Positioning: Business/Standard → Lifestyle/Experience",
+        "white_space": "Global hospitality ($800B) is dominated by mega-chains with portfolio strategies. **Opportunity: Authentic local experiences** that chains cannot replicate. Boutique, sustainability-focused, and culturally-immersive concepts are underserved globally.",
+        "strategic_advantage": "Independent brands can offer authentic local experiences, faster innovation, and community integration that global chains struggle to deliver. Digital-first distribution reduces dependency on OTAs."
+    },
+    "tea": {
+        "competitors": [
+            {"name": "Twinings (ABF)", "x_coordinate": 70, "y_coordinate": 55, "quadrant": "Heritage Premium", "hq": "UK"},
+            {"name": "Lipton (Unilever)", "x_coordinate": 45, "y_coordinate": 45, "quadrant": "Mass Market", "hq": "Netherlands"},
+            {"name": "Dilmah", "x_coordinate": 65, "y_coordinate": 70, "quadrant": "Estate Premium", "hq": "Sri Lanka"},
+            {"name": "TWG Tea", "x_coordinate": 90, "y_coordinate": 85, "quadrant": "Ultra-Luxury", "hq": "Singapore"},
+            {"name": "Teavana (Starbucks)", "x_coordinate": 75, "y_coordinate": 75, "quadrant": "Lifestyle Premium", "hq": "USA"},
+            {"name": "Harney & Sons", "x_coordinate": 72, "y_coordinate": 68, "quadrant": "Artisan Premium", "hq": "USA"}
+        ],
+        "axis_x": "Price: Mass Market → Ultra-Premium",
+        "axis_y": "Positioning: Commodity → Experience/Specialty",
+        "white_space": "Global tea market ($70B) is polarized between commodity (Lipton) and ultra-luxury (TWG). **Gap: Accessible premium** segment with authentic origin stories, sustainable sourcing, and wellness positioning.",
+        "strategic_advantage": "Direct-to-consumer models bypass retail markup. Origin authenticity (Darjeeling, Assam, Ceylon) commands premium. Wellness trend drives demand for functional teas."
+    },
+    "coffee": {
+        "competitors": [
+            {"name": "Starbucks", "x_coordinate": 70, "y_coordinate": 75, "quadrant": "Experience Premium", "hq": "USA"},
+            {"name": "Nescafé (Nestlé)", "x_coordinate": 40, "y_coordinate": 40, "quadrant": "Mass Instant", "hq": "Switzerland"},
+            {"name": "Lavazza", "x_coordinate": 75, "y_coordinate": 65, "quadrant": "Italian Heritage", "hq": "Italy"},
+            {"name": "Blue Bottle", "x_coordinate": 85, "y_coordinate": 85, "quadrant": "Third Wave Premium", "hq": "USA"},
+            {"name": "Costa Coffee (Coca-Cola)", "x_coordinate": 55, "y_coordinate": 60, "quadrant": "Accessible Quality", "hq": "UK"},
+            {"name": "Illy", "x_coordinate": 80, "y_coordinate": 70, "quadrant": "Artisan Italian", "hq": "Italy"}
+        ],
+        "axis_x": "Price: Budget → Ultra-Premium",
+        "axis_y": "Positioning: Convenience → Experience",
+        "white_space": "Global coffee market ($130B) has Starbucks dominating experience, Nestlé dominating instant. **Gap: Specialty third-wave** coffee with origin transparency, sustainable practices, and artisan quality.",
+        "strategic_advantage": "Direct trade relationships ensure quality and story. Subscription models create recurring revenue. Coffee culture growth in Asia presents expansion opportunity."
+    },
+    "technology": {
+        "competitors": [
+            {"name": "Microsoft", "x_coordinate": 80, "y_coordinate": 60, "quadrant": "Enterprise Dominant", "hq": "USA"},
+            {"name": "Google (Alphabet)", "x_coordinate": 75, "y_coordinate": 80, "quadrant": "Innovation Leader", "hq": "USA"},
+            {"name": "Amazon AWS", "x_coordinate": 70, "y_coordinate": 70, "quadrant": "Cloud Infrastructure", "hq": "USA"},
+            {"name": "SAP", "x_coordinate": 85, "y_coordinate": 50, "quadrant": "Enterprise Legacy", "hq": "Germany"},
+            {"name": "Salesforce", "x_coordinate": 75, "y_coordinate": 75, "quadrant": "SaaS Pioneer", "hq": "USA"},
+            {"name": "Oracle", "x_coordinate": 82, "y_coordinate": 45, "quadrant": "Database Legacy", "hq": "USA"}
+        ],
+        "axis_x": "Price: SMB → Enterprise",
+        "axis_y": "Positioning: Traditional → Cloud-Native",
+        "white_space": "Global enterprise software ($500B+) dominated by US giants. **Gap: Vertical-specific SaaS** solutions for underserved industries. Regional players can win with localization and compliance expertise.",
+        "strategic_advantage": "AI-first architecture can leapfrog legacy systems. Vertical focus enables domain expertise. Lower cost structures in emerging markets enable competitive pricing."
+    },
+    "food": {
+        "competitors": [
+            {"name": "Nestlé", "x_coordinate": 70, "y_coordinate": 55, "quadrant": "Global Conglomerate", "hq": "Switzerland"},
+            {"name": "PepsiCo (Frito-Lay)", "x_coordinate": 50, "y_coordinate": 50, "quadrant": "Snacks Mass", "hq": "USA"},
+            {"name": "Mondelez", "x_coordinate": 60, "y_coordinate": 60, "quadrant": "Confectionery Global", "hq": "USA"},
+            {"name": "Danone", "x_coordinate": 70, "y_coordinate": 70, "quadrant": "Health Focus", "hq": "France"},
+            {"name": "Kraft Heinz", "x_coordinate": 55, "y_coordinate": 45, "quadrant": "Legacy Brands", "hq": "USA"},
+            {"name": "Unilever Foods", "x_coordinate": 65, "y_coordinate": 55, "quadrant": "Diverse Portfolio", "hq": "Netherlands/UK"}
+        ],
+        "axis_x": "Price: Value → Premium",
+        "axis_y": "Positioning: Traditional → Health/Wellness",
+        "white_space": "Global packaged food ($4T) shifting to health, sustainability, and authenticity. **Gap: Clean-label, locally-sourced** products with transparent supply chains.",
+        "strategic_advantage": "Agility to respond to health trends faster than conglomerates. Direct-to-consumer bypasses retail gatekeepers. Authentic stories resonate with conscious consumers."
+    },
+    "beauty": {
+        "competitors": [
+            {"name": "L'Oréal", "x_coordinate": 75, "y_coordinate": 70, "quadrant": "Mass Premium", "hq": "France"},
+            {"name": "Estée Lauder", "x_coordinate": 85, "y_coordinate": 75, "quadrant": "Prestige Beauty", "hq": "USA"},
+            {"name": "Shiseido", "x_coordinate": 80, "y_coordinate": 72, "quadrant": "Asian Luxury", "hq": "Japan"},
+            {"name": "Unilever Beauty", "x_coordinate": 50, "y_coordinate": 55, "quadrant": "Mass Market", "hq": "Netherlands/UK"},
+            {"name": "Coty", "x_coordinate": 65, "y_coordinate": 60, "quadrant": "Accessible Luxury", "hq": "USA"},
+            {"name": "Amorepacific", "x_coordinate": 75, "y_coordinate": 78, "quadrant": "K-Beauty Innovation", "hq": "South Korea"}
+        ],
+        "axis_x": "Price: Mass → Prestige",
+        "axis_y": "Positioning: Traditional → Innovation/Natural",
+        "white_space": "Global beauty ($550B) seeing shift to clean beauty, inclusivity, and sustainability. **Gap: Authentic indie brands** with transparent ingredients and mission-driven positioning.",
+        "strategic_advantage": "DTC and social commerce reduce retail dependency. Influencer-led brands can build faster than conglomerates. Clean beauty premiums justify higher margins."
+    },
+    "finance": {
+        "competitors": [
+            {"name": "Visa/Mastercard", "x_coordinate": 85, "y_coordinate": 50, "quadrant": "Payment Rails", "hq": "USA"},
+            {"name": "PayPal", "x_coordinate": 70, "y_coordinate": 70, "quadrant": "Digital Payments", "hq": "USA"},
+            {"name": "Stripe", "x_coordinate": 75, "y_coordinate": 80, "quadrant": "Developer Fintech", "hq": "USA"},
+            {"name": "Ant Group (Alipay)", "x_coordinate": 65, "y_coordinate": 75, "quadrant": "Super App", "hq": "China"},
+            {"name": "Adyen", "x_coordinate": 78, "y_coordinate": 72, "quadrant": "Unified Commerce", "hq": "Netherlands"},
+            {"name": "Block (Square)", "x_coordinate": 60, "y_coordinate": 75, "quadrant": "SMB Fintech", "hq": "USA"}
+        ],
+        "axis_x": "Target: Consumer → Enterprise",
+        "axis_y": "Positioning: Legacy → Digital-Native",
+        "white_space": "Global fintech ($200B+) disrupting traditional banking. **Gap: Embedded finance** and vertical-specific solutions. Underbanked markets present massive opportunity.",
+        "strategic_advantage": "Mobile-first approach reaches underbanked populations. API-first enables embedded finance partnerships. Regional compliance expertise creates moats."
+    },
+    "default": {
+        "competitors": [
+            {"name": "Global Market Leader", "x_coordinate": 80, "y_coordinate": 70, "quadrant": "Premium Established", "hq": "Global"},
+            {"name": "Value Champion", "x_coordinate": 40, "y_coordinate": 55, "quadrant": "Mass Market", "hq": "Global"},
+            {"name": "Innovation Disruptor", "x_coordinate": 65, "y_coordinate": 85, "quadrant": "Tech-Forward", "hq": "Global"},
+            {"name": "Regional Specialist", "x_coordinate": 55, "y_coordinate": 50, "quadrant": "Local Expert", "hq": "Global"},
+            {"name": "Heritage Brand", "x_coordinate": 75, "y_coordinate": 45, "quadrant": "Traditional Premium", "hq": "Global"},
+            {"name": "Challenger Brand", "x_coordinate": 50, "y_coordinate": 70, "quadrant": "Emerging Player", "hq": "Global"}
+        ],
+        "axis_x": "Price: Budget → Premium",
+        "axis_y": "Positioning: Traditional → Modern",
+        "white_space": "Market opportunities exist for differentiated brands combining innovation with authentic value propositions.",
+        "strategic_advantage": "Agile positioning and digital-first strategy can capture market share from established players."
+    }
+}
+
+def get_global_competitors(category: str, industry: str = None) -> dict:
+    """Get GLOBAL competitors for the 'Global Overview' strategic matrix.
+    
+    These are MULTINATIONAL brands, not country-specific.
+    """
+    # Map category to key
+    category_lower = (category or "").lower()
+    
+    if any(word in category_lower for word in ["hotel", "hospitality", "resort", "lodge", "accommodation"]):
+        category_key = "hotels"
+    elif any(word in category_lower for word in ["tea", "chai"]):
+        category_key = "tea"
+    elif any(word in category_lower for word in ["coffee", "cafe", "espresso"]):
+        category_key = "coffee"
+    elif any(word in category_lower for word in ["tech", "software", "saas", "app", "digital", "it "]):
+        category_key = "technology"
+    elif any(word in category_lower for word in ["food", "snack", "beverage", "restaurant"]):
+        category_key = "food"
+    elif any(word in category_lower for word in ["beauty", "cosmetic", "skincare", "makeup"]):
+        category_key = "beauty"
+    elif any(word in category_lower for word in ["finance", "payment", "bank", "fintech", "insurance"]):
+        category_key = "finance"
+    else:
+        category_key = "default"
+    
+    global_data = GLOBAL_COMPETITORS_BY_CATEGORY.get(category_key, GLOBAL_COMPETITORS_BY_CATEGORY["default"])
+    
+    logging.info(f"🌍 GLOBAL COMPETITORS: Category '{category}' → using '{category_key}' global data ({len(global_data.get('competitors', []))} brands)")
+    
+    return global_data
+
 # ============ SACRED/ROYAL/RELIGIOUS NAME DATABASE ============
 SACRED_ROYAL_NAMES = {
     "Thailand": {
