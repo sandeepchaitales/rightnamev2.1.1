@@ -9696,11 +9696,27 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     for brand in request.brand_names:
         brand_classification = all_brand_data[brand].get("classification", {})
         if brand_classification:
+            override_info = ""
+            if brand_classification.get("linguistic_override"):
+                override_info = f"""
+├─ ⚡ LINGUISTIC OVERRIDE: {brand_classification.get('original_category')} → {brand_classification.get('category')}
+├─ Override Reason: {brand_classification.get('override_reason', 'N/A')[:150]}"""
+            
+            linguistic_insight = ""
+            ling_data = brand_classification.get("linguistic_insights", {})
+            if ling_data.get("has_meaning"):
+                linguistic_insight = f"""
+├─ 🌍 LINGUISTIC MEANING FOUND:
+│   ├─ Languages: {', '.join(ling_data.get('languages', []))}
+│   ├─ Name Type: {ling_data.get('name_type', 'Unknown')}
+│   ├─ Meaning: {ling_data.get('combined_meaning', 'N/A')[:100]}
+│   └─ Business Alignment: {ling_data.get('alignment_score', 'N/A')}/10"""
+            
             classification_context_parts.append(f"""
 BRAND: {brand}
 ├─ Classification: {brand_classification.get('category', 'UNKNOWN')}
 ├─ Distinctiveness: {brand_classification.get('distinctiveness', 'UNKNOWN')}
-├─ Protectability: {brand_classification.get('protectability', 'UNKNOWN')}
+├─ Protectability: {brand_classification.get('protectability', 'UNKNOWN')}{override_info}{linguistic_insight}
 ├─ Dictionary Tokens: {brand_classification.get('dictionary_tokens', [])}
 ├─ Invented Tokens: {brand_classification.get('invented_tokens', [])}
 └─ Reasoning: {brand_classification.get('reasoning', 'N/A')[:200]}""")
