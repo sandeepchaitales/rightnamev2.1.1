@@ -3619,25 +3619,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== PAGE 5: McKINSEY THREE-PILLAR BRAND ASSESSMENT ==================== */}
-                {brand.mckinsey_analysis && (
-                    <section className="print-new-page">
-                        <SectionHeader 
-                            icon={Briefcase} 
-                            title="Three-Pillar Brand Assessment" 
-                            subtitle="Three-Question strategic analysis" 
-                            color="violet" 
-                            badge={brand.mckinsey_analysis?.executive_recommendation}
-                        />
-                        {isAuthenticated ? (
-                            <McKinseyAnalysisSection mckinsey={brand.mckinsey_analysis} />
-                        ) : (
-                            <LockedSection title="Three-Pillar Brand Assessment Analysis" onUnlock={handleRegister} />
-                        )}
-                    </section>
-                )}
-
-                {/* ==================== PAGE 6: MARKET INTELLIGENCE ==================== */}
+                {/* ==================== PAGE 5: MARKET INTELLIGENCE ==================== */}
                 {(brand.domain_analysis || brand.visibility_analysis || brand.cultural_analysis) && (
                     <section className="print-new-page">
                         <SectionHeader icon={TrendingUp} title="Market Intelligence" subtitle="Domain status, conflicts & cultural fit" color="amber" />
