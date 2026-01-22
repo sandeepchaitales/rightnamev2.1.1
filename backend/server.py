@@ -9483,21 +9483,9 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     for brand in request.brand_names:
         logging.info(f"Running parallel checks for brand: {brand}")
         
-        # ==================== MASTER CLASSIFICATION (CALLED ONCE, FIRST) ====================
-        # This classification is passed to ALL sections that need it
-        # MUST be computed BEFORE parallel tasks to pass to trademark research
-        brand_classification = classify_brand_with_industry(brand, request.category or "Business")
-        classification_category = brand_classification.get("category", "DESCRIPTIVE")
-        logging.info(f"🏷️ MASTER CLASSIFICATION for '{brand}':")
-        logging.info(f"   Category: {classification_category}")
-        logging.info(f"   Tokens: {brand_classification['tokens']}")
-        logging.info(f"   Distinctiveness: {brand_classification['distinctiveness']}")
-        logging.info(f"   Protectability: {brand_classification['protectability']}")
-        # ==================== END MASTER CLASSIFICATION ====================
-        
-        # ==================== UNIVERSAL LINGUISTIC ANALYSIS ====================
+        # ==================== STEP 1: UNIVERSAL LINGUISTIC ANALYSIS (FIRST!) ====================
         # Analyze brand name for meaning in ANY world language using LLM
-        # This is done FIRST to provide context for trademark search and cultural fit
+        # This MUST run FIRST to provide data for classification override
         logging.info(f"🔤 Starting Universal Linguistic Analysis for '{brand}'...")
         try:
             linguistic_analysis = await analyze_brand_linguistics(
@@ -9509,11 +9497,30 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             logging.info(f"   Has Meaning: {linguistic_analysis.get('has_linguistic_meaning', False)}")
             if linguistic_analysis.get('has_linguistic_meaning'):
                 logging.info(f"   Languages: {linguistic_analysis.get('linguistic_analysis', {}).get('languages_detected', [])}")
+                logging.info(f"   Name Type: {linguistic_analysis.get('classification', {}).get('name_type', 'Unknown')}")
                 logging.info(f"   Business Alignment: {linguistic_analysis.get('business_alignment', {}).get('alignment_score', 'N/A')}/10")
         except Exception as e:
             logging.error(f"🔤 Linguistic Analysis failed for '{brand}': {e}")
             linguistic_analysis = None
         # ==================== END LINGUISTIC ANALYSIS ====================
+        
+        # ==================== STEP 2: MASTER CLASSIFICATION (WITH LINGUISTIC OVERRIDE) ====================
+        # Classification now uses linguistic data to override FANCIFUL when meaning is found
+        brand_classification = classify_brand_with_linguistic_override(
+            brand, 
+            request.category or "Business",
+            linguistic_analysis  # Pass linguistic data for potential override
+        )
+        classification_category = brand_classification.get("category", "DESCRIPTIVE")
+        
+        logging.info(f"🏷️ MASTER CLASSIFICATION for '{brand}':")
+        logging.info(f"   Category: {classification_category}")
+        logging.info(f"   Distinctiveness: {brand_classification['distinctiveness']}")
+        logging.info(f"   Protectability: {brand_classification['protectability']}")
+        if brand_classification.get("linguistic_override"):
+            logging.info(f"   ⚡ OVERRIDE: {brand_classification.get('original_category')} → {classification_category}")
+            logging.info(f"   Reason: {brand_classification.get('override_reason')}")
+        # ==================== END MASTER CLASSIFICATION ====================
         
         # Create all tasks for this brand (pass classification to trademark research)
         tasks = [
@@ -9544,8 +9551,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             "visibility": processed_results[3],
             "multi_domain": processed_results[4],
             "social": processed_results[5],
-            "classification": brand_classification,  # Store classification for later use
-            "linguistic_analysis": linguistic_analysis  # Store linguistic analysis
+            "classification": brand_classification,  # Now includes linguistic override data
+            "linguistic_analysis": linguistic_analysis  # Store full linguistic analysis
         }
     
     parallel_time = time_module.time() - parallel_start
