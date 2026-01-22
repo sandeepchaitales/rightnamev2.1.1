@@ -49,18 +49,21 @@ class GoogleAuthResponse(BaseModel):
 
 
 def get_redirect_uri(request: Request) -> str:
-    """Construct the redirect URI based on the request origin"""
-    # Get the origin from request
-    origin = request.headers.get("origin") or request.headers.get("referer")
+    """Construct the redirect URI based on the request"""
+    # Get the host from the request
+    host = request.headers.get("host", "localhost:8001")
     
-    if origin:
-        # Extract just the origin (protocol + host)
-        from urllib.parse import urlparse
-        parsed = urlparse(origin)
-        base_url = f"{parsed.scheme}://{parsed.netloc}"
+    # Determine protocol
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    if forwarded_proto:
+        scheme = forwarded_proto
+    elif "localhost" in host:
+        scheme = "http"
     else:
-        # Fallback to request base URL
-        base_url = str(request.base_url).rstrip('/')
+        scheme = "https"
+    
+    # Build base URL
+    base_url = f"{scheme}://{host}"
     
     # For production, ensure HTTPS
     if "rightname.ai" in base_url and base_url.startswith("http://"):
