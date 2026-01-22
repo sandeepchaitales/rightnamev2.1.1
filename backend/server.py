@@ -10778,6 +10778,9 @@ BRAND: {brand}
     doc['report_id'] = report_id
     doc['created_at'] = datetime.now(timezone.utc).isoformat()
     doc['request'] = request.model_dump()
+    # Add user tracking fields (will be populated when user links report)
+    doc['user_email'] = None
+    doc['user_id'] = None
     await db.evaluations.insert_one(doc)
     
     # Set report_id in the evaluation object
