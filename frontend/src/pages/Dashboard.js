@@ -3523,7 +3523,10 @@ const Dashboard = () => {
                             badge="NEW" 
                         />
                         {isAuthenticated ? (
-                            <LinguisticAnalysisSection linguisticAnalysis={brand.universal_linguistic_analysis} />
+                            <LinguisticAnalysisSection 
+                                linguisticAnalysis={brand.universal_linguistic_analysis} 
+                                brandClassification={brand.brand_classification}
+                            />
                         ) : (
                             <LockedSection title="Universal Linguistic Analysis" onUnlock={handleRegister} />
                         )}
