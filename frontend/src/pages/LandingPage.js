@@ -625,6 +625,20 @@ const LandingPage = () => {
                     </a>
                   </div>
                   
+                  {/* My Reports link for logged in users */}
+                  {user && (
+                    <div className="pt-4 border-t border-slate-100 mt-4">
+                      <Link 
+                        to="/my-reports"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-600 bg-violet-50 font-semibold transition-colors"
+                      >
+                        <FileText className="w-5 h-5" />
+                        My Reports
+                      </Link>
+                    </div>
+                  )}
+                  
                   {/* Mobile Sign Out Button for logged in users */}
                   {user && (
                     <div className="pt-4 border-t border-slate-100 mt-4">
