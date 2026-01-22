@@ -11,7 +11,7 @@ import subprocess
 
 class ConflictAnalysisTest:
     def __init__(self):
-        self.base_url = "https://session-summary-15.preview.emergentagent.com"
+        self.base_url = "https://name-analytics.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.tests_run = 0
         self.tests_passed = 0

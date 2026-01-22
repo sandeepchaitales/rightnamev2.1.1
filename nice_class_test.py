@@ -22,7 +22,7 @@ def test_nice_class_cleaning():
     try:
         # Start job
         response = requests.post(
-            "https://session-summary-15.preview.emergentagent.com/api/evaluate/start",
+            "https://name-analytics.preview.emergentagent.com/api/evaluate/start",
             json=payload,
             headers={'Content-Type': 'application/json'},
             timeout=60
@@ -41,7 +41,7 @@ def test_nice_class_cleaning():
             time.sleep(5)
             
             status_response = requests.get(
-                f"https://session-summary-15.preview.emergentagent.com/api/evaluate/status/{job_id}",
+                f"https://name-analytics.preview.emergentagent.com/api/evaluate/status/{job_id}",
                 timeout=30
             )
             
@@ -99,7 +99,7 @@ def test_nice_class_finance():
     try:
         # Start job
         response = requests.post(
-            "https://session-summary-15.preview.emergentagent.com/api/evaluate/start",
+            "https://name-analytics.preview.emergentagent.com/api/evaluate/start",
             json=payload,
             headers={'Content-Type': 'application/json'},
             timeout=60
@@ -118,7 +118,7 @@ def test_nice_class_finance():
             time.sleep(5)
             
             status_response = requests.get(
-                f"https://session-summary-15.preview.emergentagent.com/api/evaluate/status/{job_id}",
+                f"https://name-analytics.preview.emergentagent.com/api/evaluate/status/{job_id}",
                 timeout=30
             )
             
