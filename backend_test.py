@@ -9458,6 +9458,230 @@ class BrandEvaluationTester:
         
         return success
 
+    def test_user_reports_unauthenticated(self):
+        """Test GET /api/user/reports without authentication - should return 401"""
+        try:
+            print(f"\n📋 Testing User Reports - Unauthenticated Access...")
+            response = requests.get(
+                f"{self.api_url}/user/reports?page=1&limit=10&sort=newest",
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 401:
+                self.log_test("User Reports - Unauthenticated", True, "Correctly returned 401 Unauthorized")
+                return True
+            elif response.status_code == 404:
+                self.log_test("User Reports - Endpoint Missing", False, "Endpoint not found (404) - may not be implemented")
+                return False
+            else:
+                self.log_test("User Reports - Unauthenticated", False, f"Expected 401, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("User Reports - Unauthenticated", False, str(e))
+            return False
+
+    def test_user_reports_authenticated(self):
+        """Test GET /api/user/reports with authentication"""
+        if not self.session_cookies:
+            self.log_test("User Reports - Authenticated", False, "No session cookies available")
+            return False
+            
+        try:
+            print(f"\n📋 Testing User Reports - Authenticated Access...")
+            response = requests.get(
+                f"{self.api_url}/user/reports?page=1&limit=10&sort=newest",
+                cookies=self.session_cookies,
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    # Check expected structure
+                    expected_fields = ["reports", "pagination"]
+                    missing_fields = [field for field in expected_fields if field not in data]
+                    
+                    if missing_fields:
+                        self.log_test("User Reports - Response Structure", False, f"Missing fields: {missing_fields}")
+                        return False
+                    
+                    # Check pagination structure
+                    pagination = data.get("pagination", {})
+                    pagination_fields = ["page", "limit", "total", "total_pages"]
+                    missing_pagination = [field for field in pagination_fields if field not in pagination]
+                    
+                    if missing_pagination:
+                        self.log_test("User Reports - Pagination Structure", False, f"Missing pagination fields: {missing_pagination}")
+                        return False
+                    
+                    # Check reports array
+                    reports = data.get("reports", [])
+                    if not isinstance(reports, list):
+                        self.log_test("User Reports - Reports Array", False, f"Reports should be array, got {type(reports)}")
+                        return False
+                    
+                    # If there are reports, check structure
+                    if len(reports) > 0:
+                        report = reports[0]
+                        report_fields = ["report_id", "brand_name", "category", "namescore", "verdict", "created_at"]
+                        missing_report_fields = [field for field in report_fields if field not in report]
+                        
+                        if missing_report_fields:
+                            print(f"Warning: Report missing optional fields: {missing_report_fields}")
+                    
+                    self.log_test("User Reports - Authenticated", True, f"Retrieved {len(reports)} reports with proper structure")
+                    return True
+                    
+                except json.JSONDecodeError as e:
+                    self.log_test("User Reports - JSON Parse", False, f"Invalid JSON: {str(e)}")
+                    return False
+            elif response.status_code == 401:
+                self.log_test("User Reports - Authentication Failed", False, "Authentication failed despite having cookies")
+                return False
+            elif response.status_code == 404:
+                self.log_test("User Reports - Endpoint Missing", False, "Endpoint not found (404) - may not be implemented")
+                return False
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("User Reports - Authenticated", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("User Reports - Authenticated", False, str(e))
+            return False
+
+    def test_user_reports_link_unauthenticated(self):
+        """Test POST /api/user/reports/link without authentication - should return 401"""
+        # Use a dummy report_id for testing
+        test_report_id = "test-report-123"
+        
+        try:
+            print(f"\n🔗 Testing User Reports Link - Unauthenticated Access...")
+            response = requests.post(
+                f"{self.api_url}/user/reports/link?report_id={test_report_id}",
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 401:
+                self.log_test("User Reports Link - Unauthenticated", True, "Correctly returned 401 Unauthorized")
+                return True
+            elif response.status_code == 404:
+                self.log_test("User Reports Link - Endpoint Missing", False, "Endpoint not found (404) - may not be implemented")
+                return False
+            else:
+                self.log_test("User Reports Link - Unauthenticated", False, f"Expected 401, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("User Reports Link - Unauthenticated", False, str(e))
+            return False
+
+    def test_user_reports_link_authenticated(self):
+        """Test POST /api/user/reports/link with authentication"""
+        if not self.session_cookies:
+            self.log_test("User Reports Link - Authenticated", False, "No session cookies available")
+            return False
+        
+        # Use the report_id from previous test if available, otherwise use dummy
+        report_id = self.test_report_id if self.test_report_id else "test-report-123"
+        
+        try:
+            print(f"\n🔗 Testing User Reports Link - Authenticated Access...")
+            print(f"Using report_id: {report_id}")
+            
+            response = requests.post(
+                f"{self.api_url}/user/reports/link?report_id={report_id}",
+                cookies=self.session_cookies,
+                timeout=10
+            )
+            
+            print(f"Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    # Check for success response
+                    if "success" in data and data["success"]:
+                        self.log_test("User Reports Link - Authenticated", True, f"Successfully linked report {report_id}")
+                        return True
+                    elif "message" in data:
+                        self.log_test("User Reports Link - Authenticated", True, f"Response: {data['message']}")
+                        return True
+                    else:
+                        self.log_test("User Reports Link - Response Format", False, f"Unexpected response format: {data}")
+                        return False
+                        
+                except json.JSONDecodeError as e:
+                    # Some endpoints might return plain text
+                    if "success" in response.text.lower() or "linked" in response.text.lower():
+                        self.log_test("User Reports Link - Authenticated", True, f"Link successful: {response.text[:100]}")
+                        return True
+                    else:
+                        self.log_test("User Reports Link - Response Parse", False, f"Could not parse response: {str(e)}")
+                        return False
+            elif response.status_code == 400:
+                # Bad request might be expected if report doesn't exist
+                self.log_test("User Reports Link - Bad Request", True, f"Bad request (400) - expected for non-existent report")
+                return True
+            elif response.status_code == 401:
+                self.log_test("User Reports Link - Authentication Failed", False, "Authentication failed despite having cookies")
+                return False
+            elif response.status_code == 404:
+                self.log_test("User Reports Link - Endpoint Missing", False, "Endpoint not found (404) - may not be implemented")
+                return False
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+                self.log_test("User Reports Link - Authenticated", False, error_msg)
+                return False
+                
+        except Exception as e:
+            self.log_test("User Reports Link - Authenticated", False, str(e))
+            return False
+
+    def run_user_reports_tests_only(self):
+        """Run only the NEW User Reports feature tests as requested in review"""
+        print("🚀 Starting RIGHTNAME.AI User Reports Feature Tests")
+        print("="*80)
+        print("Testing NEW User Reports endpoints as requested in review:")
+        print("1. GET /api/user/reports - Get paginated list of user's reports")
+        print("2. POST /api/user/reports/link?report_id={id} - Link report to user")
+        print("="*80)
+        
+        # Basic connectivity
+        if not self.test_api_health():
+            print("❌ API health check failed - stopping tests")
+            return False
+        
+        # Test unauthenticated access first (should return 401)
+        print("\n" + "="*50)
+        print("🔒 TESTING UNAUTHENTICATED ACCESS (Should return 401)")
+        print("="*50)
+        
+        self.test_user_reports_unauthenticated()
+        self.test_user_reports_link_unauthenticated()
+        
+        # Test authenticated access
+        print("\n" + "="*50)
+        print("🔐 TESTING AUTHENTICATED ACCESS")
+        print("="*50)
+        
+        # Register and login first
+        if self.test_auth_register():
+            if self.test_auth_login_email():
+                self.test_user_reports_authenticated()
+                self.test_user_reports_link_authenticated()
+        
+        return self.print_summary()
+
 def main():
     """Main function to run Admin Panel API tests as requested in review"""
     tester = BrandEvaluationTester()
