@@ -2777,6 +2777,29 @@ const Dashboard = () => {
         openAuthModal(reportData?.report_id);
     };
 
+    // Link report to user when authenticated
+    useEffect(() => {
+        const linkReportToUser = async () => {
+            if (user && reportData?.report_id) {
+                try {
+                    const apiUrl = process.env.NODE_ENV === 'production' 
+                        ? '/api' 
+                        : `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api`;
+                    
+                    await fetch(`${apiUrl}/user/reports/link?report_id=${reportData.report_id}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    console.log('[Dashboard] Report linked to user:', reportData.report_id);
+                } catch (error) {
+                    console.error('[Dashboard] Failed to link report:', error);
+                }
+            }
+        };
+        
+        linkReportToUser();
+    }, [user, reportData?.report_id]);
+
     // PDF Download function - Simple and reliable using window.print()
     const handleDownloadPDF = async () => {
         if (!reportRef.current) {
