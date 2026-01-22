@@ -531,6 +531,8 @@ class BrandScore(BaseModel):
     realistic_registration_costs: Optional[Dict[str, Any]] = Field(default=None, description="Realistic tiered opposition costs")
     # 🔤 UNIVERSAL LINGUISTIC ANALYSIS
     universal_linguistic_analysis: Optional[Dict[str, Any]] = Field(default=None, description="Universal linguistic analysis - meaning in any world language")
+    # 🎯 WEIGHTED SCORE BREAKDOWN
+    score_breakdown: Optional[Dict[str, Any]] = Field(default=None, description="Weighted NAMESCORE breakdown with component scores")
 
 class BrandEvaluationRequest(BaseModel):
     brand_names: List[str]
