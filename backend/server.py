@@ -9706,6 +9706,19 @@ BRAND: {brand}
     - If classification is DESCRIPTIVE or GENERIC, include the appropriate trademark warning
     - strategic_classification field MUST reflect this pre-computed classification
 
+    🔤🔤🔤 UNIVERSAL LINGUISTIC ANALYSIS (CRITICAL - MEANING IN ANY LANGUAGE!) 🔤🔤🔤
+    The following linguistic analysis identifies meaning in ANY world language (not just English):
+    {linguistic_analysis_context}
+    
+    INSTRUCTION FOR LINGUISTIC ANALYSIS:
+    - This analysis detects meaning in Sanskrit, Hindi, Tamil, Urdu, Arabic, Latin, Greek, Japanese, Chinese, and ALL other languages
+    - If "has_linguistic_meaning: YES", the name has REAL meaning - NOT a coined/invented term
+    - Use the "business_alignment" score to assess name-business fit
+    - Include cultural significance and regional recognition in your cultural analysis
+    - If religious/mythological references exist, factor them into cultural sensitivity scoring
+    - The "classification.name_type" should be reflected in your strategic_classification
+    - Potential concerns should be mentioned in your cons or cultural warnings
+
     ⚠️ CRITICAL: STRING SIMILARITY ANALYSIS (PRE-COMPUTED - DO NOT IGNORE!) ⚠️
     {similarity_context}
     
