@@ -10489,17 +10489,32 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
             trademark_risk = trademark_data.get("overall_risk_score", 5)
         trademark_score = 10 - trademark_risk
         
-        # Overall score
-        overall_score = int((domain_score + social_score + trademark_score) / 3 * 10)
-        overall_score = max(30, min(95, overall_score))  # Clamp between 30-95
+        # Get cultural analysis and linguistic data for weighted scoring
+        fallback_cultural = llm_research_data.get("cultural_analysis") if llm_research_data else None
+        linguistic_data = all_brand_data.get(brand_name, {}).get("linguistic_analysis", {})
+        business_alignment = linguistic_data.get("business_alignment", {}).get("alignment_score", 5.0) if linguistic_data else 5.0
         
-        # Determine verdict
+        # Calculate WEIGHTED NAMESCORE using new comprehensive formula
+        weighted_result = calculate_weighted_namescore(
+            llm_dimensions=None,  # No LLM dimensions in fallback
+            cultural_analysis=fallback_cultural,
+            trademark_risk=trademark_risk,
+            business_alignment=business_alignment,
+            dupont_score=None,  # No DuPont in fallback
+            domain_score=domain_score,
+            social_score=social_score,
+            classification=classification
+        )
+        
+        overall_score = int(weighted_result["namescore"])
+        
+        # Determine verdict based on weighted score and trademark risk
         if trademark_risk >= 8:
             verdict = "REJECT"
             overall_score = min(overall_score, 35)
-        elif trademark_risk >= 5:
+        elif trademark_risk >= 5 or overall_score < 55:
             verdict = "CAUTION"
-            overall_score = min(overall_score, 60)
+            overall_score = min(overall_score, 60) if trademark_risk >= 5 else overall_score
         else:
             verdict = "GO"
             overall_score = max(overall_score, 65)
@@ -10507,7 +10522,6 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
         nice_class = get_nice_classification(category)
         
         # Use LLM research data if available, otherwise use hardcoded fallback
-        fallback_cultural = llm_research_data.get("cultural_analysis") if llm_research_data else None
         fallback_competitors = llm_research_data.get("country_competitor_analysis") if llm_research_data else None
         
         # Get first country data for global competitor_analysis
