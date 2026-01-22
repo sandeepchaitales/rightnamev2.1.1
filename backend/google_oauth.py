@@ -65,10 +65,6 @@ def get_redirect_uri(request: Request) -> str:
     # Build base URL
     base_url = f"{scheme}://{host}"
     
-    # For production, ensure HTTPS
-    if "rightname.ai" in base_url and base_url.startswith("http://"):
-        base_url = base_url.replace("http://", "https://")
-    
     return f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
 
 
