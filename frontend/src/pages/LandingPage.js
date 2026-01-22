@@ -728,6 +728,24 @@ const LandingPage = () => {
                         <span className="font-bold text-sm text-orange-700">Domain Scout</span>
                     </div>
                 </div>
+
+                {/* Product Hunt Badge */}
+                <div className="pt-6">
+                    <a 
+                        href="https://www.producthunt.com/products/rightname?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rightname" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-block hover:opacity-90 transition-opacity"
+                    >
+                        <img 
+                            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1066204&theme=light&t=1769075215856" 
+                            alt="RIGHTNAME - Serious brand checks before you fall in love with a name | Product Hunt" 
+                            width="250" 
+                            height="54"
+                            className="rounded-lg"
+                        />
+                    </a>
+                </div>
             </div>
 
             {/* Right Content: The Form */}
