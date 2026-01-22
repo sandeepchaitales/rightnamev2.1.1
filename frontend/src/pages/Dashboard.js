@@ -1821,11 +1821,20 @@ const LinguisticAnalysisSection = ({ linguisticAnalysis, brandClassification }) 
     const concerns = linguisticAnalysis.potential_concerns || [];
     const similarBrands = linguisticAnalysis.similar_successful_brands || [];
     
-    // Get classification override info
-    const hasOverride = brandClassification?.linguistic_override === true;
-    const originalCategory = brandClassification?.original_category;
-    const newCategory = brandClassification?.category;
-    const overrideReason = brandClassification?.override_reason;
+    // Get classification override info - check multiple sources
+    // brandClassification comes from brand.brand_classification
+    // If not available, check if linguistic analysis has classification info
+    const classificationData = brandClassification || linguisticAnalysis?.classification_override || {};
+    const hasOverride = classificationData?.linguistic_override === true;
+    const originalCategory = classificationData?.original_category;
+    const newCategory = classificationData?.category;
+    const overrideReason = classificationData?.override_reason;
+    
+    // Fallback: if no override data, use the name_type from linguistic analysis
+    const displayCategory = newCategory || (hasMeaning ? 'SUGGESTIVE' : 'FANCIFUL');
+    const displayReason = overrideReason || (hasMeaning 
+        ? `Has clear linguistic meaning in ${(ling.languages_detected || []).join(', ')} that suggests the product/service`
+        : 'Coined/invented term with no existing meaning');
     
     const getAlignmentColor = (score) => {
         if (score >= 8) return 'emerald';
