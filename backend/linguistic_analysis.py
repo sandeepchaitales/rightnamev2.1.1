@@ -192,8 +192,8 @@ async def analyze_brand_linguistics(
         
         response = await chat.send_message(full_message)
         
-        # Parse response
-        response_text = response.strip()
+        # Parse response - it's a string directly
+        response_text = response.strip() if isinstance(response, str) else str(response).strip()
         
         # Clean up response if wrapped in markdown
         if response_text.startswith("```"):
