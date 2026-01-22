@@ -2865,7 +2865,6 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         resonance_score = calculated_final
         
         # Generate linguistic check status based on calculated score
-        overall_resonance = country_linguistic.get("overall_resonance", "NEUTRAL")
         if calculated_final < 5:
             linguistic_check = f"⚠️ CRITICAL - Score {calculated_final}/10"
         elif calculated_final < 7:
