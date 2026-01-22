@@ -10816,22 +10816,23 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
         # Use LLM research data if available, otherwise use hardcoded fallback
         fallback_competitors = llm_research_data.get("country_competitor_analysis") if llm_research_data else None
         
-        # Get first country data for global competitor_analysis
-        global_competitor_analysis = None
-        if fallback_competitors and len(fallback_competitors) > 0:
-            first_country = fallback_competitors[0]
-            global_competitor_analysis = {
-                "x_axis_label": first_country.get("x_axis_label", "Price: Budget → Premium"),
-                "y_axis_label": first_country.get("y_axis_label", "Innovation: Traditional → Modern"),
-                "competitors": first_country.get("competitors", []),
-                "user_brand_position": first_country.get("user_brand_position", {
-                    "x_coordinate": 65, "y_coordinate": 75, "quadrant": "Accessible Premium",
-                    "rationale": f"'{brand_name}' positioned for premium-accessible market segment"
-                }),
-                "white_space_analysis": first_country.get("white_space_analysis", f"Opportunity exists in the {category} market for brands combining accessibility with innovation."),
-                "strategic_advantage": first_country.get("strategic_advantage", f"As a distinctive coined term, '{brand_name}' can establish unique market positioning."),
-                "suggested_pricing": f"{'Premium' if overall_score >= 75 else 'Mid-range'} positioning recommended"
-            }
+        # ═══════════════════════════════════════════════════════════════════════
+        # GLOBAL COMPETITORS - Use MULTINATIONAL brands, not country-specific
+        # This is for the "Strategic Positioning Matrix (Global Overview)"
+        # ═══════════════════════════════════════════════════════════════════════
+        global_data = get_global_competitors(category, request.industry)
+        global_competitor_analysis = {
+            "x_axis_label": global_data.get("axis_x", "Price: Budget → Premium"),
+            "y_axis_label": global_data.get("axis_y", "Positioning: Traditional → Modern"),
+            "competitors": global_data.get("competitors", []),
+            "user_brand_position": {
+                "x_coordinate": 65, "y_coordinate": 75, "quadrant": "Accessible Premium",
+                "rationale": f"'{brand_name}' positioned for premium-accessible segment in global market"
+            },
+            "white_space_analysis": global_data.get("white_space", f"Opportunity exists in the global {category} market for differentiated brands."),
+            "strategic_advantage": global_data.get("strategic_advantage", f"As a distinctive brand, '{brand_name}' can establish unique global positioning."),
+            "suggested_pricing": f"{'Premium' if overall_score >= 75 else 'Mid-range'} positioning recommended"
+        }
         
         # ==================== STRATEGY SNAPSHOT (Calculate ONCE) ====================
         strategy_snapshot = generate_strategy_snapshot(
