@@ -9550,6 +9550,18 @@ BRAND: {brand}
     classification_context = "\n".join(classification_context_parts)
     # ==================== END CLASSIFICATION CONTEXT ====================
     
+    # ==================== UNIVERSAL LINGUISTIC ANALYSIS CONTEXT ====================
+    # Format linguistic analysis results for LLM prompt
+    linguistic_context_parts = []
+    for brand in request.brand_names:
+        ling_analysis = all_brand_data[brand].get("linguistic_analysis")
+        if ling_analysis and ling_analysis.get("_analyzed_by") != "fallback":
+            linguistic_context_parts.append(format_linguistic_analysis_for_prompt(ling_analysis))
+        else:
+            linguistic_context_parts.append(f"LINGUISTIC ANALYSIS for {brand}: Not available")
+    linguistic_analysis_context = "\n\n".join(linguistic_context_parts)
+    # ==================== END LINGUISTIC ANALYSIS CONTEXT ====================
+    
     # ==================== PRE-COMPUTED CONFLICT RELEVANCE ANALYSIS ====================
     # Build conflict analysis from REAL DATA (Trademark, App Store, Deep-Trace)
     # This ensures the visibility_analysis section reflects actual findings
