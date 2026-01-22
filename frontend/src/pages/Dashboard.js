@@ -3583,24 +3583,6 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== PAGE 9.5: UNIVERSAL LINGUISTIC ANALYSIS ==================== */}
-                {brand.universal_linguistic_analysis && (
-                    <section className="print-new-page">
-                        <SectionHeader 
-                            icon={Languages} 
-                            title="Universal Linguistic Analysis" 
-                            subtitle="Meaning in any world language & business alignment" 
-                            color="violet" 
-                            badge="NEW" 
-                        />
-                        {isAuthenticated ? (
-                            <LinguisticAnalysisSection linguisticAnalysis={brand.universal_linguistic_analysis} />
-                        ) : (
-                            <LockedSection title="Universal Linguistic Analysis" onUnlock={handleRegister} />
-                        )}
-                    </section>
-                )}
-
                 {/* ==================== PAGE 10: TRADEMARK RESEARCH INTELLIGENCE ==================== */}
                 {brand.trademark_research && (
                     <section className="print-new-page">
