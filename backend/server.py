@@ -11616,6 +11616,129 @@ async def get_report(report_id: str, request: Request):
     report["is_authenticated"] = is_authenticated
     return report
 
+# ==================== USER REPORTS ENDPOINTS ====================
+
+async def get_user_from_session(request: Request):
+    """Helper to get user from session token"""
+    session_token = request.cookies.get("session_token")
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header[7:]
+    
+    if not session_token:
+        return None
+    
+    session_doc = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
+    if not session_doc:
+        return None
+    
+    expires_at = session_doc.get("expires_at")
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        return None
+    
+    user_doc = await db.users.find_one({"user_id": session_doc["user_id"]}, {"_id": 0})
+    return user_doc
+
+@api_router.get("/user/reports")
+async def get_user_reports(
+    request: Request,
+    page: int = 1,
+    limit: int = 10,
+    sort: str = "newest"
+):
+    """Get current user's reports history"""
+    user = await get_user_from_session(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    user_email = user.get("email")
+    user_id = user.get("user_id")
+    
+    if not user_email and not user_id:
+        raise HTTPException(status_code=400, detail="User identifier not found")
+    
+    # Build query to find reports by user_email or user_id
+    query = {"$or": []}
+    if user_email:
+        query["$or"].append({"user_email": user_email})
+    if user_id:
+        query["$or"].append({"user_id": user_id})
+    
+    # If no conditions, return empty
+    if not query["$or"]:
+        return {"reports": [], "pagination": {"page": page, "limit": limit, "total": 0, "total_pages": 0}}
+    
+    # Sorting
+    sort_order = -1 if sort == "newest" else 1
+    
+    # Get total count
+    total = await db.evaluations.count_documents(query)
+    
+    # Get paginated results
+    skip = (page - 1) * limit
+    cursor = db.evaluations.find(query, {"_id": 0}).sort("created_at", sort_order).skip(skip).limit(limit)
+    reports = await cursor.to_list(length=limit)
+    
+    # Transform reports for frontend (minimal data)
+    reports_summary = []
+    for report in reports:
+        req = report.get("request", {})
+        brand_scores = report.get("brand_scores", [])
+        first_brand = brand_scores[0] if brand_scores else {}
+        
+        reports_summary.append({
+            "report_id": report.get("report_id"),
+            "brand_name": req.get("brand_name", first_brand.get("brand_name", "Unknown")),
+            "category": req.get("category", "N/A"),
+            "industry": req.get("industry", ""),
+            "countries": req.get("countries", []),
+            "namescore": first_brand.get("namescore", 0),
+            "verdict": first_brand.get("verdict", report.get("comparison_verdict", "N/A")),
+            "created_at": report.get("created_at"),
+            "early_stopped": report.get("early_stopped", False),
+            "executive_summary": report.get("executive_summary", "")[:200] + "..." if len(report.get("executive_summary", "")) > 200 else report.get("executive_summary", "")
+        })
+    
+    return {
+        "reports": reports_summary,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "total_pages": (total + limit - 1) // limit
+        }
+    }
+
+@api_router.post("/user/reports/link")
+async def link_report_to_user(request: Request, report_id: str):
+    """Link a report to the current authenticated user"""
+    user = await get_user_from_session(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Find the report
+    report = await db.evaluations.find_one({"report_id": report_id})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # Link to user
+    update_data = {
+        "user_email": user.get("email"),
+        "user_id": user.get("user_id")
+    }
+    
+    await db.evaluations.update_one(
+        {"report_id": report_id},
+        {"$set": update_data}
+    )
+    
+    return {"success": True, "message": "Report linked to your account"}
+
 @api_router.post("/auth/session")
 async def create_session(request: SessionRequest, response: Response):
     """Exchange session_id for session_token and create/update user"""
