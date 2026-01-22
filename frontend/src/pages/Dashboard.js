@@ -3652,7 +3652,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== PAGE 8: COMPETITIVE LANDSCAPE ==================== */}
+                {/* ==================== PAGE 7: COMPETITIVE LANDSCAPE ==================== */}
                 {(brand.competitor_analysis || brand.country_competitor_analysis?.length > 0) && (
                     <section className="print-new-page">
                         <SectionHeader icon={Users} title="Competitive Landscape" subtitle="Strategic positioning matrix by market" color="blue" />
@@ -3667,7 +3667,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {/* ==================== PAGE 9: LEGAL RISK MATRIX ==================== */}
+                {/* ==================== PAGE 8: LEGAL RISK MATRIX ==================== */}
                 {brand.trademark_matrix && (
                     <section className="print-new-page">
                         <SectionHeader icon={Scale} title="Legal Risk Matrix" subtitle="IP Analysis & Trademark Assessment" color="red" />
