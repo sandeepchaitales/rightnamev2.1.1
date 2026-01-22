@@ -10387,10 +10387,10 @@ BRAND: {brand}
                 "strategy_snapshot": strategy_snapshot,
                 # CRITICAL FIX: Always use generate_cultural_analysis for sacred name detection
                 # If market_intelligence has data, merge it, but always run local analysis
-                # NEW: Pass classification to avoid duplicate computation
+                # NEW: Pass classification AND linguistic analysis for proper cultural context
                 "cultural_analysis": merge_cultural_analysis_with_sacred_names(
                     fallback_cultural,
-                    generate_cultural_analysis(request.countries, brand_name, category, classification),
+                    generate_cultural_analysis(request.countries, brand_name, category, classification, all_brand_data.get(brand_name, {}).get("linguistic_analysis")),
                     brand_name,
                     request.countries
                 ),
