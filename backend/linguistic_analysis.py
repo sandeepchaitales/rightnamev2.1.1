@@ -307,6 +307,15 @@ async def analyze_brand_linguistics(
         # Parse JSON
         result = json.loads(response_text)
         
+        # ═══════════════════════════════════════════════════════════════════════
+        # VALIDATE & FIX SIMILAR BRANDS (ensure category-appropriate examples)
+        # ═══════════════════════════════════════════════════════════════════════
+        if "similar_successful_brands" in result:
+            result["similar_successful_brands"] = validate_and_fix_similar_brands(
+                result.get("similar_successful_brands", []),
+                business_category
+            )
+        
         # Add metadata
         result["_analysis_version"] = "1.0"
         result["_analyzed_by"] = "universal_linguistic_analyzer"
