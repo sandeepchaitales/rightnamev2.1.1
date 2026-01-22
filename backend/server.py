@@ -10855,6 +10855,23 @@ BRAND: {brand}
         except Exception as e:
             logging.error(f"Failed to add enhanced social analysis: {e}")
         # ============ END ENHANCED SOCIAL MEDIA ANALYSIS ============
+        
+        # ============ 🔤 FEATURE 5: UNIVERSAL LINGUISTIC ANALYSIS ============
+        try:
+            # Get stored linguistic analysis from pre-computed data
+            ling_analysis = all_brand_data.get(brand_name_for_matrix, {}).get("linguistic_analysis")
+            if ling_analysis and ling_analysis.get("_analyzed_by") != "fallback":
+                brand_score.universal_linguistic_analysis = ling_analysis
+                has_meaning = ling_analysis.get('has_linguistic_meaning', False)
+                alignment_score = ling_analysis.get('business_alignment', {}).get('alignment_score', 'N/A')
+                name_type = ling_analysis.get('classification', {}).get('name_type', 'Unknown')
+                logging.info(f"✅ Added Universal Linguistic Analysis for '{brand_name_for_matrix}': "
+                           f"Has Meaning: {has_meaning}, "
+                           f"Alignment: {alignment_score}/10, "
+                           f"Type: {name_type}")
+        except Exception as e:
+            logging.error(f"Failed to add linguistic analysis: {e}")
+        # ============ END UNIVERSAL LINGUISTIC ANALYSIS ============
     
     # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
     if all_rejections:
