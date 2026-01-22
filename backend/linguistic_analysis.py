@@ -15,6 +15,7 @@ try:
 except ImportError:
     logging.error("emergentintegrations not found for linguistic analysis")
     LLM_AVAILABLE = False
+    UserMessage = None
 
 EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
 
