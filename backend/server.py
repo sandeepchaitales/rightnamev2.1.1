@@ -5819,6 +5819,23 @@ NICE_CLASS_MAP = {
     "food service": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
     "quick service": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
     "qsr": {"class_number": 43, "class_description": "Restaurant services, food and drink services, hotels"},
+    
+    # Class 39 - Transport, travel (PRIORITY for travel-related)
+    "sea travel": {"class_number": 39, "class_description": "Transport, travel arrangement, sea transport services"},
+    "sea transport": {"class_number": 39, "class_description": "Transport, travel arrangement, sea transport services"},
+    "ferry": {"class_number": 39, "class_description": "Transport, travel arrangement, ferry services"},
+    "cruise": {"class_number": 39, "class_description": "Transport, travel arrangement, cruise services"},
+    "shipping": {"class_number": 39, "class_description": "Transport, freight, shipping services"},
+    "logistics": {"class_number": 39, "class_description": "Transport, logistics, warehousing services"},
+    "travel": {"class_number": 39, "class_description": "Transport, travel arrangement services"},
+    "transport": {"class_number": 39, "class_description": "Transport, travel arrangement services"},
+    "tour": {"class_number": 39, "class_description": "Transport, travel arrangement, tour services"},
+    "booking": {"class_number": 39, "class_description": "Travel arrangement, booking services"},
+    "airline": {"class_number": 39, "class_description": "Transport, air transport services"},
+    "flight": {"class_number": 39, "class_description": "Transport, air transport services"},
+    "cargo": {"class_number": 39, "class_description": "Transport, freight, cargo services"},
+    "delivery": {"class_number": 39, "class_description": "Transport, delivery services"},
+    "courier": {"class_number": 39, "class_description": "Transport, courier services"},
 }
 
 def get_nice_classification(category: str) -> dict:
