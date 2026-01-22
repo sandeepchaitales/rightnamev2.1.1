@@ -1809,7 +1809,7 @@ const LockedSection = ({ title, onUnlock }) => (
 );
 
 // ============ UNIVERSAL LINGUISTIC ANALYSIS SECTION ============
-const LinguisticAnalysisSection = ({ linguisticAnalysis }) => {
+const LinguisticAnalysisSection = ({ linguisticAnalysis, brandClassification }) => {
     if (!linguisticAnalysis || linguisticAnalysis._analyzed_by === 'fallback') return null;
     
     const hasMeaning = linguisticAnalysis.has_linguistic_meaning;
@@ -1821,6 +1821,12 @@ const LinguisticAnalysisSection = ({ linguisticAnalysis }) => {
     const concerns = linguisticAnalysis.potential_concerns || [];
     const similarBrands = linguisticAnalysis.similar_successful_brands || [];
     
+    // Get classification override info
+    const hasOverride = brandClassification?.linguistic_override === true;
+    const originalCategory = brandClassification?.original_category;
+    const newCategory = brandClassification?.category;
+    const overrideReason = brandClassification?.override_reason;
+    
     const getAlignmentColor = (score) => {
         if (score >= 8) return 'emerald';
         if (score >= 5) return 'amber';
@@ -1829,6 +1835,18 @@ const LinguisticAnalysisSection = ({ linguisticAnalysis }) => {
     
     const alignmentScore = alignment.alignment_score || 0;
     const alignmentColor = getAlignmentColor(alignmentScore);
+    
+    // Get classification badge color
+    const getClassificationColor = (category) => {
+        switch(category?.toUpperCase()) {
+            case 'FANCIFUL': return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+            case 'ARBITRARY': return 'bg-blue-100 text-blue-700 border-blue-300';
+            case 'SUGGESTIVE': return 'bg-violet-100 text-violet-700 border-violet-300';
+            case 'DESCRIPTIVE': return 'bg-amber-100 text-amber-700 border-amber-300';
+            case 'GENERIC': return 'bg-red-100 text-red-700 border-red-300';
+            default: return 'bg-slate-100 text-slate-700 border-slate-300';
+        }
+    };
     
     return (
         <div className="space-y-6">
