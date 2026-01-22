@@ -3791,31 +3791,103 @@ def generate_rich_executive_summary(
     trademark_risk: int = 3,
     nice_class: dict = None,
     domain_available: bool = True,
-    cultural_analysis: list = None
+    cultural_analysis: list = None,
+    universal_linguistic: dict = None,  # NEW: Universal Linguistic Analysis
+    classification: dict = None  # NEW: Classification with override
 ) -> str:
     """
     Generate a rich, detailed executive summary (minimum 100 words) that provides
     substantive analysis like a professional brand consultant would.
     
-    Example output:
-    "Deepstorika" offers a highly distinctive and legally defensible foundation for a 
-    global DTC skincare brand. As a coined neologism, it bypasses the trademark saturation...
+    NOW USES: Universal Linguistic Analysis for accurate language detection,
+    cultural significance, and business alignment scoring.
     """
     
-    # Get linguistic decomposition if not provided
-    if not linguistic_analysis:
-        linguistic_analysis = generate_linguistic_decomposition(brand_name, countries, category)
+    # ==================== USE UNIVERSAL LINGUISTIC ANALYSIS ====================
+    has_universal = (
+        universal_linguistic and 
+        universal_linguistic.get("_analyzed_by") != "fallback" and
+        universal_linguistic.get("has_linguistic_meaning") is not None
+    )
     
-    decomposition = linguistic_analysis.get("decomposition", {})
-    morphemes = decomposition.get("morphemes", [])
-    brand_type = linguistic_analysis.get("brand_type", "Modern/Coined")
-    industry_fit = linguistic_analysis.get("industry_fit", {})
-    country_analysis = linguistic_analysis.get("country_analysis", {})
+    if has_universal:
+        # Extract data from Universal Linguistic Analysis
+        has_meaning = universal_linguistic.get("has_linguistic_meaning", False)
+        ling_data = universal_linguistic.get("linguistic_analysis", {})
+        cultural_sig = universal_linguistic.get("cultural_significance", {})
+        business_align = universal_linguistic.get("business_alignment", {})
+        ling_classification = universal_linguistic.get("classification", {})
+        
+        languages = ling_data.get("languages_detected", [])
+        decomposition = ling_data.get("decomposition", {})
+        combined_meaning = decomposition.get("combined_meaning", "")
+        parts = decomposition.get("parts", [])
+        part_meanings = decomposition.get("part_meanings", {})
+        
+        name_type = ling_classification.get("name_type", "Modern/Coined")
+        alignment_score = business_align.get("alignment_score", 5)
+        alignment_level = business_align.get("alignment_level", "Moderate")
+        thematic_connection = business_align.get("thematic_connection", "")
+        
+        cultural_ref_type = cultural_sig.get("reference_type")
+        cultural_details = cultural_sig.get("details", "")
+        source_origin = cultural_sig.get("source_text_or_origin", "")
+        sentiment = cultural_sig.get("sentiment", "Neutral")
+        recognition_regions = cultural_sig.get("regions_of_recognition", [])
+        
+        instant_recognition = business_align.get("customer_understanding", {}).get("instant_recognition_regions", [])
+        needs_explanation = business_align.get("customer_understanding", {}).get("needs_explanation_regions", [])
+        
+        # Determine brand type from linguistic analysis
+        is_coined = name_type in ["True-Coined", "Coined"]
+        is_heritage = name_type in ["Heritage", "Mythological", "Foreign-Language"]
+        is_meaningful = has_meaning
+        
+        # Build morpheme insights from part_meanings
+        morpheme_insights = []
+        for part in parts:
+            part_info = part_meanings.get(part, {})
+            if isinstance(part_info, dict):
+                lang = part_info.get("language", languages[0] if languages else "Unknown")
+                meaning = part_info.get("meaning", "")
+                morpheme_insights.append(f'"{part.capitalize()}" ({lang}: {meaning})')
+            else:
+                morpheme_insights.append(f'"{part.capitalize()}" ({part_info})')
+    else:
+        # Fallback to old linguistic decomposition
+        if not linguistic_analysis:
+            linguistic_analysis = generate_linguistic_decomposition(brand_name, countries, category)
+        
+        decomposition = linguistic_analysis.get("decomposition", {})
+        morphemes = decomposition.get("morphemes", [])
+        brand_type = linguistic_analysis.get("brand_type", "Modern/Coined")
+        industry_fit = linguistic_analysis.get("industry_fit", {})
+        country_analysis = linguistic_analysis.get("country_analysis", {})
+        
+        is_coined = brand_type in ["Modern/Coined", "Coined"]
+        is_heritage = brand_type == "Heritage"
+        is_meaningful = False
+        has_meaning = False
+        languages = []
+        combined_meaning = ""
+        name_type = brand_type
+        alignment_score = 5
+        alignment_level = "Moderate"
+        cultural_ref_type = None
+        recognition_regions = []
+        instant_recognition = []
+        needs_explanation = []
+        
+        morpheme_insights = []
+        for morpheme in morphemes:
+            origin = morpheme.get("origin", "")
+            meaning = morpheme.get("meaning", "")
+            morpheme_insights.append(f'"{morpheme["text"].capitalize()}" ({origin}: {meaning.split("/")[0] if "/" in meaning else meaning})')
     
-    # Determine brand name characteristics
-    is_coined = brand_type in ["Modern/Coined", "Coined"]
-    is_heritage = brand_type == "Heritage"
-    has_morphemes = len(morphemes) > 0
+    # Get classification override info
+    has_override = classification and classification.get("linguistic_override")
+    original_category = classification.get("original_category") if has_override else None
+    new_category = classification.get("category") if classification else "FANCIFUL"
     
     # Get NICE class info
     class_number = nice_class.get("class_number", 35) if nice_class else 35
@@ -3828,38 +3900,32 @@ def generate_rich_executive_summary(
         market_list.append(country_name.title())
     markets_str = ", ".join(market_list[:-1]) + f" and {market_list[-1]}" if len(market_list) > 1 else market_list[0] if market_list else "target markets"
     
-    # Analyze morpheme structure for summary
-    morpheme_insights = []
-    risk_countries = []
-    positive_countries = []
-    
-    for morpheme in morphemes:
-        origin = morpheme.get("origin", "")
-        meaning = morpheme.get("meaning", "")
-        morpheme_insights.append(f'"{morpheme["text"].capitalize()}" ({origin}: {meaning.split("/")[0] if "/" in meaning else meaning})')
-    
-    for country_name, data in country_analysis.items():
-        if data.get("overall_resonance") == "CRITICAL":
-            risk_countries.append(country_name)
-        elif data.get("overall_resonance") == "HIGH" and data.get("risk_count", 0) == 0:
-            positive_countries.append(country_name)
-    
-    # Build the executive summary
+    # ==================== BUILD EXECUTIVE SUMMARY ====================
     summary_parts = []
     
-    # Opening statement with verdict context
+    # PART 1: Opening statement with verdict context
     if verdict == "GO":
-        if is_coined:
+        if is_meaningful and is_heritage:
+            # Meaningful heritage name (like RAMASETHU, CHAIDESH)
+            lang_str = ", ".join(languages[:2]) if languages else "multiple languages"
+            summary_parts.append(
+                f'**"{brand_name}"** presents a culturally rich and strategically sound foundation for a {category} brand. '
+                f'Derived from {lang_str}, the name carries authentic meaning ("{combined_meaning}") that creates immediate resonance '
+                f'in key markets while maintaining distinctiveness for Class {class_number} ({class_description}) registration across {markets_str}.'
+            )
+        elif is_meaningful:
+            # Has meaning but not heritage
+            lang_str = ", ".join(languages[:2]) if languages else "linguistic roots"
+            summary_parts.append(
+                f'**"{brand_name}"** offers a meaningful and memorable foundation for a {category} brand. '
+                f'With roots in {lang_str} meaning "{combined_meaning}", the name balances cultural depth with commercial viability, '
+                f'supporting registration in Class {class_number} across {markets_str}.'
+            )
+        elif is_coined:
             summary_parts.append(
                 f'**"{brand_name}"** presents a highly distinctive and legally defensible foundation for a {category} brand. '
-                f'As a coined neologism, it effectively bypasses the trademark saturation common in the {category.lower()} sector, '
+                f'As a coined neologism with no existing meaning in any language, it effectively bypasses trademark saturation, '
                 f'ensuring a clear path to registration in Class {class_number} ({class_description}) across {markets_str}.'
-            )
-        elif is_heritage:
-            summary_parts.append(
-                f'**"{brand_name}"** leverages heritage linguistics to create a culturally resonant brand identity for the {category} market. '
-                f'The name draws from established etymological roots, positioning the brand with authenticity while maintaining distinctiveness '
-                f'for trademark registration in Class {class_number} across {markets_str}.'
             )
         else:
             summary_parts.append(
@@ -3868,52 +3934,114 @@ def generate_rich_executive_summary(
                 f'across {markets_str}.'
             )
     elif verdict == "CAUTION":
-        summary_parts.append(
-            f'**"{brand_name}"** shows promise for the {category} market but requires strategic attention to identified concerns. '
-            f'While the name has potential for Class {class_number} registration, certain factors in {markets_str} warrant careful evaluation before brand investment.'
-        )
+        if is_meaningful:
+            summary_parts.append(
+                f'**"{brand_name}"** ({combined_meaning}) shows cultural promise for the {category} market but requires strategic attention. '
+                f'While the meaningful name creates connection in some markets, certain factors in {markets_str} warrant careful evaluation before brand investment.'
+            )
+        else:
+            summary_parts.append(
+                f'**"{brand_name}"** shows promise for the {category} market but requires strategic attention to identified concerns. '
+                f'While the name has potential for Class {class_number} registration, certain factors in {markets_str} warrant careful evaluation.'
+            )
     else:  # NO-GO
         summary_parts.append(
             f'**"{brand_name}"** faces significant challenges for the {category} market. '
             f'Critical issues identified in trademark clearance or cultural fit across {markets_str} suggest alternative naming approaches may better serve the brand strategy.'
         )
     
-    # Morpheme analysis (if available)
-    if morpheme_insights:
-        fuse_word = "fuses" if len(morphemes) > 1 else "employs"
-        combo_word = "combination" if len(morphemes) > 1 else "structure"
-        unique_word = "unique" if is_coined else "culturally grounded"
-        position_text = "differentiates from generic category descriptors" if verdict == "GO" else "requires cultural navigation in certain markets"
+    # PART 2: Linguistic Structure & Meaning
+    if morpheme_insights and len(morpheme_insights) > 0:
+        fuse_word = "fuses" if len(morpheme_insights) > 1 else "employs"
         morpheme_join = " with ".join(morpheme_insights)
+        
+        if is_meaningful and combined_meaning:
+            summary_parts.append(
+                f'\n\n**Linguistic Structure:** The name strategically {fuse_word} '
+                f'{morpheme_join}, creating the compound meaning "{combined_meaning}". '
+            )
+        else:
+            summary_parts.append(
+                f'\n\n**Linguistic Structure:** The name {fuse_word} '
+                f'{morpheme_join}. '
+            )
+        
+        # Add business alignment insight
+        if has_universal and alignment_score >= 7:
+            summary_parts.append(
+                f'This creates **excellent business alignment** ({alignment_score}/10) with the {category} sector'
+                f'{" - " + thematic_connection if thematic_connection else ""}.'
+            )
+        elif has_universal and alignment_score >= 5:
+            summary_parts.append(
+                f'This provides moderate business alignment ({alignment_score}/10) with the {category} sector.'
+            )
+    
+    # PART 3: Cultural & Mythological Significance (NEW!)
+    if has_universal and cultural_ref_type:
+        summary_parts.append(f'\n\n**Cultural Significance:** ')
+        if cultural_ref_type == "Mythological":
+            summary_parts.append(
+                f'The name carries {cultural_ref_type.lower()} weight'
+                f'{" from " + source_origin if source_origin else ""}, '
+                f'evoking {sentiment.lower()} associations. '
+            )
+        elif cultural_ref_type == "Religious":
+            summary_parts.append(
+                f'The name has {cultural_ref_type.lower()} connotations'
+                f'{" rooted in " + source_origin if source_origin else ""}, '
+                f'which may evoke strong reactions in certain markets. '
+            )
+        elif cultural_ref_type == "Historical":
+            summary_parts.append(
+                f'The name references {cultural_ref_type.lower()} elements'
+                f'{" from " + source_origin if source_origin else ""}, '
+                f'adding depth to the brand narrative. '
+            )
+        
+        if recognition_regions:
+            summary_parts.append(f'Recognized in: {", ".join(recognition_regions[:3])}.')
+    
+    # PART 4: Classification Override (NEW!)
+    if has_override:
         summary_parts.append(
-            f'\n\n**Linguistic Structure:** The name strategically {fuse_word} '
-            f'{morpheme_join}. '
-            f'This {combo_word} creates a {unique_word} '
-            f'positioning that {position_text}.'
+            f'\n\n**Trademark Classification:** Due to its linguistic meaning, this name is classified as '
+            f'**{new_category}** (not {original_category}) on the trademark distinctiveness spectrum. '
+            f'{"This provides strong but not absolute protection." if new_category == "SUGGESTIVE" else ""}'
         )
     
-    # Industry fit insight
-    fit_level = industry_fit.get("fit_level", "NEUTRAL")
-    if fit_level == "HIGH":
-        summary_parts.append(
-            f'The phonetic structure aligns strongly with {category.lower()} industry conventions, enhancing brand recall and category association.'
-        )
-    elif fit_level == "LOW":
-        summary_parts.append(
-            f'Note: The name\'s suffix structure is atypical for the {category.lower()} sector, which may require stronger visual branding to establish category relevance.'
-        )
+    # PART 5: Market Analysis
+    if has_universal:
+        if instant_recognition and len(instant_recognition) > 0:
+            summary_parts.append(
+                f'\n\n**Market Advantage:** Instant cultural recognition in {", ".join(instant_recognition[:3])}, '
+                f'enabling heritage-based positioning without extensive brand education.'
+            )
+        if needs_explanation and len(needs_explanation) > 0:
+            summary_parts.append(
+                f' Note: Markets like {", ".join(needs_explanation[:2])} may require brand storytelling to convey the name\'s meaning.'
+            )
+    else:
+        # Fallback market analysis from old system
+        risk_countries = []
+        positive_countries = []
+        if linguistic_analysis:
+            for country_name, data in linguistic_analysis.get("country_analysis", {}).items():
+                if data.get("overall_resonance") == "CRITICAL":
+                    risk_countries.append(country_name)
+                elif data.get("overall_resonance") == "HIGH" and data.get("risk_count", 0) == 0:
+                    positive_countries.append(country_name)
+        
+        if risk_countries:
+            summary_parts.append(
+                f'\n\n**⚠️ Critical Considerations:** Market entry in {", ".join(risk_countries)} requires legal consultation due to cultural/regulatory sensitivities.'
+            )
+        if positive_countries:
+            summary_parts.append(
+                f'**Market Advantage:** Strong cultural resonance detected in {", ".join(positive_countries)}.'
+            )
     
-    # Cultural/market analysis
-    if risk_countries:
-        summary_parts.append(
-            f'\n\n**⚠️ Critical Considerations:** Market entry in {", ".join(risk_countries)} requires legal consultation due to cultural/regulatory sensitivities identified in linguistic analysis.'
-        )
-    if positive_countries:
-        summary_parts.append(
-            f'**Market Advantage:** Strong cultural resonance detected in {", ".join(positive_countries)}, presenting opportunities for heritage-based positioning.'
-        )
-    
-    # Trademark and digital assets
+    # PART 6: IP Strategy
     summary_parts.append(
         f'\n\n**IP Strategy:** '
         f'{"Recommended for immediate trademark capture with filing priority in primary markets. " if verdict == "GO" else "Proceed with comprehensive clearance search before commitment. "}'
@@ -3921,22 +4049,23 @@ def generate_rich_executive_summary(
         f'{"Social handle @" + brand_name.lower() + " should be secured across major platforms." if verdict != "NO-GO" else ""}'
     )
     
-    # Closing recommendation
+    # PART 7: Closing Recommendation with Score
     if verdict == "GO":
+        identity_focus = "the cultural heritage" if is_meaningful and is_heritage else "coined uniqueness" if is_coined else "brand distinctiveness"
         summary_parts.append(
             f'\n\n**Recommendation:** Proceed with brand development, supported by a visual identity that emphasizes '
-            f'{"the coined uniqueness" if is_coined else "the heritage narrative" if is_heritage else "brand distinctiveness"}. '
-            f'Estimated trademark registration timeline: 12-18 months in primary jurisdictions. Score: **{overall_score}/100**.'
+            f'{identity_focus}. '
+            f'Estimated trademark registration timeline: 12-18 months in primary jurisdictions. **RightName Score: {overall_score}/100**.'
         )
     elif verdict == "CAUTION":
         summary_parts.append(
             f'\n\n**Recommendation:** Address identified concerns before significant brand investment. Consider legal opinion on trademark conflicts '
-            f'and cultural consultation for sensitive markets. Score: **{overall_score}/100**.'
+            f'and cultural consultation for sensitive markets. **RightName Score: {overall_score}/100**.'
         )
     else:
         summary_parts.append(
             f'\n\n**Recommendation:** Explore alternative naming directions that better navigate the identified challenges. '
-            f'Consider coined neologisms or category-adjacent terminology to reduce conflict risk. Score: **{overall_score}/100**.'
+            f'Consider coined neologisms or category-adjacent terminology to reduce conflict risk. **RightName Score: {overall_score}/100**.'
         )
     
     return "".join(summary_parts)
