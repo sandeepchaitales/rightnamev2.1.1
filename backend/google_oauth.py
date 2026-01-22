@@ -1,0 +1,270 @@
+"""
+Google OAuth 2.0 Authentication Routes for RIGHTNAME.AI
+Custom implementation - No Emergent branding
+"""
+
+import os
+import uuid
+import httpx
+import logging
+from datetime import datetime, timezone, timedelta
+from typing import Optional
+from urllib.parse import urlencode
+
+from fastapi import APIRouter, Request, Response, HTTPException
+from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_REDIRECT_URI_PATH = "/api/auth/google/callback"
+
+# OAuth URLs
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+
+# Scopes for Google OAuth
+GOOGLE_SCOPES = [
+    "openid",
+    "email",
+    "profile"
+]
+
+google_oauth_router = APIRouter(prefix="/api/auth")
+
+# Database reference (will be set by main server)
+db = None
+
+def set_google_oauth_db(database):
+    global db
+    db = database
+
+class GoogleAuthResponse(BaseModel):
+    user_id: str
+    email: str
+    name: str
+    picture: Optional[str] = None
+
+
+def get_redirect_uri(request: Request) -> str:
+    """Construct the redirect URI based on the request origin"""
+    # Get the origin from request
+    origin = request.headers.get("origin") or request.headers.get("referer")
+    
+    if origin:
+        # Extract just the origin (protocol + host)
+        from urllib.parse import urlparse
+        parsed = urlparse(origin)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+    else:
+        # Fallback to request base URL
+        base_url = str(request.base_url).rstrip('/')
+    
+    # For production, ensure HTTPS
+    if "rightname.ai" in base_url and base_url.startswith("http://"):
+        base_url = base_url.replace("http://", "https://")
+    
+    return f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
+
+
+@google_oauth_router.get("/google")
+async def google_login(request: Request, return_url: Optional[str] = None):
+    """
+    Initiate Google OAuth flow
+    Redirects user to Google's consent screen
+    """
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Google OAuth not configured")
+    
+    # Generate state for CSRF protection
+    state = uuid.uuid4().hex
+    
+    # Store state and return_url in a temporary session
+    state_data = {
+        "state": state,
+        "return_url": return_url or "/",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Store in database for verification
+    await db.oauth_states.insert_one(state_data)
+    
+    # Build redirect URI
+    redirect_uri = get_redirect_uri(request)
+    logging.info(f"🔐 Google OAuth: redirect_uri = {redirect_uri}")
+    
+    # Build Google authorization URL
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": " ".join(GOOGLE_SCOPES),
+        "state": state,
+        "access_type": "offline",
+        "prompt": "select_account"  # Always show account selector
+    }
+    
+    auth_url = f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
+    logging.info(f"🔐 Google OAuth: Redirecting to Google")
+    
+    return RedirectResponse(url=auth_url)
+
+
+@google_oauth_router.get("/google/callback")
+async def google_callback(
+    request: Request,
+    response: Response,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None
+):
+    """
+    Handle Google OAuth callback
+    Exchange code for tokens and create/update user
+    """
+    # Handle errors from Google
+    if error:
+        logging.error(f"🔐 Google OAuth error: {error}")
+        return RedirectResponse(url="/?auth_error=" + error)
+    
+    if not code or not state:
+        logging.error("🔐 Google OAuth: Missing code or state")
+        return RedirectResponse(url="/?auth_error=missing_params")
+    
+    # Verify state
+    state_doc = await db.oauth_states.find_one({"state": state})
+    if not state_doc:
+        logging.error("🔐 Google OAuth: Invalid state")
+        return RedirectResponse(url="/?auth_error=invalid_state")
+    
+    # Delete used state
+    await db.oauth_states.delete_one({"state": state})
+    
+    return_url = state_doc.get("return_url", "/")
+    
+    try:
+        # Exchange code for tokens
+        redirect_uri = get_redirect_uri(request)
+        
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(
+                GOOGLE_TOKEN_URL,
+                data={
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "code": code,
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code"
+                }
+            )
+            
+            if token_response.status_code != 200:
+                logging.error(f"🔐 Google OAuth token error: {token_response.text}")
+                return RedirectResponse(url="/?auth_error=token_error")
+            
+            tokens = token_response.json()
+            access_token = tokens.get("access_token")
+            
+            # Get user info from Google
+            userinfo_response = await client.get(
+                GOOGLE_USERINFO_URL,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            
+            if userinfo_response.status_code != 200:
+                logging.error(f"🔐 Google OAuth userinfo error: {userinfo_response.text}")
+                return RedirectResponse(url="/?auth_error=userinfo_error")
+            
+            userinfo = userinfo_response.json()
+        
+        # Extract user data
+        google_id = userinfo.get("id")
+        email = userinfo.get("email")
+        name = userinfo.get("name")
+        picture = userinfo.get("picture")
+        
+        logging.info(f"🔐 Google OAuth: User authenticated - {email}")
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": email})
+        
+        if existing_user:
+            user_id = existing_user["user_id"]
+            # Update user info if changed
+            await db.users.update_one(
+                {"user_id": user_id},
+                {"$set": {
+                    "name": name,
+                    "picture": picture,
+                    "google_id": google_id,
+                    "last_login": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+        else:
+            # Create new user
+            user_id = f"user_{uuid.uuid4().hex[:12]}"
+            await db.users.insert_one({
+                "user_id": user_id,
+                "email": email,
+                "name": name,
+                "picture": picture,
+                "google_id": google_id,
+                "auth_provider": "google",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "last_login": datetime.now(timezone.utc).isoformat(),
+                "report_credits": 0
+            })
+            logging.info(f"🔐 Google OAuth: New user created - {user_id}")
+        
+        # Create session
+        session_token = uuid.uuid4().hex
+        expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+        
+        # Remove old sessions
+        await db.user_sessions.delete_many({"user_id": user_id})
+        
+        # Create new session
+        await db.user_sessions.insert_one({
+            "session_token": session_token,
+            "user_id": user_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "expires_at": expires_at.isoformat()
+        })
+        
+        # Build redirect URL with session info
+        # We'll set cookie and redirect to frontend
+        redirect_url = return_url if return_url != "/" else "/"
+        
+        # Create response with redirect
+        response = RedirectResponse(url=f"/#auth_success=true", status_code=302)
+        
+        # Set session cookie
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            path="/"
+        )
+        
+        logging.info(f"🔐 Google OAuth: Session created for {email}")
+        
+        return response
+        
+    except Exception as e:
+        logging.error(f"🔐 Google OAuth exception: {str(e)}")
+        return RedirectResponse(url="/?auth_error=server_error")
+
+
+@google_oauth_router.get("/google/status")
+async def google_oauth_status():
+    """Check if Google OAuth is configured"""
+    return {
+        "configured": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET),
+        "client_id_present": bool(GOOGLE_CLIENT_ID),
+        "client_secret_present": bool(GOOGLE_CLIENT_SECRET)
+    }
