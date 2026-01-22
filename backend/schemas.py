@@ -533,6 +533,8 @@ class BrandScore(BaseModel):
     universal_linguistic_analysis: Optional[Dict[str, Any]] = Field(default=None, description="Universal linguistic analysis - meaning in any world language")
     # 🎯 WEIGHTED SCORE BREAKDOWN
     score_breakdown: Optional[Dict[str, Any]] = Field(default=None, description="Weighted NAMESCORE breakdown with component scores")
+    # 🏷️ BRAND CLASSIFICATION WITH LINGUISTIC OVERRIDE
+    brand_classification: Optional[Dict[str, Any]] = Field(default=None, description="Brand classification with linguistic override data")
 
 class BrandEvaluationRequest(BaseModel):
     brand_names: List[str]
