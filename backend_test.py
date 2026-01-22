@@ -9683,7 +9683,32 @@ class BrandEvaluationTester:
         return self.print_summary()
 
 def main():
-    """Main function to run Admin Panel API tests as requested in review"""
+    """Main function to run User Reports API tests as requested in review"""
+    tester = BrandEvaluationTester()
+    
+    print("📋 RIGHTNAME USER REPORTS FEATURE TESTING")
+    print("=" * 80)
+    print("Testing NEW User Reports feature endpoints as requested in review:")
+    print("1. GET /api/user/reports - Get paginated list of user's reports")
+    print("2. POST /api/user/reports/link?report_id={id} - Link report to user")
+    print("=" * 80)
+    print("Expected behavior:")
+    print("- Both endpoints should return 401 when not authenticated")
+    print("- Both endpoints should exist and respond correctly (no 404)")
+    print("=" * 80)
+    
+    # Run the user reports tests
+    success = tester.run_user_reports_tests_only()
+    
+    if success:
+        print("\n🎉 ALL USER REPORTS TESTS PASSED!")
+        exit(0)
+    else:
+        print("\n❌ SOME USER REPORTS TESTS FAILED!")
+        exit(1)
+
+def main_admin():
+    """Main function to run Admin Panel API tests"""
     tester = BrandEvaluationTester()
     
     print("🔐 RIGHTNAME ADMIN PANEL API TESTING")
