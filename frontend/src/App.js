@@ -37,6 +37,7 @@ function AppRouter() {
       <Route path="/admin" element={<AdminPanel />} />
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/cancel" element={<PaymentCancel />} />
+      <Route path="/my-reports" element={<MyReports />} />
     </Routes>
   );
 }
