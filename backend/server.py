@@ -1296,6 +1296,19 @@ def classify_brand_with_linguistic_override(
         # Linguistic analysis confirms it's truly invented
         pass  # Keep original
     
+    # RULE 6: CATCH-ALL - ANY name with verified meaning cannot be FANCIFUL
+    # This handles cases where name_type is "Descriptive", "Phonetic-Adaptation", "Unknown", etc.
+    # If has_meaning=True and we reached this point, the name has meaning in some language
+    if original_category == "FANCIFUL" and new_category == "FANCIFUL" and has_meaning and combined_meaning:
+        # If we still have FANCIFUL after all rules, but meaning exists - override based on alignment
+        if alignment_score >= 6:
+            new_category = "SUGGESTIVE"
+            override_reason = f"Name has clear linguistic meaning ({', '.join(languages) if languages else 'detected languages'}): '{combined_meaning}'. High business alignment ({alignment_score}/10) suggests product/service."
+        else:
+            new_category = "ARBITRARY"
+            override_reason = f"Name has linguistic meaning ({', '.join(languages) if languages else 'detected languages'}): '{combined_meaning}'. Used in unrelated business context."
+        logging.info(f"🏷️ CATCH-ALL OVERRIDE: '{brand_name}' has meaning but no specific rule matched → {new_category}")
+    
     # Step 5: Apply override if needed
     if new_category != original_category:
         logging.info(f"🏷️ CLASSIFICATION OVERRIDE: '{brand_name}' → {original_category} → {new_category}")
