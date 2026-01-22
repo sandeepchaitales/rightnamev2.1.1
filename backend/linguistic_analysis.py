@@ -191,7 +191,9 @@ async def analyze_brand_linguistics(
         # Build the full message with context
         full_message = f"CONTEXT: You are a multilingual linguistic analyst. Return ONLY valid JSON, no markdown formatting.\n\n{prompt}"
         
-        response = await chat.send_message(full_message)
+        # Create UserMessage and send
+        user_msg = UserMessage(text=full_message)
+        response = await chat.send_message(user_msg)
         
         # Parse response - it's a string directly
         response_text = response.strip() if isinstance(response, str) else str(response).strip()
