@@ -87,15 +87,15 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    // Custom Google OAuth - RIGHTNAME.AI branding only
     const loginWithGoogle = () => {
         // Save current location to return to after auth
         const currentPath = window.location.pathname;
         if (currentPath !== '/' && currentPath !== '/auth/callback') {
             localStorage.setItem('auth_return_url', currentPath);
         }
-        const redirectUrl = window.location.origin + '/auth/callback';
-        window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+        // Use our custom Google OAuth endpoint
+        window.location.href = `${API_URL}/auth/google?return_url=${encodeURIComponent(currentPath)}`;
     };
 
     // Email/Password Registration
