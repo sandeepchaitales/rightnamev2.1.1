@@ -47,6 +47,9 @@ from market_intelligence import (
 # Import Payment Routes
 from payment_routes import payment_router, set_db as set_payment_db
 
+# Import Google OAuth Routes
+from google_oauth import google_oauth_router, set_google_oauth_db
+
 # Import Emergent Integration
 try:
     from emergentintegrations.llm.chat import LlmChat, UserMessage
