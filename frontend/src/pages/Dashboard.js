@@ -1924,31 +1924,17 @@ const LinguisticAnalysisSection = ({ linguisticAnalysis, brandClassification }) 
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-3 mb-3">
-                            {hasOverride ? (
-                                <>
-                                    <Badge className={`${getClassificationColor(newCategory)} font-black text-base px-4 py-1.5 border-2`}>
-                                        {newCategory}
-                                    </Badge>
-                                    <span className="text-slate-400 font-medium">(not {originalCategory?.toLowerCase()})</span>
-                                </>
-                            ) : (
-                                <Badge className={`${getClassificationColor(newCategory || brandClassification?.category)} font-black text-base px-4 py-1.5 border-2`}>
-                                    {newCategory || brandClassification?.category || 'UNKNOWN'}
-                                </Badge>
+                            <Badge className={`${getClassificationColor(displayCategory)} font-black text-base px-4 py-1.5 border-2`}>
+                                {displayCategory}
+                            </Badge>
+                            {hasOverride && originalCategory && (
+                                <span className="text-slate-400 font-medium">(not {originalCategory?.toLowerCase()})</span>
                             )}
                         </div>
                         
-                        {hasOverride && overrideReason && (
-                            <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
-                                <span className="font-bold text-blue-700">Reason:</span> {overrideReason}
-                            </p>
-                        )}
-                        
-                        {hasMeaning && !hasOverride && (
-                            <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
-                                <span className="font-bold text-blue-700">Reason:</span> Has clear linguistic meaning that hints at the product category
-                            </p>
-                        )}
+                        <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
+                            <span className="font-bold text-blue-700">Reason:</span> {displayReason}
+                        </p>
                     </div>
                 )}
                 
