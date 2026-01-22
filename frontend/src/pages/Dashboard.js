@@ -10,7 +10,7 @@ import {
     BarChart3, Target, Award, FileText, Calendar, Lightbulb,
     Rocket, MessageSquare, Scale, Building2, Hash, AtSign,
     CheckCircle, XOctagon, HelpCircle, Map, Briefcase, UserCheck, AlertCircle,
-    Download, Loader2
+    Download, Loader2, Languages, BookOpen, Info
 } from "lucide-react";
 import { 
     RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
