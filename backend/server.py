@@ -10283,6 +10283,179 @@ BRAND: {brand}
         return distinctiveness_scores.get(distinctiveness, 6.0)
     # ==================== END CLASSIFICATION-AWARE HELPERS ====================
     
+    # ==================== WEIGHTED NAMESCORE CALCULATOR ====================
+    def calculate_weighted_namescore(
+        llm_dimensions: list = None,
+        cultural_analysis: list = None,
+        trademark_risk: float = 5.0,
+        business_alignment: float = 5.0,
+        dupont_score: float = None,
+        domain_score: float = 7.0,
+        social_score: float = 7.0,
+        classification: dict = None
+    ) -> dict:
+        """
+        Calculate WEIGHTED NAMESCORE using all available scores.
+        
+        FORMULA:
+        NAMESCORE = (
+            (LLM_Dimensions_Avg × 0.40) +      # Core brand quality
+            (Cultural_Resonance × 0.15) +       # Market fit (Hybrid: MIN×0.4 + AVG×0.6)
+            (Trademark_Safety × 0.20) +         # Legal viability (10 - risk)
+            (Business_Alignment × 0.10) +       # Strategic fit
+            (DuPont_Safety × 0.10) +            # Conflict risk (100 - dupont)/10
+            (Domain_Social_Avg × 0.05)          # Digital availability
+        ) × 10
+        
+        For single country: Use that country's score directly
+        For multiple countries: Hybrid = (MIN × 0.4) + (AVG × 0.6)
+        
+        Returns dict with:
+        - namescore: Final weighted score (0-100)
+        - component_scores: Breakdown of each component
+        - formula_explanation: Human-readable formula
+        """
+        component_scores = {}
+        
+        # 1. LLM Dimensions Average (40% weight)
+        if llm_dimensions and len(llm_dimensions) > 0:
+            dim_scores = [d.get("score", 0) if isinstance(d, dict) else getattr(d, "score", 0) for d in llm_dimensions]
+            dim_scores = [s for s in dim_scores if s > 0]  # Filter out zeros
+            llm_avg = sum(dim_scores) / len(dim_scores) if dim_scores else 5.0
+        else:
+            # Fallback: use distinctiveness score
+            llm_avg = get_distinctiveness_score(classification) if classification else 6.0
+        component_scores["llm_dimensions"] = {
+            "raw": round(llm_avg, 2),
+            "weight": 0.40,
+            "weighted": round(llm_avg * 0.40, 2),
+            "source": "LLM 6-Dimensions" if llm_dimensions else "Distinctiveness fallback"
+        }
+        
+        # 2. Cultural Resonance - Hybrid Formula (15% weight)
+        if cultural_analysis and len(cultural_analysis) > 0:
+            cultural_scores = []
+            for ca in cultural_analysis:
+                if isinstance(ca, dict):
+                    score = ca.get("cultural_resonance_score", 0)
+                else:
+                    score = getattr(ca, "cultural_resonance_score", 0)
+                if score > 0:
+                    cultural_scores.append(score)
+            
+            if len(cultural_scores) == 1:
+                # Single country: Use directly
+                cultural_combined = cultural_scores[0]
+                cultural_formula = f"Single country: {cultural_scores[0]}"
+            elif len(cultural_scores) > 1:
+                # Multiple countries: Hybrid = (MIN × 0.4) + (AVG × 0.6)
+                min_score = min(cultural_scores)
+                avg_score = sum(cultural_scores) / len(cultural_scores)
+                cultural_combined = (min_score * 0.4) + (avg_score * 0.6)
+                cultural_formula = f"Hybrid: (MIN:{min_score:.1f}×0.4) + (AVG:{avg_score:.1f}×0.6) = {cultural_combined:.1f}"
+            else:
+                cultural_combined = 7.0
+                cultural_formula = "Default (no scores)"
+        else:
+            cultural_combined = 7.0
+            cultural_formula = "Default (no analysis)"
+        
+        component_scores["cultural_resonance"] = {
+            "raw": round(cultural_combined, 2),
+            "weight": 0.15,
+            "weighted": round(cultural_combined * 0.15, 2),
+            "formula": cultural_formula,
+            "country_scores": cultural_scores if cultural_analysis else []
+        }
+        
+        # 3. Trademark Safety (20% weight) - Inverted risk score
+        trademark_safety = 10 - min(10, max(0, trademark_risk))
+        component_scores["trademark_safety"] = {
+            "raw": round(trademark_safety, 2),
+            "weight": 0.20,
+            "weighted": round(trademark_safety * 0.20, 2),
+            "source": f"10 - trademark_risk ({trademark_risk})"
+        }
+        
+        # 4. Business Alignment (10% weight)
+        alignment_score = min(10, max(0, business_alignment))
+        component_scores["business_alignment"] = {
+            "raw": round(alignment_score, 2),
+            "weight": 0.10,
+            "weighted": round(alignment_score * 0.10, 2),
+            "source": "Linguistic Analysis" if business_alignment != 5.0 else "Default"
+        }
+        
+        # 5. DuPont Safety (10% weight) - Inverted confusion score
+        if dupont_score is not None:
+            # DuPont score is 0-100 (likelihood of confusion)
+            # Convert to safety: (100 - dupont) / 10
+            dupont_safety = (100 - min(100, max(0, dupont_score))) / 10
+        else:
+            dupont_safety = 8.0  # Default: assume low confusion risk
+        
+        component_scores["dupont_safety"] = {
+            "raw": round(dupont_safety, 2),
+            "weight": 0.10,
+            "weighted": round(dupont_safety * 0.10, 2),
+            "source": f"(100 - DuPont:{dupont_score})/10" if dupont_score is not None else "Default (no conflicts)"
+        }
+        
+        # 6. Digital Availability (5% weight)
+        digital_avg = (domain_score + social_score) / 2
+        component_scores["digital_availability"] = {
+            "raw": round(digital_avg, 2),
+            "weight": 0.05,
+            "weighted": round(digital_avg * 0.05, 2),
+            "domain": domain_score,
+            "social": social_score
+        }
+        
+        # Calculate final NAMESCORE
+        weighted_sum = (
+            component_scores["llm_dimensions"]["weighted"] +
+            component_scores["cultural_resonance"]["weighted"] +
+            component_scores["trademark_safety"]["weighted"] +
+            component_scores["business_alignment"]["weighted"] +
+            component_scores["dupont_safety"]["weighted"] +
+            component_scores["digital_availability"]["weighted"]
+        )
+        
+        # Scale to 0-100
+        namescore = round(weighted_sum * 10, 1)
+        namescore = max(0, min(100, namescore))  # Clamp
+        
+        # Build formula explanation
+        formula_explanation = f"""
+NAMESCORE CALCULATION:
+├─ LLM Dimensions:     {component_scores['llm_dimensions']['raw']:.1f}/10 × 40% = {component_scores['llm_dimensions']['weighted']:.2f}
+├─ Cultural Resonance: {component_scores['cultural_resonance']['raw']:.1f}/10 × 15% = {component_scores['cultural_resonance']['weighted']:.2f}
+├─ Trademark Safety:   {component_scores['trademark_safety']['raw']:.1f}/10 × 20% = {component_scores['trademark_safety']['weighted']:.2f}
+├─ Business Alignment: {component_scores['business_alignment']['raw']:.1f}/10 × 10% = {component_scores['business_alignment']['weighted']:.2f}
+├─ DuPont Safety:      {component_scores['dupont_safety']['raw']:.1f}/10 × 10% = {component_scores['dupont_safety']['weighted']:.2f}
+└─ Digital Availability: {component_scores['digital_availability']['raw']:.1f}/10 × 5% = {component_scores['digital_availability']['weighted']:.2f}
+─────────────────────────────────────
+TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
+"""
+        
+        logging.info(f"📊 WEIGHTED NAMESCORE: {namescore}/100")
+        logging.info(formula_explanation)
+        
+        return {
+            "namescore": namescore,
+            "component_scores": component_scores,
+            "formula_explanation": formula_explanation.strip(),
+            "weights_used": {
+                "llm_dimensions": 0.40,
+                "cultural_resonance": 0.15,
+                "trademark_safety": 0.20,
+                "business_alignment": 0.10,
+                "dupont_safety": 0.10,
+                "digital_availability": 0.05
+            }
+        }
+    # ==================== END WEIGHTED NAMESCORE CALCULATOR ====================
+
     def generate_fallback_report(brand_name: str, category: str, domain_data, social_data, trademark_data, visibility_data, classification: dict = None) -> dict:
         """Generate a complete report WITHOUT LLM using collected data
         
