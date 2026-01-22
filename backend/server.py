@@ -2897,11 +2897,14 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
                 "warning": classification.get("warning")
             },
             "linguistic_analysis": {
-                "morphemes": [m["text"] for m in decomposition.get("morphemes", [])],
-                "brand_type": linguistic_analysis.get("brand_type"),
-                "industry_fit": industry_fit.get("fit_level"),
-                "overall_resonance": overall_resonance,
-                "risk_count": len(risk_flags)
+                # Use universal linguistic data if available, else use fallback
+                "has_universal_analysis": has_universal_linguistic,
+                "languages": ling_insights.get("languages", []) if has_universal_linguistic else [],
+                "name_type": ling_insights.get("name_type", "Unknown") if has_universal_linguistic else "Coined/Invented",
+                "combined_meaning": ling_insights.get("combined_meaning", "") if has_universal_linguistic else None,
+                "alignment_score": ling_insights.get("alignment_score", 5) if has_universal_linguistic else None,
+                "cultural_reference_type": ling_insights.get("cultural_ref_type") if has_universal_linguistic else None,
+                "recognition_regions": ling_insights.get("recognition_regions", []) if has_universal_linguistic else []
             }
         })
         
