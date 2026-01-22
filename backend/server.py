@@ -11361,6 +11361,97 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
         except Exception as e:
             logging.error(f"Failed to add linguistic analysis: {e}")
         # ============ END UNIVERSAL LINGUISTIC ANALYSIS ============
+        
+        # ============ 🎯 FEATURE 6: WEIGHTED NAMESCORE RECALCULATION ============
+        try:
+            # Gather all components for weighted scoring
+            ling_analysis = all_brand_data.get(brand_name_for_matrix, {}).get("linguistic_analysis", {})
+            business_alignment = ling_analysis.get("business_alignment", {}).get("alignment_score", 5.0) if ling_analysis else 5.0
+            
+            # Get trademark risk
+            tr_risk = 5.0
+            if brand_score.trademark_research:
+                tr = brand_score.trademark_research
+                if hasattr(tr, 'overall_risk_score'):
+                    tr_risk = tr.overall_risk_score
+                elif isinstance(tr, dict):
+                    tr_risk = tr.get('overall_risk_score', 5.0)
+            
+            # Get DuPont score
+            dupont_score = None
+            if brand_score.dupont_analysis:
+                dupont = brand_score.dupont_analysis
+                if isinstance(dupont, dict) and dupont.get("has_analysis"):
+                    highest_risk = dupont.get("highest_risk_conflict", {})
+                    if highest_risk:
+                        dupont_score = highest_risk.get("dupont_score", None)
+            
+            # Get domain score
+            domain_score = 7.0
+            if brand_score.domain_analysis:
+                da = brand_score.domain_analysis
+                primary_available = da.primary_available if hasattr(da, 'primary_available') else da.get('primary_available', False)
+                domain_score = 8.0 if primary_available else 5.0
+            
+            # Get social score
+            social_score = 7.0
+            if brand_score.social_availability:
+                sa = brand_score.social_availability
+                available_count = len(sa.available_platforms) if hasattr(sa, 'available_platforms') else len(sa.get('available_platforms', []))
+                total_count = len(sa.platforms) if hasattr(sa, 'platforms') else len(sa.get('platforms', []))
+                if total_count > 0:
+                    social_score = (available_count / total_count) * 10
+            
+            # Get cultural analysis
+            cultural_analysis = brand_score.cultural_analysis if hasattr(brand_score, 'cultural_analysis') else None
+            if not cultural_analysis and llm_research_data:
+                cultural_analysis = llm_research_data.get("cultural_analysis")
+            
+            # Get LLM dimensions
+            llm_dimensions = brand_score.dimensions if hasattr(brand_score, 'dimensions') else None
+            
+            # Calculate weighted namescore
+            weighted_result = calculate_weighted_namescore(
+                llm_dimensions=llm_dimensions,
+                cultural_analysis=cultural_analysis,
+                trademark_risk=tr_risk,
+                business_alignment=business_alignment,
+                dupont_score=dupont_score,
+                domain_score=domain_score,
+                social_score=social_score,
+                classification=all_brand_data.get(brand_name_for_matrix, {}).get("classification")
+            )
+            
+            # Store the original LLM score for comparison
+            original_namescore = brand_score.namescore
+            new_namescore = weighted_result["namescore"]
+            
+            # Update the namescore with weighted calculation
+            brand_score.namescore = new_namescore
+            
+            # Store score breakdown for UI display
+            brand_score.score_breakdown = weighted_result
+            
+            logging.info(f"🎯 WEIGHTED NAMESCORE for '{brand_name_for_matrix}': "
+                       f"Original LLM: {original_namescore} → Weighted: {new_namescore}")
+            logging.info(f"   Components: LLM={weighted_result['component_scores']['llm_dimensions']['raw']:.1f}, "
+                       f"Cultural={weighted_result['component_scores']['cultural_resonance']['raw']:.1f}, "
+                       f"TM={weighted_result['component_scores']['trademark_safety']['raw']:.1f}, "
+                       f"Align={weighted_result['component_scores']['business_alignment']['raw']:.1f}, "
+                       f"DuPont={weighted_result['component_scores']['dupont_safety']['raw']:.1f}, "
+                       f"Digital={weighted_result['component_scores']['digital_availability']['raw']:.1f}")
+            
+            # Update verdict based on new score
+            if new_namescore >= 70:
+                brand_score.verdict = "GO"
+            elif new_namescore >= 50:
+                brand_score.verdict = "CAUTION"
+            else:
+                brand_score.verdict = "REJECT"
+                
+        except Exception as e:
+            logging.error(f"Failed to calculate weighted namescore: {e}")
+        # ============ END WEIGHTED NAMESCORE RECALCULATION ============
     
     # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
     if all_rejections:
