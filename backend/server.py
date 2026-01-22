@@ -3501,13 +3501,15 @@ def generate_smart_final_recommendations(
     category: str,
     countries: list,
     domain_available: bool,
-    nice_class: dict
+    nice_class: dict,
+    trademark_research: dict = None
 ) -> list:
     """
     Generate smart, category-aware and country-specific recommendations.
-    NO generic .beauty/.shop for medical apps, etc.
+    Now includes multi-class filing from trademark intelligence.
+    Removed: Social Presence and Brand Launch (not required).
     """
-    brand_lower = brand_name.lower()
+    brand_lower = brand_name.lower().replace(" ", "")
     
     # Get category-appropriate TLDs
     category_tlds = get_category_tlds(category)
@@ -3523,13 +3525,46 @@ def generate_smart_final_recommendations(
     else:
         domain_strategy = f"Primary .com unavailable. Secure {brand_lower}{top_category_tld} for {category} positioning. Register country TLDs ({country_tld_str}) for local markets. Consider get{brand_lower}.com or {brand_lower}app.com alternatives."
     
-    # Build trademark filing recommendation with country-specific guidance
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # BUILD TRADEMARK FILING RECOMMENDATION WITH MULTI-CLASS DATA FROM INTELLIGENCE
+    # ═══════════════════════════════════════════════════════════════════════════════
     country_names = [c.get('name') if isinstance(c, dict) else str(c) for c in countries]
-    if len(country_names) > 1:
-        trademark_recommendation = f"File trademark in NICE Class {nice_class.get('class_number', 9)} ({nice_class.get('class_description', category)}). For multi-country ({', '.join(country_names[:3])}), consider Madrid Protocol for cost-effective international registration."
-    else:
-        trademark_recommendation = f"File trademark in {country_names[0] if country_names else 'target country'} under NICE Class {nice_class.get('class_number', 9)} ({nice_class.get('class_description', category)}). Process typically 12-18 months."
+    primary_class = nice_class.get('class_number', 9)
+    primary_desc = nice_class.get('class_description', category)
     
+    # Extract multi-class filing info from trademark research if available
+    multi_class_info = ""
+    if trademark_research:
+        # Check for multi-class recommendations in trademark intelligence
+        tm_result = trademark_research.get("result", {}) if isinstance(trademark_research, dict) else {}
+        multi_class_data = tm_result.get("multi_class_recommendation", []) if tm_result else []
+        recommended_classes = tm_result.get("recommended_nice_classes", []) if tm_result else []
+        
+        # Also check for related classes in the research
+        if not multi_class_data and not recommended_classes:
+            # Try to extract from trademark conflicts - different classes in conflicts
+            conflicts = tm_result.get("trademark_conflicts", []) if tm_result else []
+            related_classes = set()
+            for conflict in conflicts:
+                conflict_class = conflict.get("class") or conflict.get("nice_class")
+                if conflict_class and conflict_class != primary_class:
+                    related_classes.add(conflict_class)
+            if related_classes:
+                multi_class_data = list(related_classes)[:3]
+        
+        if multi_class_data or recommended_classes:
+            all_classes = list(set([primary_class] + (recommended_classes or []) + (multi_class_data if isinstance(multi_class_data, list) else [])))
+            all_classes = [c for c in all_classes if isinstance(c, int)][:4]  # Max 4 classes
+            if len(all_classes) > 1:
+                multi_class_info = f" **Multi-class filing recommended:** Classes {', '.join(map(str, sorted(all_classes)))} to protect against competitive infringement."
+    
+    # Build the trademark recommendation
+    if len(country_names) > 1:
+        trademark_recommendation = f"File trademark in NICE Class {primary_class} ({primary_desc}).{multi_class_info} For multi-country ({', '.join(country_names[:3])}), consider Madrid Protocol for cost-effective international registration. Process: 12-18 months."
+    else:
+        trademark_recommendation = f"File trademark in {country_names[0] if country_names else 'target country'} under NICE Class {primary_class} ({primary_desc}).{multi_class_info} Process typically 12-18 months."
+    
+    # Only return Domain Strategy and Trademark Filing (removed Social Presence and Brand Launch)
     recommendations = [
         {
             "title": "🏢 Domain Strategy",
@@ -3538,14 +3573,6 @@ def generate_smart_final_recommendations(
         {
             "title": "📋 Trademark Filing",
             "content": trademark_recommendation
-        },
-        {
-            "title": "📱 Social Presence",
-            "content": f"Reserve @{brand_lower} on Instagram, Twitter, LinkedIn, Facebook, TikTok, and YouTube before public announcement. Consistency across platforms builds brand recognition."
-        },
-        {
-            "title": "🎯 Brand Launch",
-            "content": f"Develop comprehensive brand guidelines for {category} positioning before market entry in {', '.join(country_names[:2])}. Localize messaging for each target market."
         }
     ]
     
