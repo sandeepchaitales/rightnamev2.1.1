@@ -10493,41 +10493,22 @@ BRAND: {brand}
                         brand_score["cultural_analysis"] = llm_research_data["cultural_analysis"]
                         logging.info(f"✅ Using LLM-researched cultural analysis for {brand_name_for_fallback}")
                 
-                # Ensure competitor_analysis has proper data (global competitors from first country or research)
+                # Ensure competitor_analysis has proper data (GLOBAL competitors, not country-specific)
                 if not brand_score.get("competitor_analysis") or not brand_score.get("competitor_analysis", {}).get("competitors"):
-                    # Try to use data from first country in LLM research
-                    if llm_research_data and llm_research_data.get("country_competitor_analysis"):
-                        first_country = llm_research_data["country_competitor_analysis"][0]
-                        brand_score["competitor_analysis"] = {
-                            "x_axis_label": first_country.get("x_axis_label", "Price: Budget → Premium"),
-                            "y_axis_label": first_country.get("y_axis_label", "Innovation: Traditional → Modern"),
-                            "competitors": first_country.get("competitors", []),
-                            "user_brand_position": first_country.get("user_brand_position", {
-                                "x_coordinate": 65, "y_coordinate": 75, "quadrant": "Accessible Premium",
-                                "rationale": f"'{brand_name_for_fallback}' positioned for premium-accessible market segment"
-                            }),
-                            "white_space_analysis": first_country.get("white_space_analysis", "Market opportunity exists for innovative brands."),
-                            "strategic_advantage": first_country.get("strategic_advantage", "Distinctive brand identity enables unique positioning.")
-                        }
-                        logging.info(f"✅ Using LLM-researched competitor analysis for {brand_name_for_fallback}")
-                    else:
-                        brand_score["competitor_analysis"] = {
-                            "x_axis_label": "Price: Budget → Premium",
-                            "y_axis_label": "Innovation: Traditional → Modern",
-                            "competitors": [
-                                {"name": "Market Leader 1", "x_coordinate": 75, "y_coordinate": 65, "quadrant": "Premium Modern"},
-                                {"name": "Market Leader 2", "x_coordinate": 45, "y_coordinate": 70, "quadrant": "Mid-range Modern"},
-                                {"name": "Market Leader 3", "x_coordinate": 80, "y_coordinate": 35, "quadrant": "Premium Traditional"},
-                                {"name": "Challenger Brand", "x_coordinate": 30, "y_coordinate": 55, "quadrant": "Value Player"}
-                            ],
-                            "user_brand_position": {
-                                "x_coordinate": 65,
-                                "y_coordinate": 75,
-                                "quadrant": "Accessible Premium",
-                                "rationale": f"'{brand_name_for_fallback}' positioned for premium-accessible market segment"
-                            },
-                            "white_space_analysis": f"Opportunity exists in the market for brands combining accessibility with innovation.",
-                            "strategic_advantage": f"Distinctive brand identity enables unique market positioning."
+                    # Use GLOBAL competitors for "Global Overview" matrix
+                    global_data = get_global_competitors(request.category, request.industry)
+                    brand_score["competitor_analysis"] = {
+                        "x_axis_label": global_data.get("axis_x", "Price: Budget → Premium"),
+                        "y_axis_label": global_data.get("axis_y", "Positioning: Traditional → Modern"),
+                        "competitors": global_data.get("competitors", []),
+                        "user_brand_position": {
+                            "x_coordinate": 65,
+                            "y_coordinate": 75,
+                            "quadrant": "Accessible Premium",
+                            "rationale": f"'{brand_name_for_fallback}' positioned for premium-accessible segment globally"
+                        },
+                        "white_space_analysis": global_data.get("white_space", "Opportunity exists for differentiated brands in global market."),
+                        "strategic_advantage": global_data.get("strategic_advantage", "Distinctive brand identity enables unique global positioning.")
                         }
         
         return {"model": f"{model_provider}/{model_name}", "data": data}
