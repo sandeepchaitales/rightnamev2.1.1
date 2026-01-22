@@ -497,6 +497,13 @@ const LandingPage = () => {
                     <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse" />
                 ) : user ? (
                     <div className="flex items-center gap-2 md:gap-3">
+                        <Link 
+                          to="/my-reports" 
+                          className="flex items-center gap-2 px-3 md:px-4 py-2 bg-violet-50 hover:bg-violet-100 border-2 border-violet-200 rounded-full shadow-sm transition-colors"
+                        >
+                          <FileText className="w-4 h-4 text-violet-600" />
+                          <span className="text-sm font-bold text-violet-700 hidden sm:inline">My Reports</span>
+                        </Link>
                         <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white border-2 border-slate-200 rounded-full shadow-sm">
                             {user.picture ? (
                                 <img src={user.picture} alt={user.name} className="w-6 h-6 md:w-7 md:h-7 rounded-full ring-2 ring-violet-200" />
