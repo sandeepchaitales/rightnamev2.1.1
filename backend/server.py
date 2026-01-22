@@ -3007,7 +3007,8 @@ async def llm_first_country_analysis(
     brand_name: str,
     use_llm_research: bool = True,
     positioning: str = "Mid-Range",
-    classification: dict = None  # NEW: Accept pre-calculated classification
+    classification: dict = None,  # NEW: Accept pre-calculated classification
+    universal_linguistic: dict = None  # NEW: Accept universal linguistic analysis
 ) -> tuple:
     """
     LLM-First approach to country analysis with POSITIONING-AWARE search.
@@ -3019,6 +3020,7 @@ async def llm_first_country_analysis(
     Uses real-time web search + LLM for accuracy, with hardcoded fallback if research fails.
     
     NEW: Accepts pre-calculated classification to avoid duplicate computation.
+    NEW: Accepts universal_linguistic analysis for rich cultural context.
     
     Returns: (country_competitor_analysis, cultural_analysis)
     """
@@ -3031,7 +3033,7 @@ async def llm_first_country_analysis(
         logging.info(f"⚡ Using hardcoded data (LLM research disabled)")
         return (
             generate_country_competitor_analysis(countries, category, brand_name, None),
-            generate_cultural_analysis(countries, brand_name, category, classification)
+            generate_cultural_analysis(countries, brand_name, category, classification, universal_linguistic)
         )
     
     logging.info(f"🔬 LLM-FIRST RESEARCH: Starting {positioning} research for {len(countries)} countries...")
