@@ -2621,7 +2621,7 @@ COUNTRY_CULTURAL_DATA = {
     }
 }
 
-def generate_cultural_analysis(countries: list, brand_name: str, category: str = "Business", classification: dict = None) -> list:
+def generate_cultural_analysis(countries: list, brand_name: str, category: str = "Business", classification: dict = None, universal_linguistic: dict = None) -> list:
     """Generate cultural analysis for ALL user-selected countries (max 4)
     
     NEW FORMULA-BASED SCORING:
@@ -2632,6 +2632,7 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
     - Vibe: Premium market fit vs local competitors
     
     NEW: Accepts pre-calculated classification to avoid duplicate computation.
+    NEW: Accepts universal_linguistic analysis for rich cultural context.
     """
     result = []
     
@@ -2643,13 +2644,41 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
     cultural_data_lower = {k.lower(): v for k, v in COUNTRY_CULTURAL_DATA.items()}
     flags_lower = {k.lower(): v for k, v in COUNTRY_FLAGS.items()}
     
-    # Generate comprehensive linguistic analysis
-    linguistic_analysis = generate_linguistic_decomposition(brand_name, countries, category)
+    # Check if we have universal linguistic analysis (LLM-powered)
+    has_universal_linguistic = (
+        universal_linguistic and 
+        universal_linguistic.get("_analyzed_by") != "fallback" and
+        universal_linguistic.get("has_linguistic_meaning")
+    )
     
-    logging.info(f"🔤 LINGUISTIC DECOMPOSITION for '{brand_name}':")
-    logging.info(f"   Brand Type: {linguistic_analysis.get('brand_type')}")
-    logging.info(f"   Industry Fit: {linguistic_analysis.get('industry_fit', {}).get('fit_level')}")
-    logging.info(f"   Morphemes Found: {[m['text'] for m in linguistic_analysis.get('decomposition', {}).get('morphemes', [])]}")
+    # Extract key linguistic insights if available
+    ling_insights = {}
+    if has_universal_linguistic:
+        ling_insights = {
+            "has_meaning": True,
+            "languages": universal_linguistic.get("linguistic_analysis", {}).get("languages_detected", []),
+            "combined_meaning": universal_linguistic.get("linguistic_analysis", {}).get("decomposition", {}).get("combined_meaning", ""),
+            "name_type": universal_linguistic.get("classification", {}).get("name_type", "Unknown"),
+            "cultural_ref_type": universal_linguistic.get("cultural_significance", {}).get("reference_type"),
+            "cultural_details": universal_linguistic.get("cultural_significance", {}).get("details", ""),
+            "source_origin": universal_linguistic.get("cultural_significance", {}).get("source_text_or_origin", ""),
+            "sentiment": universal_linguistic.get("cultural_significance", {}).get("sentiment", "Neutral"),
+            "recognition_regions": universal_linguistic.get("cultural_significance", {}).get("regions_of_recognition", []),
+            "instant_recognition": universal_linguistic.get("business_alignment", {}).get("customer_understanding", {}).get("instant_recognition_regions", []),
+            "needs_explanation": universal_linguistic.get("business_alignment", {}).get("customer_understanding", {}).get("needs_explanation_regions", []),
+            "potential_concerns": universal_linguistic.get("potential_concerns", []),
+            "alignment_score": universal_linguistic.get("business_alignment", {}).get("alignment_score", 5),
+            "religious_sensitive": universal_linguistic.get("cultural_significance", {}).get("religious_sensitivity", {}).get("is_sensitive", False)
+        }
+        logging.info(f"🌍 CULTURAL ANALYSIS: Using Universal Linguistic Data for '{brand_name}'")
+        logging.info(f"   Languages: {ling_insights['languages']}")
+        logging.info(f"   Name Type: {ling_insights['name_type']}")
+        logging.info(f"   Recognition Regions: {ling_insights['recognition_regions']}")
+    else:
+        # Fall back to old linguistic decomposition
+        linguistic_analysis = generate_linguistic_decomposition(brand_name, countries, category)
+        logging.info(f"🔤 LINGUISTIC DECOMPOSITION for '{brand_name}' (fallback):")
+        logging.info(f"   Brand Type: {linguistic_analysis.get('brand_type')}")
     
     # Ensure we process up to 4 countries
     countries_to_process = countries[:4] if len(countries) > 4 else countries
@@ -2658,6 +2687,7 @@ def generate_cultural_analysis(countries: list, brand_name: str, category: str =
         # Get country name (handle dict or string)
         country_name = country.get('name') if isinstance(country, dict) else str(country)
         country_lower = country_name.lower().strip() if country_name else ""
+        display_name = country_name.title() if country_name else "Unknown"
         display_name = country_name.title() if country_name else "Unknown"
         
         # Get base cultural data - CASE INSENSITIVE
