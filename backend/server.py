@@ -3496,7 +3496,167 @@ def generate_smart_domain_suggestions(brand_name: str, category: str, countries:
     }
 
 
-def generate_smart_final_recommendations(
+def calculate_dynamic_fallback_dimensions(
+    brand_name: str,
+    category: str,
+    classification: dict,
+    linguistic_analysis: dict = None,
+    trademark_risk: float = 5.0,
+    domain_available: bool = False,
+    countries: list = None
+) -> list:
+    """
+    Calculate DYNAMIC dimension scores based on brand characteristics.
+    Used when LLM dimensions are not available (fallback path).
+    
+    Instead of hardcoded 7.5, 7.2, 7.0... we calculate based on:
+    - Brand name length and phonetics
+    - Classification type
+    - Linguistic meaning and alignment
+    - Trademark risk
+    - Market scope
+    """
+    
+    # Extract data
+    legal_category = classification.get("category", "SUGGESTIVE") if classification else "SUGGESTIVE"
+    has_meaning = linguistic_analysis.get("has_linguistic_meaning", False) if linguistic_analysis else False
+    alignment_score = linguistic_analysis.get("business_alignment", {}).get("alignment_score", 5) if linguistic_analysis else 5
+    languages = linguistic_analysis.get("linguistic_analysis", {}).get("languages_detected", []) if linguistic_analysis else []
+    
+    brand_lower = brand_name.lower()
+    brand_length = len(brand_name.replace(" ", ""))
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # 1. BRAND DISTINCTIVENESS & MEMORABILITY
+    # ═══════════════════════════════════════════════════════════════════════
+    # Base from classification
+    distinctiveness_base = {
+        "FANCIFUL": 9.0, "ARBITRARY": 8.0, "SUGGESTIVE": 7.0,
+        "DESCRIPTIVE": 5.0, "GENERIC": 2.0
+    }.get(legal_category, 6.5)
+    
+    # Adjust for length (shorter = more memorable)
+    if brand_length <= 6:
+        distinctiveness_base += 0.5
+    elif brand_length <= 10:
+        distinctiveness_base += 0.2
+    elif brand_length > 15:
+        distinctiveness_base -= 0.5
+    
+    # Adjust for simplicity (all alpha = cleaner)
+    if brand_lower.replace(" ", "").isalpha():
+        distinctiveness_base += 0.3
+    
+    distinctiveness = round(max(1.0, min(10.0, distinctiveness_base)), 1)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # 2. CULTURAL & LINGUISTIC RESONANCE
+    # ═══════════════════════════════════════════════════════════════════════
+    if has_meaning:
+        # Has linguistic meaning - use alignment score
+        cultural_base = min(9.0, alignment_score + 1.5)
+        # Bonus for heritage/mythological references
+        cultural_significance = linguistic_analysis.get("cultural_significance", {}) if linguistic_analysis else {}
+        if cultural_significance.get("has_cultural_reference"):
+            cultural_base += 0.5
+    else:
+        # Coined/invented name - neutral cultural resonance
+        cultural_base = 6.0
+        # Penalty if hard to pronounce (many consonant clusters)
+        consonant_clusters = sum(1 for i in range(len(brand_lower)-1) 
+                                 if brand_lower[i] not in 'aeiou' and brand_lower[i+1] not in 'aeiou')
+        if consonant_clusters >= 3:
+            cultural_base -= 0.5
+    
+    # Adjust for multi-language recognition
+    if len(languages) >= 2:
+        cultural_base += 0.3
+    
+    cultural_resonance = round(max(1.0, min(10.0, cultural_base)), 1)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # 3. PREMIUM POSITIONING & TRUST CURVE
+    # ═══════════════════════════════════════════════════════════════════════
+    # Fanciful/Arbitrary names can command premium
+    premium_base = {
+        "FANCIFUL": 8.0, "ARBITRARY": 7.5, "SUGGESTIVE": 7.0,
+        "DESCRIPTIVE": 5.5, "GENERIC": 3.0
+    }.get(legal_category, 6.0)
+    
+    # Heritage/cultural names can feel premium
+    if has_meaning and alignment_score >= 7:
+        premium_base += 0.5
+    
+    # Domain availability affects perceived legitimacy
+    if domain_available:
+        premium_base += 0.3
+    else:
+        premium_base -= 0.2
+    
+    premium_positioning = round(max(1.0, min(10.0, premium_base)), 1)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # 4. SCALABILITY & BRAND ARCHITECTURE
+    # ═══════════════════════════════════════════════════════════════════════
+    # Fanciful names scale best (can enter any category)
+    scalability_base = {
+        "FANCIFUL": 9.0, "ARBITRARY": 8.5, "SUGGESTIVE": 6.5,
+        "DESCRIPTIVE": 4.0, "GENERIC": 2.0
+    }.get(legal_category, 6.0)
+    
+    # Multi-country scope suggests need for scalability
+    if countries and len(countries) >= 3:
+        scalability_base += 0.3
+    
+    # Names with narrow meaning scale less well
+    if has_meaning and alignment_score >= 8:
+        # Very aligned = potentially narrow
+        scalability_base -= 0.3
+    
+    scalability = round(max(1.0, min(10.0, scalability_base)), 1)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # 5. TRADEMARK STRENGTH (from actual risk score)
+    # ═══════════════════════════════════════════════════════════════════════
+    trademark_strength = round(10.0 - trademark_risk, 1)
+    trademark_strength = max(1.0, min(10.0, trademark_strength))
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # 6. CONSUMER PERCEPTION / MARKET PERCEPTION
+    # ═══════════════════════════════════════════════════════════════════════
+    # Combination of memorability, pronunciation, and associations
+    perception_base = (distinctiveness + cultural_resonance + premium_positioning) / 3
+    
+    # Adjust for easy pronunciation
+    vowel_ratio = sum(1 for c in brand_lower if c in 'aeiou') / max(len(brand_lower), 1)
+    if 0.3 <= vowel_ratio <= 0.5:  # Balanced vowel ratio
+        perception_base += 0.3
+    
+    # Meaningful names create stronger perception
+    if has_meaning:
+        perception_base += 0.4
+    
+    market_perception = round(max(1.0, min(10.0, perception_base)), 1)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # RETURN DIMENSION BREAKDOWN
+    # ═══════════════════════════════════════════════════════════════════════
+    logging.info(f"📊 DYNAMIC DIMENSIONS for '{brand_name}': "
+                 f"Distinct={distinctiveness}, Cultural={cultural_resonance}, "
+                 f"Premium={premium_positioning}, Scale={scalability}, "
+                 f"TM={trademark_strength}, Perception={market_perception}")
+    
+    return [
+        {"Brand Distinctiveness": distinctiveness},
+        {"Cultural Resonance": cultural_resonance},
+        {"Premium Positioning": premium_positioning},
+        {"Scalability": scalability},
+        {"Trademark Strength": trademark_strength},
+        {"Market Perception": market_perception}
+    ]
+
+
+
     brand_name: str,
     category: str,
     countries: list,
