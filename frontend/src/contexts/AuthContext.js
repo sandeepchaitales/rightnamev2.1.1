@@ -238,14 +238,22 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
+            const token = getStoredToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             await fetch(`${API_URL}/auth/logout`, {
                 method: 'POST',
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
         } catch (error) {
             console.error('Logout error:', error);
         }
-        // Clear localStorage auth data
+        // Clear all auth data
+        removeStoredToken();
         localStorage.removeItem('user_authenticated');
         localStorage.removeItem('user_data');
         setUser(null);
