@@ -30,11 +30,12 @@ export const AuthProvider = ({ children }) => {
 
     // Check authentication status on mount
     useEffect(() => {
-        // Check if returning from Google OAuth success
-        if (window.location.hash.includes('auth_success=true')) {
-            // Clear the hash
+        // Check if returning from Google OAuth success (in hash or query string)
+        if (window.location.hash.includes('auth_success=true') || 
+            window.location.search.includes('auth_success=true')) {
+            // Clear the hash/query params
             window.history.replaceState(null, '', window.location.pathname);
-            // Check auth status
+            // Check auth status - cookie should be set
             checkAuth();
         } 
         // Check if there's an auth error
