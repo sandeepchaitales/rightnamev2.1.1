@@ -50,8 +50,9 @@ class GoogleAuthResponse(BaseModel):
 
 def get_redirect_uri(request: Request) -> str:
     """Construct the redirect URI based on the request"""
-    # Get the host from the request
-    host = request.headers.get("host", "localhost:8001")
+    # Try to get the original host from forwarded headers (for proxy/ingress scenarios)
+    forwarded_host = request.headers.get("x-forwarded-host", "")
+    host = forwarded_host or request.headers.get("host", "localhost:8001")
     
     # Determine protocol
     forwarded_proto = request.headers.get("x-forwarded-proto", "")
@@ -62,10 +63,25 @@ def get_redirect_uri(request: Request) -> str:
     else:
         scheme = "https"
     
-    # Build base URL
-    base_url = f"{scheme}://{host}"
+    # For preview/production environments, ensure we use the correct domain
+    # Check if this is an emergentagent.com deployment
+    if "emergentagent.com" in host or "preview" in host:
+        # Use the frontend URL's domain for the callback
+        frontend_url = os.environ.get("FRONTEND_URL", "")
+        if frontend_url:
+            # Extract domain from frontend URL
+            from urllib.parse import urlparse
+            parsed = urlparse(frontend_url)
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            base_url = f"{scheme}://{host}"
+    else:
+        base_url = f"{scheme}://{host}"
     
-    return f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
+    redirect_uri = f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
+    logging.info(f"🔐 Google OAuth: Generated redirect_uri = {redirect_uri} (host={host}, scheme={scheme})")
+    
+    return redirect_uri
 
 
 @google_oauth_router.get("/google")
