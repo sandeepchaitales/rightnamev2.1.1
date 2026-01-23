@@ -14,6 +14,11 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
+// Helper to get session token from localStorage
+const getStoredToken = () => localStorage.getItem('session_token');
+const setStoredToken = (token) => localStorage.setItem('session_token', token);
+const removeStoredToken = () => localStorage.removeItem('session_token');
+
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -30,32 +35,72 @@ export const AuthProvider = ({ children }) => {
 
     // Check authentication status on mount
     useEffect(() => {
-        // Check if returning from Google OAuth success (in hash or query string)
-        if (window.location.hash.includes('auth_success=true') || 
-            window.location.search.includes('auth_success=true')) {
-            // Clear the hash/query params
-            window.history.replaceState(null, '', window.location.pathname);
-            // Check auth status - cookie should be set
-            checkAuth();
-        } 
+        // Check if returning from Google OAuth with auth_token
+        const params = new URLSearchParams(window.location.search);
+        const authToken = params.get('auth_token');
+        
+        if (authToken) {
+            try {
+                // Decode the base64 user info
+                const decoded = JSON.parse(atob(authToken));
+                console.log('🔐 OAuth: Received auth token', decoded.email);
+                
+                // Store session token in localStorage
+                if (decoded.session_token) {
+                    setStoredToken(decoded.session_token);
+                }
+                
+                // Store user data
+                const userData = {
+                    user_id: decoded.user_id,
+                    email: decoded.email,
+                    name: decoded.name,
+                    picture: decoded.picture
+                };
+                
+                setUser(userData);
+                localStorage.setItem('user_authenticated', 'true');
+                localStorage.setItem('user_data', JSON.stringify(userData));
+                setLoading(false);
+                
+                // Clear the URL params
+                window.history.replaceState(null, '', window.location.pathname);
+                
+                console.log('🔐 OAuth: User logged in successfully', decoded.email);
+                return;
+            } catch (e) {
+                console.error('🔐 OAuth: Failed to decode auth token', e);
+            }
+        }
+        
         // Check if there's an auth error
-        else if (window.location.search.includes('auth_error=')) {
-            const params = new URLSearchParams(window.location.search);
+        if (window.location.search.includes('auth_error=')) {
             const error = params.get('auth_error');
             console.error('Google OAuth error:', error);
-            // Clear the error param
             window.history.replaceState(null, '', window.location.pathname);
-            checkAuth();
         }
-        else {
-            checkAuth();
-        }
+        
+        // Normal auth check
+        checkAuth();
     }, []);
 
     const checkAuth = async () => {
         try {
+            // Get stored token
+            const token = getStoredToken();
+            
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // Add Authorization header if we have a token
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(`${API_URL}/auth/me`, {
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
             
             // Read response text first to avoid body stream issues
