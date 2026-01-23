@@ -291,7 +291,6 @@ async def google_callback(
         # The frontend will extract the token and store it in localStorage
         
         # Encode user info for the redirect
-        import base64
         user_info = {
             "session_token": session_token,
             "user_id": user_id,
