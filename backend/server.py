@@ -13273,12 +13273,18 @@ async def get_current_user(request: Request):
 @api_router.post("/auth/logout")
 async def logout(request: Request, response: Response):
     """Logout user and clear session"""
+    # Try cookie first, then Authorization header
     session_token = request.cookies.get("session_token")
+    
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header[7:]
     
     if session_token:
         await db.user_sessions.delete_many({"session_token": session_token})
     
-    # Delete cookie with same settings as it was set
+    # Delete cookie
     response.delete_cookie(key="session_token", path="/", samesite="lax")
     return {"message": "Logged out successfully"}
 
