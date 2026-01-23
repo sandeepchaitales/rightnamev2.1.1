@@ -7,6 +7,8 @@ import os
 import uuid
 import httpx
 import logging
+import json
+import base64
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from urllib.parse import urlencode
