@@ -11145,16 +11145,17 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                     "verdict_statement": f"{'✅ RECOMMENDED TO PROCEED' if verdict == 'GO' else '⚠️ PROCEED WITH CAUTION' if verdict == 'CAUTION' else '❌ NOT RECOMMENDED'}",
                     "suitability_score": overall_score,
                     "bottom_line": f"'{brand_name}' {'demonstrates strong potential for the {category} market. Recommended to proceed with trademark filing and brand development.' if verdict == 'GO' else 'shows promise but requires attention to identified concerns before proceeding.' if verdict == 'CAUTION' else 'faces significant challenges. Consider alternative naming approaches.'}",
-                    "dimension_breakdown": [
-                        {"Brand Distinctiveness": 7.5},
-                        {"Cultural Resonance": 7.2},
-                        {"Premium Positioning": 7.0},
-                        {"Scalability": 7.3},
-                        {"Trademark Strength": float(trademark_score)},
-                        {"Market Perception": 7.0}
-                    ],
+                    "dimension_breakdown": calculate_dynamic_fallback_dimensions(
+                        brand_name=brand_name,
+                        category=category,
+                        classification=classification,
+                        linguistic_analysis=linguistic_data,
+                        trademark_risk=trademark_risk,
+                        domain_available=domain_available,
+                        countries=request.countries
+                    ),
                     "recommendations": generate_smart_final_recommendations(brand_name, category, request.countries, domain_available, nice_class, trademark_data),
-                    "alternative_path": f"If primary strategy faces obstacles, consider: 1) Modified spelling variations, 2) Adding descriptive suffix (e.g., '{brand_name}Labs'), 3) Geographic modifiers for specific markets."
+                    "alternative_path": generate_dynamic_alternative_path(brand_name, category, classification, trademark_data)
                 },
                 # NEW: Use classification-aware McKinsey analysis
                 "mckinsey_analysis": generate_mckinsey_analysis(
