@@ -13278,7 +13278,8 @@ async def logout(request: Request, response: Response):
     if session_token:
         await db.user_sessions.delete_many({"session_token": session_token})
     
-    response.delete_cookie(key="session_token", path="/", samesite="none", secure=True)
+    # Delete cookie with same settings as it was set
+    response.delete_cookie(key="session_token", path="/", samesite="lax")
     return {"message": "Logged out successfully"}
 
 app.include_router(api_router)
