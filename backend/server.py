@@ -3656,7 +3656,58 @@ def calculate_dynamic_fallback_dimensions(
     ]
 
 
+def generate_dynamic_alternative_path(
+    brand_name: str,
+    category: str,
+    classification: dict,
+    trademark_data: dict = None
+) -> str:
+    """
+    Generate DYNAMIC alternative path suggestions based on actual conflicts found.
+    Not generic - tailored to the specific situation.
+    """
+    legal_category = classification.get("category", "SUGGESTIVE") if classification else "SUGGESTIVE"
+    
+    # Extract conflicts if available
+    conflicts = []
+    if trademark_data and isinstance(trademark_data, dict):
+        conflicts = trademark_data.get("trademark_conflicts", []) or []
+    
+    suggestions = []
+    
+    # 1. If conflicts found - suggest differentiating modifications
+    if conflicts:
+        conflict_names = [c.get("name", "") for c in conflicts[:2]]
+        suggestions.append(f"Differentiate from '{conflict_names[0]}' with unique spelling or prefix")
+    else:
+        suggestions.append("Modified spelling variations for stronger distinctiveness")
+    
+    # 2. Category-aware suffix suggestions
+    category_lower = category.lower()
+    if any(word in category_lower for word in ["tech", "software", "app", "saas"]):
+        suggestions.append(f"Adding tech suffix (e.g., '{brand_name}AI', '{brand_name}Labs', '{brand_name}HQ')")
+    elif any(word in category_lower for word in ["food", "restaurant", "cafe", "tea", "coffee"]):
+        suggestions.append(f"Adding food suffix (e.g., '{brand_name}Kitchen', '{brand_name}Cafe', '{brand_name}Co')")
+    elif any(word in category_lower for word in ["hotel", "travel", "tourism"]):
+        suggestions.append(f"Adding hospitality suffix (e.g., '{brand_name}Stays', '{brand_name}Escapes')")
+    elif any(word in category_lower for word in ["finance", "bank", "payment"]):
+        suggestions.append(f"Adding fintech suffix (e.g., '{brand_name}Pay', '{brand_name}Fi')")
+    else:
+        suggestions.append(f"Adding descriptive suffix (e.g., '{brand_name}Co', '{brand_name}Group')")
+    
+    # 3. Geographic modifier if multi-country
+    suggestions.append("Geographic modifiers for specific market entry")
+    
+    # 4. Classification-specific advice
+    if legal_category == "DESCRIPTIVE":
+        suggestions.append("Consider more distinctive/arbitrary naming approach for stronger protection")
+    elif legal_category == "SUGGESTIVE":
+        suggestions.append("Strengthen suggestive elements for better recall")
+    
+    return f"If primary strategy faces obstacles, consider: {'; '.join(suggestions[:3])}."
 
+
+def generate_smart_final_recommendations(
     brand_name: str,
     category: str,
     countries: list,
