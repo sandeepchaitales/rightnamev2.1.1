@@ -92,6 +92,34 @@ def get_redirect_uri(request: Request) -> str:
     return redirect_uri
 
 
+@google_oauth_router.get("/google/debug")
+async def google_debug(request: Request):
+    """Debug endpoint to check what redirect_uri would be generated"""
+    origin = request.headers.get("origin", "")
+    referer = request.headers.get("referer", "")
+    forwarded_host = request.headers.get("x-forwarded-host", "")
+    host = request.headers.get("host", "")
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    
+    redirect_uri = get_redirect_uri(request)
+    
+    return {
+        "generated_redirect_uri": redirect_uri,
+        "headers": {
+            "origin": origin,
+            "referer": referer,
+            "x-forwarded-host": forwarded_host,
+            "host": host,
+            "x-forwarded-proto": forwarded_proto
+        },
+        "expected_in_google_console": [
+            "https://rightname.ai/api/auth/google/callback",
+            "https://www.rightname.ai/api/auth/google/callback",
+            redirect_uri
+        ]
+    }
+
+
 @google_oauth_router.get("/google")
 async def google_login(request: Request, return_url: Optional[str] = None):
     """
