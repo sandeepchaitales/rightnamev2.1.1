@@ -289,20 +289,27 @@ async def google_callback(
         redirect_url = return_url if return_url != "/" else "/"
         
         # Create response with redirect
-        response = RedirectResponse(url=f"/#auth_success=true", status_code=302)
+        # Use the return_url or default to homepage
+        final_redirect = return_url if return_url and return_url != "/" else "/"
+        response = RedirectResponse(url=final_redirect, status_code=302)
         
-        # Set session cookie
+        # Set session cookie - ensure it works across the domain
+        # For production (rightname.ai), we need secure=True
+        # For localhost development, we need secure=False
+        is_localhost = "localhost" in str(request.url) or "127.0.0.1" in str(request.url)
+        
         response.set_cookie(
             key="session_token",
             value=session_token,
             httponly=True,
-            secure=True,
+            secure=not is_localhost,  # True for production, False for localhost
             samesite="lax",
             max_age=60 * 60 * 24 * 30,  # 30 days
-            path="/"
+            path="/",
+            domain=None  # Let browser set the domain automatically
         )
         
-        logging.info(f"🔐 Google OAuth: Session created for {email}")
+        logging.info(f"🔐 Google OAuth: Session created for {email}, redirecting to {final_redirect}")
         
         return response
         
