@@ -49,38 +49,46 @@ class GoogleAuthResponse(BaseModel):
 
 
 def get_redirect_uri(request: Request) -> str:
-    """Construct the redirect URI based on the request"""
-    # Try to get the original host from forwarded headers (for proxy/ingress scenarios)
+    """Construct the redirect URI based on the request origin"""
+    # Get various headers that might contain the original host
+    origin = request.headers.get("origin", "")
+    referer = request.headers.get("referer", "")
     forwarded_host = request.headers.get("x-forwarded-host", "")
-    host = forwarded_host or request.headers.get("host", "localhost:8001")
+    host = request.headers.get("host", "localhost:8001")
+    forwarded_proto = request.headers.get("x-forwarded-proto", "https")
     
-    # Determine protocol
-    forwarded_proto = request.headers.get("x-forwarded-proto", "")
-    if forwarded_proto:
-        scheme = forwarded_proto
-    elif "localhost" in host:
-        scheme = "http"
-    else:
-        scheme = "https"
+    logging.info(f"🔐 OAuth Headers: origin={origin}, referer={referer}, host={host}, x-forwarded-host={forwarded_host}")
     
-    # For preview/production environments, ensure we use the correct domain
-    # Check if this is an emergentagent.com deployment
-    if "emergentagent.com" in host or "preview" in host:
-        # Use the frontend URL's domain for the callback
-        frontend_url = os.environ.get("FRONTEND_URL", "")
-        if frontend_url:
-            # Extract domain from frontend URL
-            from urllib.parse import urlparse
-            parsed = urlparse(frontend_url)
+    # Priority 1: Use origin header (most reliable for the actual frontend domain)
+    if origin and origin.startswith("http"):
+        base_url = origin.rstrip("/")
+        redirect_uri = f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
+        logging.info(f"🔐 Google OAuth: Using origin header → {redirect_uri}")
+        return redirect_uri
+    
+    # Priority 2: Extract from referer
+    if referer:
+        from urllib.parse import urlparse
+        parsed = urlparse(referer)
+        if parsed.scheme and parsed.netloc:
             base_url = f"{parsed.scheme}://{parsed.netloc}"
-        else:
-            base_url = f"{scheme}://{host}"
-    else:
-        base_url = f"{scheme}://{host}"
+            redirect_uri = f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
+            logging.info(f"🔐 Google OAuth: Using referer header → {redirect_uri}")
+            return redirect_uri
     
+    # Priority 3: Use x-forwarded-host with x-forwarded-proto
+    if forwarded_host:
+        scheme = forwarded_proto or "https"
+        base_url = f"{scheme}://{forwarded_host}"
+        redirect_uri = f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
+        logging.info(f"🔐 Google OAuth: Using x-forwarded-host → {redirect_uri}")
+        return redirect_uri
+    
+    # Priority 4: Use host header
+    scheme = "http" if "localhost" in host else "https"
+    base_url = f"{scheme}://{host}"
     redirect_uri = f"{base_url}{GOOGLE_REDIRECT_URI_PATH}"
-    logging.info(f"🔐 Google OAuth: Generated redirect_uri = {redirect_uri} (host={host}, scheme={scheme})")
-    
+    logging.info(f"🔐 Google OAuth: Using host header → {redirect_uri}")
     return redirect_uri
 
 
