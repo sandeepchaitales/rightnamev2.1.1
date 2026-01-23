@@ -2315,7 +2315,120 @@ def _get_neutral_default_market_data(category: str, country: str) -> dict:
         "entry_recommendation": f"Phased market entry for {country}: Phase 1 (6 months) - Digital validation and customer discovery. Phase 2 (12 months) - Strategic partnerships and channel development. Phase 3 (18+ months) - Scale operations and market expansion. Key success factors: strong unit economics, customer retention, and brand building."
     }
 
-def generate_country_competitor_analysis(countries: list, category: str, brand_name: str, industry: str = None) -> list:
+
+async def generate_llm_market_insights(
+    brand_name: str,
+    category: str,
+    country: str,
+    positioning: str = None,
+    usp: str = None
+) -> dict:
+    """
+    Generate DYNAMIC market insights using LLM.
+    Returns white_space, strategic_advantage, and entry_recommendation.
+    Falls back to hardcoded data if LLM fails.
+    """
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
+        if not EMERGENT_KEY:
+            return None
+        
+        prompt = f"""You are a McKinsey market strategist. Analyze the market opportunity for a NEW brand.
+
+BRAND: {brand_name}
+CATEGORY: {category}
+TARGET COUNTRY: {country}
+POSITIONING: {positioning or 'Not specified'}
+USP: {usp or 'Not specified'}
+
+Provide analysis in this EXACT JSON format (no markdown, just JSON):
+{{
+    "white_space": "2-3 sentences about market gaps and opportunities specific to {category} in {country}. Include market size if known. Be specific about underserved segments.",
+    "strategic_advantage": "2-3 sentences about how '{brand_name}' can win in this market. Focus on differentiation, timing, and competitive positioning.",
+    "entry_recommendation": "3-phase market entry plan (6mo/12mo/18mo+) specific to {country}. Include specific platforms, partnerships, and success metrics."
+}}
+
+Be specific to the {category} industry and {country} market. Do not be generic."""
+
+        chat = LlmChat(EMERGENT_KEY, "openai", "gpt-4o-mini")
+        user_msg = UserMessage(text=prompt)
+        response = await chat.send_message(user_msg)
+        
+        # Parse response
+        response_text = str(response).strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        
+        result = json.loads(response_text)
+        logging.info(f"✅ LLM Market Insights generated for {brand_name} in {country}")
+        return result
+        
+    except Exception as e:
+        logging.warning(f"⚠️ LLM Market Insights failed: {e}")
+        return None
+
+
+def generate_dynamic_market_insights_sync(
+    brand_name: str,
+    category: str,
+    country: str,
+    positioning: str = None,
+    classification: dict = None
+) -> dict:
+    """
+    Generate market insights synchronously (non-LLM fallback).
+    Creates dynamic insights based on brand characteristics.
+    """
+    legal_category = classification.get("category", "SUGGESTIVE") if classification else "SUGGESTIVE"
+    category_lower = category.lower()
+    country_lower = country.lower()
+    
+    # Dynamic white space based on category
+    if any(word in category_lower for word in ["tea", "chai"]):
+        white_space = f"The {country} tea market presents opportunity in the premium segment. Gap exists between mass-market commodity tea and ultra-luxury offerings. '{brand_name}' can target the accessible-premium segment with authentic origin stories and wellness positioning."
+    elif any(word in category_lower for word in ["hotel", "hospitality"]):
+        white_space = f"The {country} hospitality sector shows demand for boutique and experience-driven accommodations. Chain standardization has created opportunity for authentic, locally-rooted brands. '{brand_name}' can capture the lifestyle-conscious traveler segment."
+    elif any(word in category_lower for word in ["tech", "software", "app"]):
+        white_space = f"The {country} technology market is growing with increasing digital adoption. Opportunity exists for solutions that address local market needs with global standards. '{brand_name}' can position as an innovative challenger."
+    elif any(word in category_lower for word in ["food", "restaurant"]):
+        white_space = f"The {country} food market is evolving toward health-conscious and authentic offerings. Consumer demand for quality and transparency is rising. '{brand_name}' can differentiate through product authenticity and brand story."
+    elif any(word in category_lower for word in ["beauty", "cosmetic"]):
+        white_space = f"The {country} beauty market is shifting toward clean beauty and sustainability. Indie brands with authentic stories are gaining against conglomerates. '{brand_name}' can capture the conscious consumer segment."
+    else:
+        white_space = f"The {country} {category} market presents opportunities for differentiated brands. '{brand_name}' can establish positioning by focusing on underserved customer segments and innovative value propositions."
+    
+    # Dynamic strategic advantage based on classification
+    if legal_category == "FANCIFUL":
+        strategic_advantage = f"As a coined/invented name, '{brand_name}' has maximum trademark protection and can be positioned across multiple categories. The blank-slate nature allows complete brand narrative control. No legacy associations to overcome."
+    elif legal_category == "ARBITRARY":
+        strategic_advantage = f"'{brand_name}' uses familiar words in an unexpected context, creating memorability while maintaining strong legal protection. This allows creative storytelling while leveraging existing word recognition."
+    elif legal_category == "SUGGESTIVE":
+        strategic_advantage = f"'{brand_name}' suggests product benefits without directly describing them, balancing distinctiveness with consumer understanding. This creates intuitive brand recognition while maintaining registrability."
+    else:
+        strategic_advantage = f"'{brand_name}' can differentiate through execution excellence, customer experience, and brand building. Focus on building distinctive brand assets and customer loyalty."
+    
+    # Dynamic entry recommendation
+    if any(word in country_lower for word in ["india", "indonesia", "brazil", "mexico"]):
+        entry_recommendation = f"Phase 1 (0-6 months): Launch on major e-commerce platforms and build digital presence. Phase 2 (6-12 months): Expand to tier-2 cities and build distribution partnerships. Phase 3 (12-18 months): Consider offline presence in high-traffic locations. Key: Mobile-first approach, local language content."
+    elif any(word in country_lower for word in ["usa", "uk", "canada", "australia"]):
+        entry_recommendation = f"Phase 1 (0-6 months): DTC website launch with targeted digital marketing. Phase 2 (6-12 months): Amazon/marketplace expansion and influencer partnerships. Phase 3 (12-18 months): Retail partnerships and brand awareness campaigns. Key: Build community and loyalty program early."
+    elif any(word in country_lower for word in ["uae", "singapore", "japan"]):
+        entry_recommendation = f"Phase 1 (0-6 months): Premium positioning with flagship presence. Phase 2 (6-12 months): Strategic partnerships with established distributors. Phase 3 (12-18 months): Regional expansion from hub market. Key: Quality perception and premium pricing."
+    else:
+        entry_recommendation = f"Phase 1 (0-6 months): Market validation and customer discovery. Phase 2 (6-12 months): Channel development and partnership building. Phase 3 (12-18 months): Scale operations and expand market share. Key: Adapt to local market dynamics."
+    
+    return {
+        "white_space": white_space,
+        "strategic_advantage": strategic_advantage,
+        "entry_recommendation": entry_recommendation
+    }
+
+
+
     """Generate RESEARCHED competitor analysis for ALL user-selected countries (max 4)
     Now category-aware - uses different competitor data based on industry category
     """
