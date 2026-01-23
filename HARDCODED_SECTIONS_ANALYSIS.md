@@ -1,19 +1,97 @@
 # RIGHTNAME.AI - Hardcoded Sections Analysis
 
-## 📊 SUMMARY
+## 📊 SUMMARY - UPDATED
 
 | Category | Status | Impact Level |
 |----------|--------|--------------|
 | Global Competitors | ✅ FIXED | High |
 | Country-Specific Competitors | ✅ GOOD (Real data) | - |
 | Similar Brand Examples | ✅ FIXED | Medium |
-| Dimension Scores (Fallback) | ⚠️ HARDCODED | High |
-| Cultural Scores (Fallback) | ⚠️ SEMI-DYNAMIC | Medium |
-| White Space Analysis | ⚠️ HARDCODED | Medium |
-| Strategic Advantage | ⚠️ HARDCODED | Medium |
-| Entry Recommendations | ⚠️ HARDCODED | Medium |
+| Dimension Scores (Fallback) | ✅ FIXED - Now Dynamic | High |
+| Cultural Scores (Fallback) | ✅ SEMI-DYNAMIC | Medium |
+| White Space Analysis | ✅ FIXED - Dynamic generation | Medium |
+| Strategic Advantage | ✅ FIXED - Classification-aware | Medium |
+| Entry Recommendations | ✅ FIXED - Country-aware | Medium |
+| Alternative Path | ✅ FIXED - Conflict-aware | Low |
 | Executive Summary | ✅ DYNAMIC | - |
 | Trademark Messages | ✅ DYNAMIC | - |
+
+---
+
+## ✅ ALL FIXES APPLIED
+
+### 1. **Fallback Dimension Scores** - NOW DYNAMIC
+**Function:** `calculate_dynamic_fallback_dimensions()`
+**Location:** `/app/backend/server.py` - Lines 3499-3656
+
+Calculates each dimension based on:
+- **Distinctiveness:** Classification type + brand length + simplicity
+- **Cultural Resonance:** Linguistic meaning + alignment score + heritage
+- **Premium Positioning:** Classification + meaning alignment + domain
+- **Scalability:** Classification + multi-country scope + meaning breadth
+- **Trademark Strength:** Actual trademark risk score (inverse)
+- **Market Perception:** Composite of above + pronunciation ease
+
+### 2. **White Space Analysis** - NOW DYNAMIC
+**Function:** `generate_dynamic_market_insights_sync()`
+**Location:** `/app/backend/server.py` - Lines 2380-2430
+
+Generates category-specific white space analysis:
+- Tea/Coffee → Premium segment opportunity
+- Hotels → Boutique/experience demand
+- Tech → Local solutions with global standards
+- Food → Health-conscious and authenticity trends
+- Beauty → Clean beauty and sustainability shift
+
+### 3. **Strategic Advantage** - NOW CLASSIFICATION-AWARE
+**Function:** `generate_dynamic_market_insights_sync()`
+
+Tailored advice based on classification:
+- FANCIFUL → Maximum protection, blank-slate narrative
+- ARBITRARY → Familiar words in unexpected context
+- SUGGESTIVE → Balanced distinctiveness and understanding
+- DESCRIPTIVE → Focus on execution excellence
+
+### 4. **Entry Recommendations** - NOW COUNTRY-AWARE
+**Function:** `generate_dynamic_market_insights_sync()`
+
+Market-specific entry strategies:
+- Emerging markets (India, Indonesia) → E-commerce first, tier-2 expansion
+- Developed markets (USA, UK) → DTC website, Amazon/marketplace
+- Premium hubs (UAE, Singapore) → Flagship presence, distributor partnerships
+
+### 5. **Alternative Path** - NOW CONFLICT-AWARE
+**Function:** `generate_dynamic_alternative_path()`
+**Location:** `/app/backend/server.py` - Lines 3658-3715
+
+Suggestions based on:
+- Actual conflicts found in trademark search
+- Category-appropriate suffixes (Labs, AI, Kitchen, Stays, Pay)
+- Classification-specific advice
+
+---
+
+## 📁 NEW FUNCTIONS ADDED
+
+| Function | Purpose | Location |
+|----------|---------|----------|
+| `calculate_dynamic_fallback_dimensions()` | Dynamic dimension scores | Line 3499 |
+| `generate_dynamic_alternative_path()` | Conflict-aware alternatives | Line 3658 |
+| `generate_llm_market_insights()` | LLM-based market insights | Line 2318 |
+| `generate_dynamic_market_insights_sync()` | Sync fallback market insights | Line 2380 |
+
+---
+
+## 🎯 RESULT
+
+**Before:** Same hardcoded values for ALL brands
+**After:** Each brand gets UNIQUE scores and insights based on:
+- Brand name characteristics
+- Classification type
+- Linguistic analysis
+- Category/industry
+- Target countries
+- Actual conflicts found
 
 ---
 
