@@ -289,8 +289,14 @@ async def google_callback(
         redirect_url = return_url if return_url != "/" else "/"
         
         # Create response with redirect
-        # Use the return_url or default to homepage
-        final_redirect = return_url if return_url and return_url != "/" else "/"
+        # Use the return_url or default to homepage, always add auth_success
+        if return_url and return_url != "/" and not return_url.startswith("http"):
+            # Append auth_success to the return URL
+            separator = "&" if "?" in return_url else "?"
+            final_redirect = f"{return_url}{separator}auth_success=true"
+        else:
+            final_redirect = "/?auth_success=true"
+        
         response = RedirectResponse(url=final_redirect, status_code=302)
         
         # Set session cookie - ensure it works across the domain
