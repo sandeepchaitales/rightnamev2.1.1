@@ -2459,6 +2459,28 @@ def generate_dynamic_market_insights_sync(
         market_data = get_market_data_for_category_country(category, country_name, industry)
         logging.info(f"📊 Market data for {display_name} {flag} ({category_key}): {len(market_data.get('competitors', []))} competitors")
         
+        # Check if we got default/generic data - if so, generate dynamic insights
+        is_generic_data = "Market Leader" in str(market_data.get("competitors", [])) or \
+                          "Market analysis for" in market_data.get("white_space", "")
+        
+        if is_generic_data:
+            # Generate dynamic insights for this brand/category/country
+            dynamic_insights = generate_dynamic_market_insights_sync(
+                brand_name=brand_name,
+                category=category,
+                country=display_name,
+                positioning=None,
+                classification=None
+            )
+            white_space = dynamic_insights["white_space"]
+            strategic_advantage = dynamic_insights["strategic_advantage"]
+            entry_recommendation = dynamic_insights["entry_recommendation"]
+            logging.info(f"🔄 Using DYNAMIC market insights for {display_name} (category had default data)")
+        else:
+            white_space = market_data["white_space"].replace("'", "'")
+            strategic_advantage = market_data["strategic_advantage"].replace("'", "'")
+            entry_recommendation = market_data["entry_recommendation"].replace("'", "'")
+        
         # Build the analysis
         result.append({
             "country": display_name,
@@ -2472,9 +2494,9 @@ def generate_dynamic_market_insights_sync(
                 "quadrant": market_data["user_position"]["quadrant"],
                 "rationale": f"'{brand_name}' positioned in {market_data['user_position']['quadrant']} segment to maximize market opportunity in {display_name}"
             },
-            "white_space_analysis": market_data["white_space"].replace("'", "'"),
-            "strategic_advantage": market_data["strategic_advantage"].replace("'", "'"),
-            "market_entry_recommendation": market_data["entry_recommendation"].replace("'", "'")
+            "white_space_analysis": white_space,
+            "strategic_advantage": strategic_advantage,
+            "market_entry_recommendation": entry_recommendation
         })
     
     return result
