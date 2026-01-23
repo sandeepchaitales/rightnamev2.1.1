@@ -284,35 +284,41 @@ async def google_callback(
             "expires_at": expires_at.isoformat()
         })
         
-        # Build redirect URL with session info
-        # We'll set cookie and redirect to frontend
-        redirect_url = return_url if return_url != "/" else "/"
+        # Build redirect URL with session token in URL
+        # This approach is more reliable than cookies for cross-domain scenarios
+        # The frontend will extract the token and store it in localStorage
         
-        # Create response with redirect
-        # Use the return_url or default to homepage, always add auth_success
+        # Encode user info for the redirect
+        import base64
+        user_info = {
+            "session_token": session_token,
+            "user_id": user_id,
+            "email": email,
+            "name": name,
+            "picture": picture
+        }
+        encoded_user = base64.urlsafe_b64encode(json.dumps(user_info).encode()).decode()
+        
+        # Build redirect with token
         if return_url and return_url != "/" and not return_url.startswith("http"):
-            # Append auth_success to the return URL
-            separator = "&" if "?" in return_url else "?"
-            final_redirect = f"{return_url}{separator}auth_success=true"
+            final_redirect = f"{return_url}?auth_token={encoded_user}"
         else:
-            final_redirect = "/?auth_success=true"
+            final_redirect = f"/?auth_token={encoded_user}"
         
         response = RedirectResponse(url=final_redirect, status_code=302)
         
-        # Set session cookie - ensure it works across the domain
-        # For production (rightname.ai), we need secure=True
-        # For localhost development, we need secure=False
+        # Also set cookie as backup (for same-domain scenarios)
         is_localhost = "localhost" in str(request.url) or "127.0.0.1" in str(request.url)
         
         response.set_cookie(
             key="session_token",
             value=session_token,
-            httponly=True,
-            secure=not is_localhost,  # True for production, False for localhost
+            httponly=False,  # Allow JS access for debugging
+            secure=not is_localhost,
             samesite="lax",
-            max_age=60 * 60 * 24 * 30,  # 30 days
+            max_age=60 * 60 * 24 * 30,
             path="/",
-            domain=None  # Let browser set the domain automatically
+            domain=None
         )
         
         logging.info(f"🔐 Google OAuth: Session created for {email}, redirecting to {final_redirect}")
