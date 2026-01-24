@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Debug - RightName.ai</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #0f0; }
+        .box { background: #16213e; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        h2 { color: #e94560; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Auth Debug Page</h1>
+    
+    <div class="box">
+        <h2>URL Info</h2>
+        <p><strong>Full URL:</strong> <span id="fullUrl"></span></p>
+        <p><strong>Search Params:</strong> <span id="searchParams"></span></p>
+        <p><strong>auth_token present:</strong> <span id="hasToken"></span></p>
+    </div>
+    
+    <div class="box">
+        <h2>auth_token Value</h2>
+        <pre id="tokenValue"></pre>
+    </div>
+    
+    <div class="box">
+        <h2>Decoded Token</h2>
+        <pre id="decodedToken"></pre>
+    </div>
+    
+    <div class="box">
+        <h2>localStorage</h2>
+        <p><strong>session_token:</strong> <span id="sessionToken"></span></p>
+        <p><strong>user_authenticated:</strong> <span id="userAuth"></span></p>
+        <p><strong>user_data:</strong></p>
+        <pre id="userData"></pre>
+    </div>
+    
+    <div class="box">
+        <h2>Actions</h2>
+        <button onclick="clearAuth()">Clear All Auth Data</button>
+        <button onclick="testDecode()">Test Decode</button>
+        <button onclick="window.location.href='/'">Go to Homepage</button>
+    </div>
+
+    <script>
+        // Display URL info
+        document.getElementById('fullUrl').textContent = window.location.href;
+        document.getElementById('searchParams').textContent = window.location.search;
+        
+        // Check for auth_token
+        const params = new URLSearchParams(window.location.search);
+        const authToken = params.get('auth_token');
+        document.getElementById('hasToken').textContent = authToken ? 'YES ✅' : 'NO ❌';
+        document.getElementById('tokenValue').textContent = authToken || '(none)';
+        
+        // Try to decode
+        if (authToken) {
+            try {
+                const decoded = JSON.parse(atob(authToken));
+                document.getElementById('decodedToken').textContent = JSON.stringify(decoded, null, 2);
+            } catch (e) {
+                document.getElementById('decodedToken').textContent = 'DECODE ERROR: ' + e.message;
+            }
+        } else {
+            document.getElementById('decodedToken').textContent = '(no token to decode)';
+        }
+        
+        // Show localStorage
+        document.getElementById('sessionToken').textContent = localStorage.getItem('session_token') || '(none)';
+        document.getElementById('userAuth').textContent = localStorage.getItem('user_authenticated') || '(none)';
+        document.getElementById('userData').textContent = localStorage.getItem('user_data') || '(none)';
+        
+        function clearAuth() {
+            localStorage.removeItem('session_token');
+            localStorage.removeItem('user_authenticated');
+            localStorage.removeItem('user_data');
+            alert('Auth data cleared! Refreshing...');
+            location.reload();
+        }
+        
+        function testDecode() {
+            const token = prompt('Enter auth_token to decode:');
+            if (token) {
+                try {
+                    const decoded = JSON.parse(atob(token));
+                    alert('SUCCESS!\n\n' + JSON.stringify(decoded, null, 2));
+                } catch (e) {
+                    alert('DECODE ERROR: ' + e.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
