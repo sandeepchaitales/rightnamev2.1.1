@@ -94,6 +94,33 @@ def get_redirect_uri(request: Request) -> str:
     return redirect_uri
 
 
+@google_oauth_router.get("/google/test-login")
+async def test_login(request: Request):
+    """Test login endpoint - bypasses Google for debugging"""
+    import json
+    import base64
+    
+    # Create a test user
+    test_user = {
+        "session_token": f"test_{uuid.uuid4().hex[:16]}",
+        "user_id": "test_user_123",
+        "email": "test@rightname.ai",
+        "name": "Test User",
+        "picture": None
+    }
+    
+    # Encode the user info
+    encoded_user = base64.urlsafe_b64encode(json.dumps(test_user).encode()).decode()
+    
+    # Return debug info + redirect URL
+    return {
+        "test_user": test_user,
+        "encoded_token": encoded_user,
+        "redirect_url": f"/?auth_token={encoded_user}",
+        "instructions": "Copy redirect_url and paste in browser to test frontend auth handling"
+    }
+
+
 @google_oauth_router.get("/google/debug")
 async def google_debug(request: Request):
     """Debug endpoint to check what redirect_uri would be generated"""
