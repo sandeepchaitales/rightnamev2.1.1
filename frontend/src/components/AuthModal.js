@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { ReportPreviewCompact } from './ReportPreview';
 
 const AuthModal = () => {
-    const { showAuthModal, closeAuthModal, loginWithGoogle, loginWithEmail, registerWithEmail } = useAuth();
+    const { showAuthModal, closeAuthModal, loginWithEmail, registerWithEmail } = useAuth();
     const [activeTab, setActiveTab] = useState('login');
     const [loading, setLoading] = useState(false);
     
