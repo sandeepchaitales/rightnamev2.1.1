@@ -41,20 +41,15 @@ export const AuthProvider = ({ children }) => {
         
         if (authToken) {
             try {
-                // Convert URL-safe base64 back to standard base64
-                // Replace - with +, _ with /, and add padding if needed
-                let base64 = authToken.replace(/-/g, '+').replace(/_/g, '/');
-                while (base64.length % 4) {
-                    base64 += '=';
-                }
-                
-                // Decode the base64 user info
-                const decoded = JSON.parse(atob(base64));
-                console.log('🔐 OAuth: Received auth token', decoded.email);
+                // The token is URL-encoded standard base64
+                // URLSearchParams already decodes it, so we can use atob directly
+                const decoded = JSON.parse(atob(authToken));
+                console.log('🔐 OAuth: Received auth token for', decoded.email);
                 
                 // Store session token in localStorage
                 if (decoded.session_token) {
                     setStoredToken(decoded.session_token);
+                    console.log('🔐 OAuth: Session token stored');
                 }
                 
                 // Store user data
@@ -73,10 +68,11 @@ export const AuthProvider = ({ children }) => {
                 // Clear the URL params
                 window.history.replaceState(null, '', window.location.pathname);
                 
-                console.log('🔐 OAuth: User logged in successfully', decoded.email);
+                console.log('🔐 OAuth: User logged in successfully!', decoded.email);
                 return;
             } catch (e) {
-                console.error('🔐 OAuth: Failed to decode auth token', e, authToken);
+                console.error('🔐 OAuth: Failed to decode auth token', e);
+                console.error('🔐 OAuth: Token was:', authToken);
             }
         }
         
