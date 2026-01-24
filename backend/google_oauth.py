@@ -122,6 +122,30 @@ async def test_login(request: Request):
     }
 
 
+@google_oauth_router.get("/google/test-redirect")
+async def test_redirect(request: Request):
+    """Test redirect - actually redirects like real OAuth would"""
+    from urllib.parse import quote
+    
+    # Create a test user
+    test_user = {
+        "session_token": f"test_{uuid.uuid4().hex[:16]}",
+        "user_id": "test_user_123",
+        "email": "test@rightname.ai",
+        "name": "Test User",
+        "picture": None
+    }
+    
+    # Encode the user info
+    encoded_user = base64.b64encode(json.dumps(test_user).encode()).decode()
+    encoded_user_safe = quote(encoded_user, safe='')
+    
+    logging.info(f"🔐 Test redirect: Creating redirect to /?auth_token=...")
+    
+    # Actually redirect like real OAuth
+    return RedirectResponse(url=f"/?auth_token={encoded_user_safe}", status_code=302)
+
+
 @google_oauth_router.get("/google/debug")
 async def google_debug(request: Request):
     """Debug endpoint to check what redirect_uri would be generated"""
