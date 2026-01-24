@@ -41,8 +41,15 @@ export const AuthProvider = ({ children }) => {
         
         if (authToken) {
             try {
+                // Convert URL-safe base64 back to standard base64
+                // Replace - with +, _ with /, and add padding if needed
+                let base64 = authToken.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) {
+                    base64 += '=';
+                }
+                
                 // Decode the base64 user info
-                const decoded = JSON.parse(atob(authToken));
+                const decoded = JSON.parse(atob(base64));
                 console.log('🔐 OAuth: Received auth token', decoded.email);
                 
                 // Store session token in localStorage
@@ -69,7 +76,7 @@ export const AuthProvider = ({ children }) => {
                 console.log('🔐 OAuth: User logged in successfully', decoded.email);
                 return;
             } catch (e) {
-                console.error('🔐 OAuth: Failed to decode auth token', e);
+                console.error('🔐 OAuth: Failed to decode auth token', e, authToken);
             }
         }
         
