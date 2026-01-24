@@ -225,10 +225,9 @@ export const AuthProvider = ({ children }) => {
     // Email/Password Registration
     const registerWithEmail = async (email, password, name) => {
         try {
-            const response = await fetch(`${API_URL}/auth/register`, {
+            const response = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
                 body: JSON.stringify({ email, password, name })
             });
             
@@ -246,13 +245,18 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.detail || 'Registration failed');
             }
             
+            // Store session token
+            if (data.session_token) {
+                setStoredToken(data.session_token);
+            }
+            
             // Save auth status to localStorage for persistence
             localStorage.setItem('user_authenticated', 'true');
-            localStorage.setItem('user_data', JSON.stringify(data));
+            localStorage.setItem('user_data', JSON.stringify(data.user));
             
-            setUser(data);
+            setUser(data.user);
             setShowAuthModal(false);
-            return { success: true, user: data };
+            return { success: true, user: data.user };
         } catch (error) {
             console.error('Registration error:', error);
             return { success: false, error: error.message };
@@ -262,10 +266,9 @@ export const AuthProvider = ({ children }) => {
     // Email/Password Login
     const loginWithEmail = async (email, password) => {
         try {
-            const response = await fetch(`${API_URL}/auth/login/email`, {
+            const response = await fetch(`${API_URL}/auth/signin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
                 body: JSON.stringify({ email, password })
             });
             
@@ -283,13 +286,18 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.detail || 'Login failed');
             }
             
+            // Store session token
+            if (data.session_token) {
+                setStoredToken(data.session_token);
+            }
+            
             // Save auth status to localStorage for persistence
             localStorage.setItem('user_authenticated', 'true');
-            localStorage.setItem('user_data', JSON.stringify(data));
+            localStorage.setItem('user_data', JSON.stringify(data.user));
             
-            setUser(data);
+            setUser(data.user);
             setShowAuthModal(false);
-            return { success: true, user: data };
+            return { success: true, user: data.user };
         } catch (error) {
             console.error('Login error:', error);
             return { success: false, error: error.message };
