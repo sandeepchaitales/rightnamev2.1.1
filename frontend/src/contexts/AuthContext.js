@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -18,6 +18,14 @@ const API_URL = getApiUrl();
 const getStoredToken = () => localStorage.getItem('session_token');
 const setStoredToken = (token) => localStorage.setItem('session_token', token);
 const removeStoredToken = () => localStorage.removeItem('session_token');
+const getStoredUser = () => {
+    try {
+        const data = localStorage.getItem('user_data');
+        return data ? JSON.parse(data) : null;
+    } catch {
+        return null;
+    }
+};
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -28,51 +36,74 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    // Initialize user from localStorage immediately
+    const [user, setUser] = useState(() => getStoredUser());
     const [loading, setLoading] = useState(true);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [pendingReportId, setPendingReportId] = useState(null);
 
+    // Process OAuth callback token
+    const processAuthToken = useCallback((authToken) => {
+        console.log('🔐 OAuth: Processing auth token...');
+        console.log('🔐 OAuth: Token length:', authToken?.length);
+        
+        try {
+            // The token is URL-encoded standard base64
+            // URLSearchParams already decodes it, so we can use atob directly
+            const decoded = JSON.parse(atob(authToken));
+            console.log('🔐 OAuth: Decoded successfully for', decoded.email);
+            
+            // Store session token in localStorage
+            if (decoded.session_token) {
+                setStoredToken(decoded.session_token);
+                console.log('🔐 OAuth: Session token stored in localStorage');
+            }
+            
+            // Store user data
+            const userData = {
+                user_id: decoded.user_id,
+                email: decoded.email,
+                name: decoded.name,
+                picture: decoded.picture
+            };
+            
+            // Save to localStorage FIRST (persists across page reloads)
+            localStorage.setItem('user_authenticated', 'true');
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            
+            // Then update React state
+            setUser(userData);
+            setLoading(false);
+            
+            console.log('🔐 OAuth: User logged in successfully!', decoded.email);
+            console.log('🔐 OAuth: localStorage user_data:', localStorage.getItem('user_data'));
+            
+            // Clear the URL params AFTER everything is saved
+            window.history.replaceState(null, '', window.location.pathname);
+            
+            return true;
+        } catch (e) {
+            console.error('🔐 OAuth: Failed to decode auth token', e);
+            console.error('🔐 OAuth: Token was:', authToken?.substring(0, 50) + '...');
+            return false;
+        }
+    }, []);
+
     // Check authentication status on mount
     useEffect(() => {
+        console.log('🔐 AuthContext: Initializing...');
+        console.log('🔐 AuthContext: Current URL:', window.location.href);
+        console.log('🔐 AuthContext: localStorage user_data:', localStorage.getItem('user_data'));
+        
         // Check if returning from Google OAuth with auth_token
         const params = new URLSearchParams(window.location.search);
         const authToken = params.get('auth_token');
         
         if (authToken) {
-            try {
-                // The token is URL-encoded standard base64
-                // URLSearchParams already decodes it, so we can use atob directly
-                const decoded = JSON.parse(atob(authToken));
-                console.log('🔐 OAuth: Received auth token for', decoded.email);
-                
-                // Store session token in localStorage
-                if (decoded.session_token) {
-                    setStoredToken(decoded.session_token);
-                    console.log('🔐 OAuth: Session token stored');
-                }
-                
-                // Store user data
-                const userData = {
-                    user_id: decoded.user_id,
-                    email: decoded.email,
-                    name: decoded.name,
-                    picture: decoded.picture
-                };
-                
-                setUser(userData);
-                localStorage.setItem('user_authenticated', 'true');
-                localStorage.setItem('user_data', JSON.stringify(userData));
-                setLoading(false);
-                
-                // Clear the URL params
-                window.history.replaceState(null, '', window.location.pathname);
-                
-                console.log('🔐 OAuth: User logged in successfully!', decoded.email);
-                return;
-            } catch (e) {
-                console.error('🔐 OAuth: Failed to decode auth token', e);
-                console.error('🔐 OAuth: Token was:', authToken);
+            console.log('🔐 AuthContext: Found auth_token in URL');
+            const success = processAuthToken(authToken);
+            if (success) {
+                return; // Don't call checkAuth, we already have the user
             }
         }
         
@@ -83,9 +114,20 @@ export const AuthProvider = ({ children }) => {
             window.history.replaceState(null, '', window.location.pathname);
         }
         
+        // Check if we have a stored user (from previous session)
+        const storedUser = getStoredUser();
+        if (storedUser) {
+            console.log('🔐 AuthContext: Found stored user:', storedUser.email);
+            setUser(storedUser);
+            setLoading(false);
+            // Optionally verify the session is still valid
+            checkAuth();
+            return;
+        }
+        
         // Normal auth check
         checkAuth();
-    }, []);
+    }, [processAuthToken]);
 
     const checkAuth = async () => {
         try {
