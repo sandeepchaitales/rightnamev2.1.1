@@ -13288,6 +13288,128 @@ async def logout(request: Request, response: Response):
     response.delete_cookie(key="session_token", path="/", samesite="lax")
     return {"message": "Logged out successfully"}
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EMAIL/PASSWORD AUTHENTICATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class EmailSignUpRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+
+class EmailSignInRequest(BaseModel):
+    email: str
+    password: str
+
+@api_router.post("/auth/signup")
+async def email_signup(request_data: EmailSignUpRequest):
+    """Sign up with email and password"""
+    import hashlib
+    
+    email = request_data.email.lower().strip()
+    password = request_data.password
+    name = request_data.name.strip()
+    
+    # Validate email format
+    if not email or '@' not in email:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    
+    # Validate password
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered. Please sign in.")
+    
+    # Hash password
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    # Create user
+    user_id = f"user_{uuid.uuid4().hex[:16]}"
+    user_doc = {
+        "user_id": user_id,
+        "email": email,
+        "name": name,
+        "password_hash": password_hash,
+        "picture": None,
+        "auth_provider": "email",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    # Create session
+    session_token = f"sess_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+    
+    await db.user_sessions.insert_one({
+        "session_token": session_token,
+        "user_id": user_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": expires_at.isoformat()
+    })
+    
+    logging.info(f"🔐 Email Signup: New user created - {email}")
+    
+    return {
+        "success": True,
+        "session_token": session_token,
+        "user": {
+            "user_id": user_id,
+            "email": email,
+            "name": name,
+            "picture": None
+        }
+    }
+
+
+@api_router.post("/auth/signin")
+async def email_signin(request_data: EmailSignInRequest):
+    """Sign in with email and password"""
+    import hashlib
+    
+    email = request_data.email.lower().strip()
+    password = request_data.password
+    
+    # Find user
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check password
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    if user.get("password_hash") != password_hash:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Create session
+    session_token = f"sess_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+    
+    await db.user_sessions.insert_one({
+        "session_token": session_token,
+        "user_id": user["user_id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": expires_at.isoformat()
+    })
+    
+    logging.info(f"🔐 Email Signin: User logged in - {email}")
+    
+    return {
+        "success": True,
+        "session_token": session_token,
+        "user": {
+            "user_id": user["user_id"],
+            "email": user["email"],
+            "name": user.get("name", email.split("@")[0]),
+            "picture": user.get("picture")
+        }
+    }
+
+
 app.include_router(api_router)
 app.include_router(admin_router)  # Admin panel routes
 app.include_router(payment_router)  # Payment routes
