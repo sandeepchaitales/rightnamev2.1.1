@@ -130,23 +130,38 @@ export const AuthProvider = ({ children }) => {
     }, [processAuthToken]);
 
     const checkAuth = async () => {
+        console.log('🔐 checkAuth: Starting auth check...');
         try {
             // Get stored token
             const token = getStoredToken();
+            console.log('🔐 checkAuth: Token exists:', !!token);
+            
+            // If no token, check localStorage fallback
+            if (!token) {
+                const storedUser = getStoredUser();
+                if (storedUser) {
+                    console.log('🔐 checkAuth: No token but found stored user:', storedUser.email);
+                    setUser(storedUser);
+                    setLoading(false);
+                    return;
+                }
+                console.log('🔐 checkAuth: No token and no stored user');
+                setUser(null);
+                setLoading(false);
+                return;
+            }
             
             const headers = {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             };
-            
-            // Add Authorization header if we have a token
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
             
             const response = await fetch(`${API_URL}/auth/me`, {
                 credentials: 'include',
                 headers
             });
+            
+            console.log('🔐 checkAuth: Response status:', response.status);
             
             // Read response text first to avoid body stream issues
             const responseText = await response.text();
@@ -154,40 +169,40 @@ export const AuthProvider = ({ children }) => {
             if (response.ok) {
                 try {
                     const userData = JSON.parse(responseText);
+                    console.log('🔐 checkAuth: Got user from API:', userData.email);
                     setUser(userData);
                     localStorage.setItem('user_authenticated', 'true');
                     localStorage.setItem('user_data', JSON.stringify(userData));
                 } catch (parseError) {
                     console.error('Failed to parse auth response:', parseError);
-                    setUser(null);
+                    // Don't clear user, fall back to localStorage
+                    const storedUser = getStoredUser();
+                    if (storedUser) {
+                        setUser(storedUser);
+                    }
                 }
             } else {
-                // Check localStorage as fallback
-                const storedAuth = localStorage.getItem('user_authenticated');
-                const storedUser = localStorage.getItem('user_data');
-                if (storedAuth === 'true' && storedUser) {
-                    try {
-                        setUser(JSON.parse(storedUser));
-                    } catch {
-                        setUser(null);
-                        localStorage.removeItem('user_authenticated');
-                        localStorage.removeItem('user_data');
-                    }
+                console.log('🔐 checkAuth: API returned error, checking localStorage...');
+                // API returned error - check localStorage as fallback
+                const storedUser = getStoredUser();
+                if (storedUser && localStorage.getItem('user_authenticated') === 'true') {
+                    console.log('🔐 checkAuth: Using stored user:', storedUser.email);
+                    setUser(storedUser);
                 } else {
+                    console.log('🔐 checkAuth: No valid stored user, clearing auth');
                     setUser(null);
+                    removeStoredToken();
+                    localStorage.removeItem('user_authenticated');
+                    localStorage.removeItem('user_data');
                 }
             }
         } catch (error) {
-            console.error('Auth check failed:', error);
-            // Check localStorage as fallback
-            const storedAuth = localStorage.getItem('user_authenticated');
-            const storedUser = localStorage.getItem('user_data');
-            if (storedAuth === 'true' && storedUser) {
-                try {
-                    setUser(JSON.parse(storedUser));
-                } catch {
-                    setUser(null);
-                }
+            console.error('🔐 checkAuth: Network error:', error);
+            // Network error - use localStorage fallback
+            const storedUser = getStoredUser();
+            if (storedUser && localStorage.getItem('user_authenticated') === 'true') {
+                console.log('🔐 checkAuth: Network error, using stored user:', storedUser.email);
+                setUser(storedUser);
             } else {
                 setUser(null);
             }
