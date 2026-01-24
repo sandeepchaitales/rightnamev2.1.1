@@ -359,11 +359,36 @@ async def google_callback(
         
         logging.info(f"🔐 Google OAuth: Encoded token length={len(encoded_user)}, email={email}")
         
-        # Build redirect with token
-        if return_url and return_url != "/" and not return_url.startswith("http"):
-            final_redirect = f"{return_url}?auth_token={encoded_user_safe}"
+        # Get the base URL for redirect (must be absolute URL for production)
+        origin = request.headers.get("origin", "")
+        referer = request.headers.get("referer", "")
+        forwarded_host = request.headers.get("x-forwarded-host", "")
+        host = request.headers.get("host", "")
+        forwarded_proto = request.headers.get("x-forwarded-proto", "https")
+        
+        # Determine base URL
+        if origin and origin.startswith("http"):
+            base_url = origin.rstrip("/")
+        elif referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+        elif forwarded_host:
+            base_url = f"{forwarded_proto}://{forwarded_host}"
+        elif "localhost" in host or "127.0.0.1" in host:
+            base_url = f"http://{host}"
         else:
-            final_redirect = f"/?auth_token={encoded_user_safe}"
+            base_url = f"https://{host}"
+        
+        logging.info(f"🔐 Google OAuth: Base URL for redirect: {base_url}")
+        
+        # Build redirect with token - use ABSOLUTE URL
+        if return_url and return_url != "/" and not return_url.startswith("http"):
+            final_redirect = f"{base_url}{return_url}?auth_token={encoded_user_safe}"
+        else:
+            final_redirect = f"{base_url}/?auth_token={encoded_user_safe}"
+        
+        logging.info(f"🔐 Google OAuth: Final redirect URL: {final_redirect}")
         
         response = RedirectResponse(url=final_redirect, status_code=302)
         
