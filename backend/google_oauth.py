@@ -317,7 +317,9 @@ async def google_callback(
         # This approach is more reliable than cookies for cross-domain scenarios
         # The frontend will extract the token and store it in localStorage
         
-        # Encode user info for the redirect
+        # Encode user info for the redirect - use standard base64 (not urlsafe)
+        # and then URL-encode it for safety in query params
+        from urllib.parse import quote
         user_info = {
             "session_token": session_token,
             "user_id": user_id,
@@ -325,13 +327,18 @@ async def google_callback(
             "name": name,
             "picture": picture
         }
-        encoded_user = base64.urlsafe_b64encode(json.dumps(user_info).encode()).decode()
+        # Use standard base64 encoding
+        encoded_user = base64.b64encode(json.dumps(user_info).encode()).decode()
+        # URL-encode the base64 string to handle + and / characters
+        encoded_user_safe = quote(encoded_user, safe='')
+        
+        logging.info(f"🔐 Google OAuth: Encoded token length={len(encoded_user)}, email={email}")
         
         # Build redirect with token
         if return_url and return_url != "/" and not return_url.startswith("http"):
-            final_redirect = f"{return_url}?auth_token={encoded_user}"
+            final_redirect = f"{return_url}?auth_token={encoded_user_safe}"
         else:
-            final_redirect = f"/?auth_token={encoded_user}"
+            final_redirect = f"/?auth_token={encoded_user_safe}"
         
         response = RedirectResponse(url=final_redirect, status_code=302)
         
