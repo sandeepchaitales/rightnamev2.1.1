@@ -97,8 +97,7 @@ def get_redirect_uri(request: Request) -> str:
 @google_oauth_router.get("/google/test-login")
 async def test_login(request: Request):
     """Test login endpoint - bypasses Google for debugging"""
-    import json
-    import base64
+    from urllib.parse import quote
     
     # Create a test user
     test_user = {
@@ -109,15 +108,17 @@ async def test_login(request: Request):
         "picture": None
     }
     
-    # Encode the user info
-    encoded_user = base64.urlsafe_b64encode(json.dumps(test_user).encode()).decode()
+    # Encode the user info (same as real OAuth callback)
+    encoded_user = base64.b64encode(json.dumps(test_user).encode()).decode()
+    encoded_user_safe = quote(encoded_user, safe='')
     
     # Return debug info + redirect URL
     return {
         "test_user": test_user,
         "encoded_token": encoded_user,
-        "redirect_url": f"/?auth_token={encoded_user}",
-        "instructions": "Copy redirect_url and paste in browser to test frontend auth handling"
+        "encoded_token_url_safe": encoded_user_safe,
+        "redirect_url": f"/?auth_token={encoded_user_safe}",
+        "instructions": "Visit redirect_url to test frontend auth handling"
     }
 
 
