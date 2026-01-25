@@ -153,28 +153,34 @@ export const AuthProvider = ({ children }) => {
             
             const headers = {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Authorization': `Bearer ${token}`
             };
             
             const response = await fetch(`${API_URL}/auth/me`, {
-                credentials: 'include',
+                credentials: 'omit',
                 headers
             });
             
             console.log('🔐 checkAuth: Response status:', response.status);
             
-            // Read response text first to avoid body stream issues
-            const responseText = await response.text();
+            // Use clone() to safely handle response body
+            const responseClone = response.clone();
             
             if (response.ok) {
                 try {
-                    const userData = JSON.parse(responseText);
+                    const userData = await response.json();
                     console.log('🔐 checkAuth: Got user from API:', userData.email);
                     setUser(userData);
                     localStorage.setItem('user_authenticated', 'true');
                     localStorage.setItem('user_data', JSON.stringify(userData));
                 } catch (parseError) {
                     console.error('Failed to parse auth response:', parseError);
+                    // Try reading from clone
+                    try {
+                        const text = await responseClone.text();
+                        console.log('🔐 checkAuth: Raw response:', text);
+                    } catch (e) {}
                     // Don't clear user, fall back to localStorage
                     const storedUser = getStoredUser();
                     if (storedUser) {
