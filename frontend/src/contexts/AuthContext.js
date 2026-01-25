@@ -225,29 +225,47 @@ export const AuthProvider = ({ children }) => {
     // Email/Password Registration
     const registerWithEmail = async (email, password, name) => {
         try {
+            console.log('🔐 Registration: Starting signup for', email);
+            
+            // Clone the request body to avoid any stream issues
+            const requestBody = JSON.stringify({ email, password, name });
+            
             const response = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, name })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: requestBody,
+                // Disable credentials for cross-origin to avoid CORS issues
+                credentials: 'omit'
             });
             
-            const text = await response.text();
+            console.log('🔐 Registration: Response status', response.status);
+            
+            // Use clone() to safely read the response body
+            const responseClone = response.clone();
             let data;
             
             try {
-                data = JSON.parse(text);
+                data = await response.json();
             } catch (parseError) {
-                console.error('Response text:', text);
-                throw new Error('Registration failed - invalid response');
+                // If json() fails, try text() on the clone
+                const text = await responseClone.text();
+                console.error('🔐 Registration: Parse error, raw response:', text);
+                throw new Error(text || 'Registration failed - invalid response');
             }
             
+            console.log('🔐 Registration: Response data', data);
+            
             if (!response.ok) {
-                throw new Error(data.detail || 'Registration failed');
+                throw new Error(data.detail || data.message || 'Registration failed');
             }
             
             // Store session token
             if (data.session_token) {
                 setStoredToken(data.session_token);
+                console.log('🔐 Registration: Session token stored');
             }
             
             // Save auth status to localStorage for persistence
@@ -256,39 +274,58 @@ export const AuthProvider = ({ children }) => {
             
             setUser(data.user);
             setShowAuthModal(false);
+            console.log('🔐 Registration: Success!');
             return { success: true, user: data.user };
         } catch (error) {
-            console.error('Registration error:', error);
-            return { success: false, error: error.message };
+            console.error('🔐 Registration error:', error);
+            return { success: false, error: error.message || 'Registration failed' };
         }
     };
 
     // Email/Password Login
     const loginWithEmail = async (email, password) => {
         try {
+            console.log('🔐 Login: Starting signin for', email);
+            
+            // Clone the request body to avoid any stream issues
+            const requestBody = JSON.stringify({ email, password });
+            
             const response = await fetch(`${API_URL}/auth/signin`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: requestBody,
+                // Disable credentials for cross-origin to avoid CORS issues
+                credentials: 'omit'
             });
             
-            const text = await response.text();
+            console.log('🔐 Login: Response status', response.status);
+            
+            // Use clone() to safely read the response body
+            const responseClone = response.clone();
             let data;
             
             try {
-                data = JSON.parse(text);
+                data = await response.json();
             } catch (parseError) {
-                console.error('Response text:', text);
-                throw new Error('Login failed - invalid response');
+                // If json() fails, try text() on the clone
+                const text = await responseClone.text();
+                console.error('🔐 Login: Parse error, raw response:', text);
+                throw new Error(text || 'Login failed - invalid response');
             }
             
+            console.log('🔐 Login: Response data', data);
+            
             if (!response.ok) {
-                throw new Error(data.detail || 'Login failed');
+                throw new Error(data.detail || data.message || 'Invalid email or password');
             }
             
             // Store session token
             if (data.session_token) {
                 setStoredToken(data.session_token);
+                console.log('🔐 Login: Session token stored');
             }
             
             // Save auth status to localStorage for persistence
@@ -297,10 +334,11 @@ export const AuthProvider = ({ children }) => {
             
             setUser(data.user);
             setShowAuthModal(false);
+            console.log('🔐 Login: Success!');
             return { success: true, user: data.user };
         } catch (error) {
-            console.error('Login error:', error);
-            return { success: false, error: error.message };
+            console.error('🔐 Login error:', error);
+            return { success: false, error: error.message || 'Login failed' };
         }
     };
 
