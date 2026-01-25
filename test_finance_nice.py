@@ -21,7 +21,7 @@ def test_finance_nice_class():
     try:
         # Start evaluation
         response = requests.post(
-            "https://name-analytics.preview.emergentagent.com/api/evaluate/start",
+            "https://name-validator-4.preview.emergentagent.com/api/evaluate/start",
             json=payload,
             headers={'Content-Type': 'application/json'},
             timeout=30
@@ -39,7 +39,7 @@ def test_finance_nice_class():
         time.sleep(60)  # Wait 1 minute
         
         status_response = requests.get(
-            f"https://name-analytics.preview.emergentagent.com/api/evaluate/status/{job_id}",
+            f"https://name-validator-4.preview.emergentagent.com/api/evaluate/status/{job_id}",
             timeout=10
         )
         
