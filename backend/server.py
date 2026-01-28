@@ -732,7 +732,16 @@ def analyze_suffix_industry_fit(brand_name: str, category: str) -> dict:
         "beauty": "beauty", "cosmetics": "beauty", "skincare": "beauty",
         "food": "food", "restaurant": "food", "f&b": "food", "beverage": "food",
         "finance": "finance", "fintech": "finance", "banking": "finance", "payments": "finance",
-        "wellness": "wellness", "health": "wellness", "fitness": "wellness", "spa": "wellness"
+        "wellness": "wellness", "health": "wellness", "fitness": "wellness", "spa": "wellness",
+        # Media & Content categories
+        "youtube": "media", "channel": "media", "podcast": "media", "content": "media", 
+        "media": "media", "streaming": "media", "vlog": "media", "creator": "media",
+        "entertainment": "media", "video": "media", "influencer": "media",
+        # Education
+        "education": "education", "edtech": "education", "learning": "education", "course": "education",
+        "training": "education", "academy": "education", "school": "education",
+        # E-commerce & Retail
+        "ecommerce": "retail", "retail": "retail", "shop": "retail", "store": "retail", "marketplace": "retail"
     }
     
     industry_key = None
@@ -742,9 +751,9 @@ def analyze_suffix_industry_fit(brand_name: str, category: str) -> dict:
             break
     
     if not industry_key:
-        industry_key = "hotels"  # Default
+        industry_key = "general"  # Default to general, not hotels
     
-    industry_suffixes = SUFFIX_INDUSTRY_FIT.get(industry_key, SUFFIX_INDUSTRY_FIT["hotels"])
+    industry_suffixes = SUFFIX_INDUSTRY_FIT.get(industry_key, SUFFIX_INDUSTRY_FIT.get("general", {"high_fit": [], "low_fit": []}))
     
     result = {
         "industry": industry_key,
