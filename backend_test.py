@@ -1408,7 +1408,7 @@ class BrandEvaluationTester:
                 if classification_found == "FANCIFUL":
                     critical_issues.append(f"Classification WRONG: Found FANCIFUL, expected DESCRIPTIVE or SUGGESTIVE")
                 if truly_coined_found:
-                    critical_issues.append(f"'Truly Coined' text FOUND: Should NOT appear for dictionary words")
+                    critical_issues.append(f"'Truly Coined' text FOUND: '{truly_coined_text}' should NOT appear for dictionary words")
                 if response_time > 120:
                     critical_issues.append(f"Response time EXCEEDED: {response_time:.2f}s > 120s timeout")
                 
