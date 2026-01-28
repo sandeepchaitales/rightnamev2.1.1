@@ -11639,7 +11639,7 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                         {"name": f"Neo{brand_name[:4]}", "score": 70, "rationale": "Innovation-focused prefix"}
                     ]
                 },
-                "mitigation_strategies": RISK_MITIGATION_STRATEGIES[:5],
+                "mitigation_strategies": get_country_specific_mitigation_strategies(request.countries)[:6],
                 "registration_timeline": generate_registration_timeline(request.countries),
                 "legal_precedents": generate_legal_precedents("LOW" if trademark_risk <= 3 else "MEDIUM"),
                 # Use actual classification from 5-step spectrum instead of hardcoded "Coined/Invented"
