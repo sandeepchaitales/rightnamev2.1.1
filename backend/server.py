@@ -6999,6 +6999,52 @@ MULTI_CLASS_STRATEGY = {
         "total_recommended": 2,
         "filing_strategy": "Class 41 + Class 9 for most EdTech companies"
     },
+    # YouTube / Content Creation / Podcasts
+    "youtube": {
+        "primary": {"class_number": 41, "description": "Entertainment services, video production", "term": "Entertainment services, video production, educational videos"},
+        "secondary": [
+            {"class_number": 35, "description": "Advertising, sponsorship services", "rationale": "For monetization and brand deals", "priority": "When monetizing"},
+            {"class_number": 9, "description": "Downloadable video content", "rationale": "For courses or downloadable content", "priority": "If selling courses"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 41 immediately for content creation; add Class 35 for sponsorships"
+    },
+    "youtube channel": {
+        "primary": {"class_number": 41, "description": "Entertainment services, video production", "term": "Entertainment services, video production, educational videos"},
+        "secondary": [
+            {"class_number": 35, "description": "Advertising, sponsorship services", "rationale": "For monetization and brand deals", "priority": "When monetizing"},
+            {"class_number": 9, "description": "Downloadable video content", "rationale": "For courses or downloadable content", "priority": "If selling courses"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 41 immediately for content creation; add Class 35 for sponsorships"
+    },
+    "content creator": {
+        "primary": {"class_number": 41, "description": "Entertainment, content creation services", "term": "Entertainment services, content creation, video production"},
+        "secondary": [
+            {"class_number": 35, "description": "Advertising, influencer marketing", "rationale": "For brand partnerships", "priority": "When monetizing"},
+            {"class_number": 9, "description": "Digital content products", "rationale": "For downloadable products", "priority": "If selling digital products"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 41 for core content services"
+    },
+    "podcast": {
+        "primary": {"class_number": 41, "description": "Entertainment, audio production services", "term": "Entertainment services, audio production, podcasting"},
+        "secondary": [
+            {"class_number": 35, "description": "Advertising, sponsorship services", "rationale": "For podcast monetization", "priority": "When monetizing"},
+            {"class_number": 9, "description": "Downloadable audio content", "rationale": "For premium audio content", "priority": "If selling content"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 41 for podcast production; add Class 35 for sponsorships"
+    },
+    "media": {
+        "primary": {"class_number": 41, "description": "Entertainment, media production services", "term": "Entertainment services, media production, broadcasting"},
+        "secondary": [
+            {"class_number": 35, "description": "Advertising, media buying services", "rationale": "For media agency services", "priority": "If offering ad services"},
+            {"class_number": 38, "description": "Broadcasting, streaming services", "rationale": "For live broadcasting", "priority": "If live streaming"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 41 for content; Class 38 if broadcasting"
+    },
     # Beauty / Cosmetics
     "beauty": {
         "primary": {"class_number": 3, "description": "Cosmetics, skincare, beauty products", "term": "Cosmetics, skincare preparations, beauty products"},
