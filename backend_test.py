@@ -1272,7 +1272,7 @@ class BrandEvaluationTester:
             print(f"CRITICAL TEST CASE:")
             print(f"  Brand: FailedFounders")
             print(f"  Category: YouTube Channel")
-            print(f"  Positioning: Educational content for entrepreneurs")
+            print(f"  Positioning: Mid-Range")
             print(f"  Countries: India, USA")
             print(f"\nEXPECTED RESULTS:")
             print(f"  1. NICE Class: 41 (Education & Entertainment) - NOT 35 (Business Services)")
