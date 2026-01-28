@@ -426,6 +426,8 @@ def format_linguistic_analysis_for_prompt(analysis: Dict[str, Any]) -> str:
         
         # Language origin
         languages = ling.get("languages_detected", [])
+        # Filter out None values
+        languages = [lang for lang in languages if lang is not None]
         if languages:
             sections.append(f"Language Origin: {', '.join(languages)}")
         
