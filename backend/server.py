@@ -10963,7 +10963,7 @@ BRAND: {brand}
         """
         component_scores = {}
         
-        # 1. LLM Dimensions Average (40% weight)
+        # 1. LLM Dimensions Average (35% weight)
         if llm_dimensions and len(llm_dimensions) > 0:
             dim_scores = [d.get("score", 0) if isinstance(d, dict) else getattr(d, "score", 0) for d in llm_dimensions]
             dim_scores = [s for s in dim_scores if s > 0]  # Filter out zeros
@@ -10973,12 +10973,45 @@ BRAND: {brand}
             llm_avg = get_distinctiveness_score(classification) if classification else 6.0
         component_scores["llm_dimensions"] = {
             "raw": round(llm_avg, 2),
-            "weight": 0.40,
-            "weighted": round(llm_avg * 0.40, 2),
+            "weight": 0.35,
+            "weighted": round(llm_avg * 0.35, 2),
             "source": "LLM 6-Dimensions" if llm_dimensions else "Distinctiveness fallback"
         }
         
-        # 2. Cultural Resonance - Hybrid Formula (15% weight)
+        # 2. Business Alignment (20% weight) - Strategic category fit
+        alignment_score = min(10, max(0, business_alignment))
+        component_scores["business_alignment"] = {
+            "raw": round(alignment_score, 2),
+            "weight": 0.20,
+            "weighted": round(alignment_score * 0.20, 2),
+            "source": "Linguistic Analysis" if business_alignment != 5.0 else "Default"
+        }
+        
+        # 3. Trademark Safety (15% weight) - Inverted risk score
+        trademark_safety = 10 - min(10, max(0, trademark_risk))
+        component_scores["trademark_safety"] = {
+            "raw": round(trademark_safety, 2),
+            "weight": 0.15,
+            "weighted": round(trademark_safety * 0.15, 2),
+            "source": f"10 - trademark_risk ({trademark_risk})"
+        }
+        
+        # 4. DuPont Safety (15% weight) - Inverted confusion score
+        if dupont_score is not None:
+            # DuPont score is 0-100 (likelihood of confusion)
+            # Convert to safety: (100 - dupont) / 10
+            dupont_safety = (100 - min(100, max(0, dupont_score))) / 10
+        else:
+            dupont_safety = 8.0  # Default: assume low confusion risk
+        
+        component_scores["dupont_safety"] = {
+            "raw": round(dupont_safety, 2),
+            "weight": 0.15,
+            "weighted": round(dupont_safety * 0.15, 2),
+            "source": f"(100 - DuPont:{dupont_score})/10" if dupont_score is not None else "Default (no conflicts)"
+        }
+        
+        # 5. Cultural Resonance - Hybrid Formula (10% weight)
         if cultural_analysis and len(cultural_analysis) > 0:
             cultural_scores = []
             for ca in cultural_analysis:
@@ -11008,43 +11041,10 @@ BRAND: {brand}
         
         component_scores["cultural_resonance"] = {
             "raw": round(cultural_combined, 2),
-            "weight": 0.15,
-            "weighted": round(cultural_combined * 0.15, 2),
+            "weight": 0.10,
+            "weighted": round(cultural_combined * 0.10, 2),
             "formula": cultural_formula,
             "country_scores": cultural_scores if cultural_analysis else []
-        }
-        
-        # 3. Trademark Safety (20% weight) - Inverted risk score
-        trademark_safety = 10 - min(10, max(0, trademark_risk))
-        component_scores["trademark_safety"] = {
-            "raw": round(trademark_safety, 2),
-            "weight": 0.20,
-            "weighted": round(trademark_safety * 0.20, 2),
-            "source": f"10 - trademark_risk ({trademark_risk})"
-        }
-        
-        # 4. Business Alignment (10% weight)
-        alignment_score = min(10, max(0, business_alignment))
-        component_scores["business_alignment"] = {
-            "raw": round(alignment_score, 2),
-            "weight": 0.10,
-            "weighted": round(alignment_score * 0.10, 2),
-            "source": "Linguistic Analysis" if business_alignment != 5.0 else "Default"
-        }
-        
-        # 5. DuPont Safety (10% weight) - Inverted confusion score
-        if dupont_score is not None:
-            # DuPont score is 0-100 (likelihood of confusion)
-            # Convert to safety: (100 - dupont) / 10
-            dupont_safety = (100 - min(100, max(0, dupont_score))) / 10
-        else:
-            dupont_safety = 8.0  # Default: assume low confusion risk
-        
-        component_scores["dupont_safety"] = {
-            "raw": round(dupont_safety, 2),
-            "weight": 0.10,
-            "weighted": round(dupont_safety * 0.10, 2),
-            "source": f"(100 - DuPont:{dupont_score})/10" if dupont_score is not None else "Default (no conflicts)"
         }
         
         # 6. Digital Availability (5% weight)
