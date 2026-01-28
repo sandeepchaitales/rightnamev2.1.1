@@ -10239,9 +10239,17 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             logging.error(f"Similarity check failed for {brand}: {e}")
             return {"report": f"Similarity check failed: {str(e)}", "should_reject": False, "result": {}}
     
-    async def gather_trademark_data(brand, classification_category: str = "DESCRIPTIVE"):
-        """Run trademark research with hybrid risk model"""
+    async def gather_trademark_data(brand, classification_category: str = "DESCRIPTIVE", understanding: dict = None):
+        """Run trademark research with hybrid risk model and understanding context"""
         try:
+            # Get NICE class from understanding if available
+            nice_class_override = None
+            if understanding:
+                nice_class_info = get_nice_class_from_understanding(understanding)
+                nice_class_override = nice_class_info.get("class_number")
+                classification_category = get_classification_from_understanding(understanding)
+                logging.info(f"🧠 Trademark using Understanding: Class {nice_class_override}, Classification {classification_category}")
+            
             # Include user-provided competitors and keywords for better search
             # Pass classification for hybrid risk model
             research_result = await conduct_trademark_research(
@@ -10251,7 +10259,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
                 countries=request.countries,
                 known_competitors=request.known_competitors or [],
                 product_keywords=request.product_keywords or [],
-                classification=classification_category  # NEW: Pass classification for hybrid model
+                classification=classification_category,  # From understanding
+                nice_class_override=nice_class_override   # NEW: Pass NICE class from understanding
             )
             return {
                 "prompt_data": format_research_for_prompt(research_result),
