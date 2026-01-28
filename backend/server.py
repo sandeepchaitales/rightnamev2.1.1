@@ -10943,13 +10943,13 @@ BRAND: {brand}
         """
         Calculate WEIGHTED NAMESCORE using all available scores.
         
-        FORMULA:
+        FORMULA (Updated July 2025):
         NAMESCORE = (
-            (LLM_Dimensions_Avg × 0.40) +      # Core brand quality
-            (Cultural_Resonance × 0.15) +       # Market fit (Hybrid: MIN×0.4 + AVG×0.6)
-            (Trademark_Safety × 0.20) +         # Legal viability (10 - risk)
-            (Business_Alignment × 0.10) +       # Strategic fit
-            (DuPont_Safety × 0.10) +            # Conflict risk (100 - dupont)/10
+            (LLM_Dimensions_Avg × 0.35) +      # Core brand quality
+            (Business_Alignment × 0.20) +       # Strategic fit (category alignment)
+            (Trademark_Safety × 0.15) +         # Legal viability (10 - risk)
+            (DuPont_Safety × 0.15) +            # Conflict risk (100 - dupont)/10
+            (Cultural_Resonance × 0.10) +       # Market fit (Hybrid: MIN×0.4 + AVG×0.6)
             (Domain_Social_Avg × 0.05)          # Digital availability
         ) × 10
         
