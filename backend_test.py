@@ -9989,6 +9989,13 @@ if __name__ == "__main__":
             tester = BrandEvaluationTester()
             success = tester.run_deep_trace_tests_only()
             sys.exit(0 if success else 1)
+        elif sys.argv[1] == "understanding":
+            # Run only the Understanding Module Integration test
+            tester = BrandEvaluationTester()
+            success = tester.run_understanding_module_test_only()
+            sys.exit(0 if success else 1)
     else:
-        # Run Admin Panel API tests by default (as requested in review)
-        sys.exit(main())
+        # Run Understanding Module test by default (as requested in review)
+        tester = BrandEvaluationTester()
+        success = tester.run_understanding_module_test_only()
+        sys.exit(0 if success else 1)
