@@ -11129,6 +11129,7 @@ BRAND: {brand}
                 # Ensure competitor_analysis has proper data (GLOBAL competitors, not country-specific)
                 # 🆕 Use Deep Market Intelligence if available (reuse deep_intel from above)
                 
+                # ALWAYS prefer Deep Market Intelligence over LLM-generated generic archetypes
                 if deep_intel and deep_intel.get("global_matrix", {}).get("competitors"):
                     # Use REAL competitors from Deep Market Intelligence
                     global_matrix = deep_intel.get("global_matrix", {})
@@ -11147,6 +11148,7 @@ BRAND: {brand}
                             "modernity_axis": None
                         })
                     
+                    # OVERRIDE existing competitor_analysis with real data
                     brand_score["competitor_analysis"] = {
                         "x_axis_label": global_matrix.get("x_axis_label", "Price: Budget → Premium"),
                         "y_axis_label": global_matrix.get("y_axis_label", "Quality: Basic → High Production"),
@@ -11160,7 +11162,7 @@ BRAND: {brand}
                         "white_space_analysis": get_white_space_summary(deep_intel),
                         "strategic_advantage": "Real competitor data from Deep Market Intelligence enables precise positioning strategy."
                     }
-                    logging.info(f"🎯 Using Deep Market Intel for competitor_analysis: {len(formatted_competitors)} real competitors")
+                    logging.info(f"🎯 OVERRIDE: Using Deep Market Intel for competitor_analysis: {len(formatted_competitors)} REAL competitors")
                     
                 elif not brand_score.get("competitor_analysis") or not brand_score.get("competitor_analysis", {}).get("competitors"):
                     # Fallback: Use GLOBAL competitors for "Global Overview" matrix
@@ -11178,6 +11180,7 @@ BRAND: {brand}
                         "white_space_analysis": global_data.get("white_space", "Opportunity exists for differentiated brands in global market."),
                         "strategic_advantage": global_data.get("strategic_advantage", "Distinctive brand identity enables unique global positioning.")
                     }
+                    logging.info(f"⚠️ Using fallback global competitors (no Deep Market Intel)")
         
         return {"model": f"{model_provider}/{model_name}", "data": data}
     
