@@ -52,6 +52,15 @@ from linguistic_analysis import (
     get_linguistic_insights_for_cultural_fit
 )
 
+# Import Understanding Module - THE BRAIN of RIGHTNAME.AI
+from understanding_module import (
+    generate_brand_understanding,
+    get_nice_class_from_understanding,
+    get_classification_from_understanding,
+    get_business_type_from_understanding,
+    should_use_understanding_classification
+)
+
 # Import Payment Routes
 from payment_routes import payment_router, set_db as set_payment_db
 
