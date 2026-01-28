@@ -610,6 +610,28 @@ SUFFIX_INDUSTRY_FIT = {
         "high_fit": ["zen", "calm", "peace", "vita", "life", "health", "fit", "well", "soul", "mind"],
         "medium_fit": ["hub", "lab", "co", "studio"],
         "low_fit": ["tech", "soft", "ware", "byte"]
+    },
+    # New categories for media/content
+    "media": {
+        "high_fit": ["cast", "show", "tube", "tv", "media", "studio", "productions", "channel", "network", "talks"],
+        "medium_fit": ["hub", "spot", "co", "lab", "zone", "nation"],
+        "low_fit": ["inn", "tel", "stay", "palace", "manor", "villa", "bank", "pay"]
+    },
+    "education": {
+        "high_fit": ["learn", "edu", "academy", "school", "class", "course", "tutor", "study", "skills"],
+        "medium_fit": ["hub", "lab", "pro", "plus", "co"],
+        "low_fit": ["inn", "tel", "stay", "palace", "manor", "villa"]
+    },
+    "retail": {
+        "high_fit": ["mart", "shop", "store", "market", "bazaar", "cart", "buy", "deal"],
+        "medium_fit": ["hub", "spot", "co", "zone"],
+        "low_fit": ["inn", "tel", "stay", "palace", "manor", "tech", "soft"]
+    },
+    # General fallback - neutral for all
+    "general": {
+        "high_fit": [],
+        "medium_fit": ["hub", "co", "pro", "plus"],
+        "low_fit": []
     }
 }
 
