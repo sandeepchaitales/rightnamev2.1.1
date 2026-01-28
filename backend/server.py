@@ -10410,7 +10410,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             "multi_domain": processed_results[4],
             "social": processed_results[5],
             "classification": brand_classification,  # Now includes linguistic override data
-            "linguistic_analysis": linguistic_analysis  # Store full linguistic analysis
+            "linguistic_analysis": linguistic_analysis,  # Store full linguistic analysis
+            "understanding": brand_understanding  # Store understanding module data (Source of Truth)
         }
     
     parallel_time = time_module.time() - parallel_start
