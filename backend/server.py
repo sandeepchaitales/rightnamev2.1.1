@@ -10344,6 +10344,60 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         except Exception as e:
             logging.error(f"🔤 Linguistic Analysis failed for '{brand}': {e}")
             linguistic_analysis = None
+        
+        # ==================== OVERRIDE LINGUISTIC WITH UNDERSTANDING ====================
+        # If Understanding Module has better data, override the linguistic analysis
+        if brand_understanding:
+            brand_analysis = brand_understanding.get("brand_analysis", {})
+            word_analysis = brand_analysis.get("word_analysis", [])
+            has_dict_words = brand_analysis.get("has_dictionary_words", False)
+            understanding_classification = brand_analysis.get("linguistic_classification", {})
+            
+            # Override has_linguistic_meaning based on Understanding
+            if has_dict_words:
+                if not linguistic_analysis:
+                    linguistic_analysis = {}
+                
+                # Override with Understanding Module data
+                linguistic_analysis["has_linguistic_meaning"] = True
+                linguistic_analysis["_overridden_by_understanding"] = True
+                linguistic_analysis["brand_name"] = brand
+                
+                # Build word meanings from Understanding
+                languages_detected = list(set([w.get("language", "English") for w in word_analysis]))
+                part_meanings = {w.get("word"): {"meaning": w.get("meaning", ""), "language": w.get("language", "English")} for w in word_analysis}
+                
+                linguistic_analysis["linguistic_analysis"] = {
+                    "languages_detected": languages_detected,
+                    "decomposition": {
+                        "can_be_decomposed": len(word_analysis) > 1,
+                        "parts": brand_analysis.get("tokenized", []),
+                        "part_meanings": part_meanings,
+                        "combined_meaning": brand_analysis.get("combined_meaning", "")
+                    }
+                }
+                
+                linguistic_analysis["classification"] = {
+                    "name_type": understanding_classification.get("type", "DESCRIPTIVE"),
+                    "distinctiveness_level": "LOW" if understanding_classification.get("type") in ["DESCRIPTIVE", "GENERIC"] else "MEDIUM" if understanding_classification.get("type") == "SUGGESTIVE" else "HIGH",
+                    "reasoning": understanding_classification.get("reasoning", "")
+                }
+                
+                # Business alignment from Understanding
+                business_understanding = brand_understanding.get("business_understanding", {})
+                semantic_safety = brand_understanding.get("semantic_safety", {})
+                linguistic_analysis["business_alignment"] = {
+                    "alignment_score": semantic_safety.get("industry_fit_score", 7.0),
+                    "alignment_level": "HIGH" if semantic_safety.get("industry_fit_score", 7) >= 7 else "MEDIUM" if semantic_safety.get("industry_fit_score", 7) >= 5 else "LOW",
+                    "thematic_connection": business_understanding.get("what_they_offer", "")
+                }
+                
+                logging.info(f"🧠 OVERRIDING Linguistic Analysis with Understanding Module data for '{brand}'")
+                logging.info(f"   Tokenized: {brand_analysis.get('tokenized', [])}")
+                logging.info(f"   Has Dictionary Words: {has_dict_words}")
+                logging.info(f"   Classification: {understanding_classification.get('type', 'UNKNOWN')}")
+        # ==================== END OVERRIDE ====================
+        
         # ==================== END LINGUISTIC ANALYSIS ====================
         
         # ==================== STEP 2: MASTER CLASSIFICATION (WITH UNDERSTANDING + LINGUISTIC OVERRIDE) ====================
