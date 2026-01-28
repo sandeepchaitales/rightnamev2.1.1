@@ -61,6 +61,14 @@ from understanding_module import (
     should_use_understanding_classification
 )
 
+# Import Deep Market Intelligence Agent
+from deep_market_intelligence import (
+    deep_market_intelligence,
+    format_competitors_for_matrix,
+    format_country_analysis,
+    get_white_space_summary
+)
+
 # Import Payment Routes
 from payment_routes import payment_router, set_db as set_payment_db
 
