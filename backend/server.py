@@ -6319,13 +6319,6 @@ RISK_MITIGATION_STRATEGIES = [
         "timeline": "1-2 weeks"
     },
     {
-        "priority": "HIGH", 
-        "action": "File Intent-to-Use (ITU) application immediately",
-        "rationale": "Establishes priority date while business launches. US allows ITU filing 6 months before commercial use with extensions available",
-        "estimated_cost": "$275-$400 per class (USPTO)",
-        "timeline": "File within 30 days of brand decision"
-    },
-    {
         "priority": "HIGH",
         "action": "Develop distinctive visual identity (logo, trade dress)",
         "rationale": "Strong design elements provide additional protection layer. Even if wordmark faces challenges, stylized logo may proceed",
@@ -6361,6 +6354,77 @@ RISK_MITIGATION_STRATEGIES = [
         "timeline": "Before primary filing"
     }
 ]
+
+# Country-specific filing strategies
+COUNTRY_FILING_STRATEGIES = {
+    "India": {
+        "priority": "HIGH",
+        "action": "File trademark application with 'Proposed to be Used' basis",
+        "rationale": "India allows filing on 'Proposed to be Used' basis. No strict deadline to prove use before registration, but must show bona fide intent to use the mark.",
+        "estimated_cost": "₹4,500-₹9,000 per class (Government fee)",
+        "timeline": "File within 30 days of brand decision"
+    },
+    "USA": {
+        "priority": "HIGH",
+        "action": "File Intent-to-Use (ITU) application immediately",
+        "rationale": "US allows ITU filing under Section 1(b). You have 6 months after Notice of Allowance to file Statement of Use, with extensions available up to 3 years.",
+        "estimated_cost": "$250-$350 per class (USPTO TEAS)",
+        "timeline": "File within 30 days of brand decision"
+    },
+    "UK": {
+        "priority": "HIGH",
+        "action": "File trademark application with UK IPO",
+        "rationale": "UK allows filing without proof of use. Post-Brexit, separate UK filing required (no longer covered by EU trademark).",
+        "estimated_cost": "£170 for first class + £50 each additional",
+        "timeline": "File within 30 days of brand decision"
+    },
+    "UAE": {
+        "priority": "HIGH",
+        "action": "File trademark application with UAE Ministry of Economy",
+        "rationale": "UAE requires legalized documents. Arabic translation mandatory. Use requirement is strict - file only when ready to use.",
+        "estimated_cost": "AED 6,000-10,000 per class",
+        "timeline": "File when ready to enter market"
+    },
+    "Singapore": {
+        "priority": "HIGH",
+        "action": "File trademark application with IPOS",
+        "rationale": "Singapore uses first-to-file system. No use requirement before filing. Fast examination (4-6 months typical).",
+        "estimated_cost": "SGD 341 per class",
+        "timeline": "File within 30 days of brand decision"
+    },
+    "default": {
+        "priority": "HIGH",
+        "action": "File trademark application in target jurisdiction",
+        "rationale": "Consult local IP attorney for jurisdiction-specific requirements. Most countries allow filing without immediate proof of use.",
+        "estimated_cost": "Varies by jurisdiction",
+        "timeline": "File within 30 days of brand decision"
+    }
+}
+
+def get_country_specific_mitigation_strategies(countries: list) -> list:
+    """
+    Generate country-specific risk mitigation strategies.
+    Uses the primary country's filing requirements.
+    """
+    primary_country = countries[0] if countries else "default"
+    if isinstance(primary_country, dict):
+        primary_country = primary_country.get('name', 'default')
+    
+    # Get country-specific filing strategy
+    filing_strategy = COUNTRY_FILING_STRATEGIES.get(primary_country, COUNTRY_FILING_STRATEGIES["default"])
+    
+    # Build strategies list with country-specific filing first
+    strategies = [
+        RISK_MITIGATION_STRATEGIES[0],  # Clearance search (universal)
+        filing_strategy,                 # Country-specific filing
+        RISK_MITIGATION_STRATEGIES[1],  # Visual identity
+        RISK_MITIGATION_STRATEGIES[2],  # Document use
+        RISK_MITIGATION_STRATEGIES[3],  # Co-existence
+        RISK_MITIGATION_STRATEGIES[4],  # Monitoring
+        RISK_MITIGATION_STRATEGIES[5],  # Backup names
+    ]
+    
+    return strategies
 
 REGISTRATION_TIMELINE_STAGES = {
     "India": [
