@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 # Google Custom Search
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
-GOOGLE_CSE_ID = os.environ.get("GOOGLE_CSE_ID")
+GOOGLE_CSE_ID = os.environ.get("GOOGLE_CSE_ID") or os.environ.get("GOOGLE_SEARCH_ENGINE_ID")
 
 # LLM Integration
 try:
