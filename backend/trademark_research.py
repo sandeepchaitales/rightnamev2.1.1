@@ -1635,7 +1635,8 @@ async def conduct_trademark_research(
     countries: List[str],
     known_competitors: List[str] = None,
     product_keywords: List[str] = None,
-    classification: str = None  # NEW: Accept pre-computed classification
+    classification: str = None,  # Pre-computed classification
+    nice_class_override: int = None  # NEW: Override NICE class from Understanding Module
 ) -> TrademarkResearchResult:
     """
     Conduct trademark research for a brand name using the Hybrid Risk Model.
@@ -1648,11 +1649,14 @@ async def conduct_trademark_research(
         known_competitors: User-provided competitors to check for conflicts
         product_keywords: Additional keywords for more targeted searches
         classification: Pre-computed trademark classification (FANCIFUL, ARBITRARY, SUGGESTIVE, DESCRIPTIVE, GENERIC)
+        nice_class_override: Override NICE class from Understanding Module (Source of Truth)
     
     Returns:
         TrademarkResearchResult with hybrid risk assessment
     """
     logger.info(f"Starting trademark research for '{brand_name}' in {industry}/{category} with classification: {classification}")
+    if nice_class_override:
+        logger.info(f"🧠 Using Understanding Module NICE Class Override: {nice_class_override}")
     
     # Default empty lists
     known_competitors = known_competitors or []
@@ -1666,8 +1670,17 @@ async def conduct_trademark_research(
         countries=countries or ["India"]
     )
     
-    # Get Nice Classification
-    result.nice_classification = get_nice_classification(category, industry)
+    # Get Nice Classification - Use override if provided by Understanding Module
+    if nice_class_override:
+        # Use the Understanding Module's NICE class (Source of Truth)
+        result.nice_classification = {
+            "class_number": nice_class_override,
+            "class_description": f"Class {nice_class_override} (from Understanding Module)",
+            "source": "understanding_module"
+        }
+        logger.info(f"🧠 NICE CLASS from Understanding: {nice_class_override}")
+    else:
+        result.nice_classification = get_nice_classification(category, industry)
     
     # Step 1: Check known data cache first (FAST)
     known_data = get_known_data(brand_name)
