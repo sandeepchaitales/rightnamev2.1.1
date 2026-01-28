@@ -10165,6 +10165,37 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         return response_data
     # ==================== END EARLY STOPPING ====================
     
+    # ==================== UNDERSTANDING MODULE - THE BRAIN ====================
+    # Run FIRST before any other analysis to understand what user is building
+    # This creates a "Source of Truth" that all downstream modules read from
+    logging.info(f"🧠 UNDERSTANDING MODULE: Starting for {len(request.brand_names)} brand(s)...")
+    
+    brand_understandings = {}
+    for brand in request.brand_names:
+        try:
+            understanding = await generate_brand_understanding(
+                brand_name=brand,
+                category=request.category,
+                positioning=request.positioning,
+                countries=request.countries
+            )
+            brand_understandings[brand] = understanding
+            
+            # Log key insights
+            classification = understanding.get("brand_analysis", {}).get("linguistic_classification", {}).get("type", "UNKNOWN")
+            nice_class = understanding.get("trademark_context", {}).get("primary_nice_class", {}).get("class_number", 0)
+            business_type = understanding.get("business_understanding", {}).get("business_type", "unknown")
+            tokens = understanding.get("brand_analysis", {}).get("tokenized", [])
+            
+            logging.info(f"🧠 UNDERSTANDING for '{brand}': Classification={classification}, Class={nice_class}, Type={business_type}, Tokens={tokens}")
+            
+        except Exception as e:
+            logging.error(f"🧠 Understanding Module failed for {brand}: {e}")
+            brand_understandings[brand] = None
+    
+    logging.info(f"🧠 UNDERSTANDING MODULE: Complete for {len(brand_understandings)} brand(s)")
+    # ==================== END UNDERSTANDING MODULE ====================
+    
     if LlmChat and EMERGENT_KEY:
         # Claude first (OpenAI having 502 issues), then OpenAI as fallback
         models_to_try = [
