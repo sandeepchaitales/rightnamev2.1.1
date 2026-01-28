@@ -1263,6 +1263,7 @@ class BrandEvaluationTester:
             "brand_names": ["FailedFounders"],
             "category": "YouTube Channel",
             "positioning": "Mid-Range",
+            "market_scope": "Multi-Country",
             "countries": ["India", "USA"]
         }
         
