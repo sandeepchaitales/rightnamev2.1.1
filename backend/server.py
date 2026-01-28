@@ -11054,7 +11054,59 @@ BRAND: {brand}
                 brand_name_for_fallback = brand_score.get("brand_name", "Brand")
                 category_for_fallback = brand_score.get("category", "Business")
                 
-                # If country_competitor_analysis is empty or missing countries, use LLM research data or regenerate
+                # 🆕 First check Deep Market Intelligence for country competitor analysis
+                deep_intel = all_brand_data.get(brand_name_for_fallback, {}).get("deep_market_intel")
+                
+                if deep_intel and deep_intel.get("country_analysis"):
+                    # Use REAL country-specific competitors from Deep Market Intelligence
+                    country_analysis_data = deep_intel.get("country_analysis", {})
+                    formatted_country_competitors = []
+                    
+                    for country in request.countries:
+                        country_data = country_analysis_data.get(country, {})
+                        
+                        if country_data:
+                            # Format competitors from deep intel
+                            direct_comps = country_data.get("direct_competitors", [])
+                            market_leaders = country_data.get("market_leaders", [])
+                            
+                            all_comps = []
+                            for comp in (direct_comps + market_leaders)[:6]:
+                                all_comps.append({
+                                    "name": comp.get("name", "Unknown"),
+                                    "x_coordinate": float(comp.get("x", 5)) * 10,
+                                    "y_coordinate": float(comp.get("y", 5)) * 10,
+                                    "quadrant": comp.get("type", "Competitor"),
+                                    "price_axis": None,
+                                    "modernity_axis": None
+                                })
+                            
+                            # Get country flag
+                            country_flags = {"India": "🇮🇳", "USA": "🇺🇸", "UK": "🇬🇧", "UAE": "🇦🇪", "Singapore": "🇸🇬", "Australia": "🇦🇺", "Canada": "🇨🇦", "Germany": "🇩🇪", "Japan": "🇯🇵", "China": "🇨🇳"}
+                            country_flag = country_flags.get(country, "🌍")
+                            
+                            formatted_country_competitors.append({
+                                "country": country,
+                                "country_flag": country_flag,
+                                "x_axis_label": "Price: Budget → Premium",
+                                "y_axis_label": "Quality: Basic → High Production",
+                                "competitors": all_comps,
+                                "user_brand_position": {
+                                    "x_coordinate": 50,
+                                    "y_coordinate": 70,
+                                    "quadrant": country_data.get("positioning_opportunity", "Accessible Premium"),
+                                    "rationale": f"Positioned for {country_data.get('positioning_opportunity', 'target')} segment"
+                                },
+                                "white_space_analysis": country_data.get("white_space", f"Opportunity in {country} market"),
+                                "strategic_advantage": f"Deep Market Intelligence identified {len(all_comps)} real competitors in {country}.",
+                                "market_entry_recommendation": country_data.get("format_gap", "Differentiated market entry strategy recommended")
+                            })
+                    
+                    if formatted_country_competitors:
+                        brand_score["country_competitor_analysis"] = formatted_country_competitors
+                        logging.info(f"🎯 Using Deep Market Intel for country_competitor_analysis: {len(formatted_country_competitors)} countries")
+                
+                # Fallback: If country_competitor_analysis is empty or missing countries, use LLM research data or regenerate
                 if not brand_score.get("country_competitor_analysis") or len(brand_score.get("country_competitor_analysis", [])) == 0:
                     # Use LLM research data if available (from earlier parallel processing)
                     if llm_research_data and llm_research_data.get("country_competitor_analysis"):
@@ -11075,8 +11127,7 @@ BRAND: {brand}
                         logging.info(f"✅ Using LLM-researched cultural analysis for {brand_name_for_fallback}")
                 
                 # Ensure competitor_analysis has proper data (GLOBAL competitors, not country-specific)
-                # 🆕 Use Deep Market Intelligence if available
-                deep_intel = all_brand_data.get(brand_name_for_fallback, {}).get("deep_market_intel")
+                # 🆕 Use Deep Market Intelligence if available (reuse deep_intel from above)
                 
                 if deep_intel and deep_intel.get("global_matrix", {}).get("competitors"):
                     # Use REAL competitors from Deep Market Intelligence
