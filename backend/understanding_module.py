@@ -533,6 +533,8 @@ async def generate_brand_understanding(
     
     # Try LLM first
     if LlmChat and EMERGENT_KEY:
+        from emergentintegrations.llm.chat import UserMessage
+        
         models_to_try = [
             ("openai", "gpt-4o-mini"),  # Fast and reliable for structured output
             ("openai", "gpt-4o"),        # Fallback
@@ -542,21 +544,16 @@ async def generate_brand_understanding(
             try:
                 logger.info(f"🧠 Understanding Module: Trying {provider}/{model}...")
                 
-                chat = LlmChat(
-                    api_key=EMERGENT_KEY,
-                    provider=provider,
-                    model=model,
-                    temperature=0.3,  # Low temperature for consistent structured output
+                chat = LlmChat(EMERGENT_KEY, provider, model)
+                user_msg = UserMessage(text=prompt)
+                
+                response = await asyncio.wait_for(
+                    chat.send_message(user_msg),
                     timeout=30
                 )
                 
-                response = await asyncio.to_thread(
-                    chat.send_message,
-                    prompt
-                )
-                
                 # Parse the JSON response
-                response_text = response.strip()
+                response_text = str(response).strip()
                 
                 # Clean up response if needed
                 if response_text.startswith("```json"):
