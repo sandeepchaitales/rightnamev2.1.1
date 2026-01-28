@@ -1262,7 +1262,7 @@ class BrandEvaluationTester:
         payload = {
             "brand_names": ["FailedFounders"],
             "category": "YouTube Channel",
-            "positioning": "Educational content for entrepreneurs",
+            "positioning": "Mid-Range",
             "countries": ["India", "USA"]
         }
         
