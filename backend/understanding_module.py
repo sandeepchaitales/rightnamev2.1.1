@@ -580,7 +580,7 @@ async def generate_brand_understanding(
     
     # If LLM failed, use fallback
     if understanding_data is None:
-        logger.warning(f"🧠 Understanding Module: LLM failed, using fallback logic")
+        logger.warning("🧠 Understanding Module: LLM failed, using fallback logic")
         understanding_data = generate_fallback_understanding(brand_name, category, positioning, countries)
         model_used = "fallback"
     
@@ -670,7 +670,7 @@ def generate_fallback_understanding(
             "is_dictionary_word": is_dict,
             "language": "English",
             "part_of_speech": "unknown",
-            "meaning": f"Component of brand name",
+            "meaning": "Component of brand name",
             "sentiment": "neutral",
             "commonality": "common" if is_dict else "unknown"
         })
