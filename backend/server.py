@@ -11044,18 +11044,30 @@ BRAND: {brand}
         # POST-PROCESSING: Ensure country_competitor_analysis has ALL user-selected countries
         # This fixes the issue where LLM skips some countries
         if "brand_scores" in data and isinstance(data["brand_scores"], list):
-            for brand_score in data["brand_scores"]:
+            for idx, brand_score in enumerate(data["brand_scores"]):
                 existing_countries = []
                 if "country_competitor_analysis" in brand_score:
                     existing_countries = [c.get("country", "") for c in brand_score.get("country_competitor_analysis", [])]
                 
                 # Check if any user countries are missing
                 # Note: request is accessible in outer scope
-                brand_name_for_fallback = brand_score.get("brand_name", "Brand")
+                # 🔧 FIX: Use original brand name from request, not LLM response
+                brand_name_for_fallback = request.brand_names[idx] if idx < len(request.brand_names) else brand_score.get("brand_name", "Brand")
                 category_for_fallback = brand_score.get("category", "Business")
+                
+                # Debug logging
+                logging.info(f"🔍 POST-PROCESSING for '{brand_name_for_fallback}' (idx={idx})")
+                logging.info(f"🔍 all_brand_data keys: {list(all_brand_data.keys())}")
                 
                 # 🆕 First check Deep Market Intelligence for country competitor analysis
                 deep_intel = all_brand_data.get(brand_name_for_fallback, {}).get("deep_market_intel")
+                
+                if deep_intel:
+                    logging.info(f"🎯 Found deep_intel for '{brand_name_for_fallback}': {len(deep_intel.get('global_matrix', {}).get('competitors', []))} global competitors")
+                else:
+                    logging.warning(f"⚠️ No deep_intel found for '{brand_name_for_fallback}'")
+                
+                if deep_intel and deep_intel.get("country_analysis"):
                 
                 if deep_intel and deep_intel.get("country_analysis"):
                     # Use REAL country-specific competitors from Deep Market Intelligence
