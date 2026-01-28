@@ -1373,9 +1373,16 @@ class BrandEvaluationTester:
                 # VERIFICATION 5: NO "Truly Coined" text should appear
                 print(f"\n🔍 VERIFICATION 5: 'Truly Coined' Text Check")
                 truly_coined_found = False
-                if "truly coined" in response_text or "no existing meaning" in response_text:
+                truly_coined_text = ""
+                if "truly coined" in response_text:
                     truly_coined_found = True
-                    issues.append(f"'Truly Coined' text FOUND: Should NOT appear for dictionary words")
+                    truly_coined_text = "truly coined"
+                elif "no existing meaning" in response_text:
+                    truly_coined_found = True
+                    truly_coined_text = "no existing meaning"
+                
+                if truly_coined_found:
+                    print(f"❌ 'Truly Coined' text FOUND: '{truly_coined_text}' detected in response")
                 else:
                     print(f"✅ 'Truly Coined' text CORRECT: Not found (as expected)")
                 
