@@ -9867,6 +9867,28 @@ class BrandEvaluationTester:
         
         return self.print_summary()
 
+    def run_understanding_module_test_only(self):
+        """Run only the Understanding Module Integration test as requested in review"""
+        print("🧠 Starting RIGHTNAME.AI Understanding Module Integration Test")
+        print("="*80)
+        print("Testing NEW UNDERSTANDING MODULE for RIGHTNAME brand evaluation API")
+        print("Critical test case: FailedFounders YouTube Channel")
+        print("="*80)
+        
+        # Basic connectivity
+        if not self.test_api_health():
+            print("❌ API health check failed - stopping tests")
+            return False
+        
+        # Run the Understanding Module test
+        print("\n" + "="*50)
+        print("🧠 TESTING UNDERSTANDING MODULE INTEGRATION")
+        print("="*50)
+        
+        self.test_understanding_module_integration()
+        
+        return self.print_summary()
+
 def main():
     """Main function to run User Reports API tests as requested in review"""
     tester = BrandEvaluationTester()
