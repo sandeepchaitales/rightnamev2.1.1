@@ -11043,6 +11043,10 @@ BRAND: {brand}
         
         # POST-PROCESSING: Ensure country_competitor_analysis has ALL user-selected countries
         # This fixes the issue where LLM skips some countries
+        logging.info("=" * 60)
+        logging.info("🔄 POST-PROCESSING: Starting competitor data override...")
+        logging.info("=" * 60)
+        
         if "brand_scores" in data and isinstance(data["brand_scores"], list):
             for idx, brand_score in enumerate(data["brand_scores"]):
                 existing_countries = []
