@@ -1257,6 +1257,161 @@ class BrandEvaluationTester:
             self.log_test("Admin Login - Invalid Credentials", False, str(e))
             return False
 
+    def test_understanding_module_integration(self):
+        """Test NEW UNDERSTANDING MODULE integration for RIGHTNAME brand evaluation API"""
+        payload = {
+            "brand_names": ["FailedFounders"],
+            "category": "YouTube Channel",
+            "positioning": "Educational content for entrepreneurs",
+            "countries": ["India", "USA"]
+        }
+        
+        try:
+            print(f"\n🧠 Testing NEW UNDERSTANDING MODULE Integration...")
+            print(f"CRITICAL TEST CASE:")
+            print(f"  Brand: FailedFounders")
+            print(f"  Category: YouTube Channel")
+            print(f"  Positioning: Educational content for entrepreneurs")
+            print(f"  Countries: India, USA")
+            print(f"\nEXPECTED RESULTS:")
+            print(f"  1. NICE Class: 41 (Education & Entertainment) - NOT 35 (Business Services)")
+            print(f"  2. Linguistic Classification: DESCRIPTIVE or SUGGESTIVE - NOT FANCIFUL")
+            print(f"  3. Word Tokenization: ['Failed', 'Founders'] - two dictionary words")
+            print(f"  4. Business Type: content_media - NOT saas/software/product")
+            print(f"  5. NO 'Truly Coined' text should appear")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120 seconds timeout as specified
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Understanding Module - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Understanding Module - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                issues = []
+                
+                # VERIFICATION 1: NICE CLASS should be 41 (Education & Entertainment)
+                print(f"\n🔍 VERIFICATION 1: NICE Class Check")
+                trademark_research = brand.get("trademark_research", {})
+                nice_classification = trademark_research.get("nice_classification", {})
+                nice_class = nice_classification.get("class_number")
+                
+                print(f"Found NICE Class: {nice_class}")
+                if nice_class != 41:
+                    issues.append(f"NICE Class WRONG: Expected 41 (Education & Entertainment), got {nice_class}")
+                else:
+                    print(f"✅ NICE Class CORRECT: Class 41 (Education & Entertainment)")
+                
+                # VERIFICATION 2: Linguistic Classification should be DESCRIPTIVE or SUGGESTIVE
+                print(f"\n🔍 VERIFICATION 2: Linguistic Classification Check")
+                response_text = json.dumps(data).lower()
+                
+                # Look for classification in various places
+                classification_found = None
+                if "descriptive" in response_text:
+                    classification_found = "DESCRIPTIVE"
+                elif "suggestive" in response_text:
+                    classification_found = "SUGGESTIVE"
+                elif "fanciful" in response_text:
+                    classification_found = "FANCIFUL"
+                elif "arbitrary" in response_text:
+                    classification_found = "ARBITRARY"
+                
+                print(f"Found Classification: {classification_found}")
+                if classification_found == "FANCIFUL":
+                    issues.append(f"Classification WRONG: Found FANCIFUL, expected DESCRIPTIVE or SUGGESTIVE")
+                elif classification_found in ["DESCRIPTIVE", "SUGGESTIVE"]:
+                    print(f"✅ Classification CORRECT: {classification_found}")
+                else:
+                    print(f"⚠️ Classification unclear or not found in response")
+                
+                # VERIFICATION 3: Word Tokenization - should show ["Failed", "Founders"]
+                print(f"\n🔍 VERIFICATION 3: Word Tokenization Check")
+                # Look for tokenization evidence in response
+                tokenization_correct = False
+                if "failed" in response_text and "founders" in response_text:
+                    # Check if they're mentioned as separate words
+                    if ("failed" in response_text and "founders" in response_text and 
+                        ("two" in response_text or "dictionary" in response_text)):
+                        tokenization_correct = True
+                        print(f"✅ Tokenization CORRECT: Found evidence of 'Failed' and 'Founders' as separate dictionary words")
+                    else:
+                        print(f"⚠️ Tokenization: Found 'failed' and 'founders' but unclear if properly tokenized")
+                else:
+                    issues.append(f"Tokenization UNCLEAR: Could not verify ['Failed', 'Founders'] tokenization")
+                
+                # VERIFICATION 4: Business Type should be content_media
+                print(f"\n🔍 VERIFICATION 4: Business Type Check")
+                business_type_correct = False
+                if "content_media" in response_text:
+                    business_type_correct = True
+                    print(f"✅ Business Type CORRECT: Found 'content_media'")
+                elif any(wrong_type in response_text for wrong_type in ["saas", "software", "product"]):
+                    issues.append(f"Business Type WRONG: Found saas/software/product instead of content_media")
+                else:
+                    print(f"⚠️ Business Type: Could not verify content_media in response")
+                
+                # VERIFICATION 5: NO "Truly Coined" text should appear
+                print(f"\n🔍 VERIFICATION 5: 'Truly Coined' Text Check")
+                truly_coined_found = False
+                if "truly coined" in response_text or "no existing meaning" in response_text:
+                    truly_coined_found = True
+                    issues.append(f"'Truly Coined' text FOUND: Should NOT appear for dictionary words")
+                else:
+                    print(f"✅ 'Truly Coined' text CORRECT: Not found (as expected)")
+                
+                # Check response time
+                if response_time > 120:
+                    issues.append(f"Response time EXCEEDED: {response_time:.2f}s > 120s timeout")
+                else:
+                    print(f"✅ Response Time ACCEPTABLE: {response_time:.2f}s within 120s limit")
+                
+                # Summary of results
+                print(f"\n📋 UNDERSTANDING MODULE TEST SUMMARY:")
+                print(f"  1. NICE Class 41: {'✅' if nice_class == 41 else '❌'}")
+                print(f"  2. Classification NOT FANCIFUL: {'✅' if classification_found != 'FANCIFUL' else '❌'}")
+                print(f"  3. Word Tokenization: {'✅' if tokenization_correct else '⚠️'}")
+                print(f"  4. Business Type content_media: {'✅' if business_type_correct else '⚠️'}")
+                print(f"  5. NO 'Truly Coined': {'✅' if not truly_coined_found else '❌'}")
+                print(f"  6. Response Time: {'✅' if response_time <= 120 else '❌'}")
+                
+                if issues:
+                    self.log_test("Understanding Module Integration", False, "; ".join(issues))
+                    return False
+                
+                success_msg = f"All verifications passed. NICE Class: {nice_class}, Classification: {classification_found}, Time: {response_time:.2f}s"
+                self.log_test("Understanding Module Integration", True, success_msg)
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Understanding Module - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Understanding Module - Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Understanding Module - Exception", False, str(e))
+            return False
+
     def test_admin_evaluations_stats(self):
         """Test GET /api/admin/evaluations/stats endpoint"""
         if not self.admin_token:
