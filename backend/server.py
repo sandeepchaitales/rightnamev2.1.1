@@ -11075,8 +11075,44 @@ BRAND: {brand}
                         logging.info(f"✅ Using LLM-researched cultural analysis for {brand_name_for_fallback}")
                 
                 # Ensure competitor_analysis has proper data (GLOBAL competitors, not country-specific)
-                if not brand_score.get("competitor_analysis") or not brand_score.get("competitor_analysis", {}).get("competitors"):
-                    # Use GLOBAL competitors for "Global Overview" matrix
+                # 🆕 Use Deep Market Intelligence if available
+                deep_intel = all_brand_data.get(brand_name_for_fallback, {}).get("deep_market_intel")
+                
+                if deep_intel and deep_intel.get("global_matrix", {}).get("competitors"):
+                    # Use REAL competitors from Deep Market Intelligence
+                    global_matrix = deep_intel.get("global_matrix", {})
+                    competitors_data = global_matrix.get("competitors", [])
+                    user_pos = global_matrix.get("user_position", {})
+                    
+                    # Format competitors for matrix display
+                    formatted_competitors = []
+                    for comp in competitors_data[:10]:
+                        formatted_competitors.append({
+                            "name": comp.get("name", "Unknown"),
+                            "x_coordinate": float(comp.get("x", 5)) * 10,  # Scale 1-10 to 10-100
+                            "y_coordinate": float(comp.get("y", 5)) * 10,
+                            "quadrant": comp.get("type", "Competitor"),
+                            "price_axis": None,
+                            "modernity_axis": None
+                        })
+                    
+                    brand_score["competitor_analysis"] = {
+                        "x_axis_label": global_matrix.get("x_axis_label", "Price: Budget → Premium"),
+                        "y_axis_label": global_matrix.get("y_axis_label", "Quality: Basic → High Production"),
+                        "competitors": formatted_competitors,
+                        "user_brand_position": {
+                            "x_coordinate": float(user_pos.get("x", 5)) * 10,
+                            "y_coordinate": float(user_pos.get("y", 7)) * 10,
+                            "quadrant": user_pos.get("quadrant", "Accessible Premium"),
+                            "rationale": f"'{brand_name_for_fallback}' positioned in {user_pos.get('quadrant', 'target')} segment"
+                        },
+                        "white_space_analysis": get_white_space_summary(deep_intel),
+                        "strategic_advantage": "Real competitor data from Deep Market Intelligence enables precise positioning strategy."
+                    }
+                    logging.info(f"🎯 Using Deep Market Intel for competitor_analysis: {len(formatted_competitors)} real competitors")
+                    
+                elif not brand_score.get("competitor_analysis") or not brand_score.get("competitor_analysis", {}).get("competitors"):
+                    # Fallback: Use GLOBAL competitors for "Global Overview" matrix
                     global_data = get_global_competitors(request.category, request.industry)
                     brand_score["competitor_analysis"] = {
                         "x_axis_label": global_data.get("axis_x", "Price: Budget → Premium"),
@@ -11090,7 +11126,7 @@ BRAND: {brand}
                         },
                         "white_space_analysis": global_data.get("white_space", "Opportunity exists for differentiated brands in global market."),
                         "strategic_advantage": global_data.get("strategic_advantage", "Distinctive brand identity enables unique global positioning.")
-                        }
+                    }
         
         return {"model": f"{model_provider}/{model_name}", "data": data}
     
