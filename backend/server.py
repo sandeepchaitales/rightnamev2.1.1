@@ -11068,8 +11068,6 @@ BRAND: {brand}
                     logging.warning(f"⚠️ No deep_intel found for '{brand_name_for_fallback}'")
                 
                 if deep_intel and deep_intel.get("country_analysis"):
-                
-                if deep_intel and deep_intel.get("country_analysis"):
                     # Use REAL country-specific competitors from Deep Market Intelligence
                     country_analysis_data = deep_intel.get("country_analysis", {})
                     formatted_country_competitors = []
