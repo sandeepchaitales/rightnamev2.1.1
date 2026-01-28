@@ -10319,6 +10319,12 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
     for brand in request.brand_names:
         logging.info(f"Running parallel checks for brand: {brand}")
         
+        # ==================== GET UNDERSTANDING (From Brain Module) ====================
+        brand_understanding = brand_understandings.get(brand)
+        if brand_understanding:
+            logging.info(f"🧠 Using Understanding Module data for '{brand}'")
+        # ==================== END GET UNDERSTANDING ====================
+        
         # ==================== STEP 1: UNIVERSAL LINGUISTIC ANALYSIS (FIRST!) ====================
         # Analyze brand name for meaning in ANY world language using LLM
         # This MUST run FIRST to provide data for classification override
@@ -10340,14 +10346,28 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             linguistic_analysis = None
         # ==================== END LINGUISTIC ANALYSIS ====================
         
-        # ==================== STEP 2: MASTER CLASSIFICATION (WITH LINGUISTIC OVERRIDE) ====================
-        # Classification now uses linguistic data to override FANCIFUL when meaning is found
-        brand_classification = classify_brand_with_linguistic_override(
-            brand, 
-            request.category or "Business",
-            linguistic_analysis  # Pass linguistic data for potential override
-        )
-        classification_category = brand_classification.get("category", "DESCRIPTIVE")
+        # ==================== STEP 2: MASTER CLASSIFICATION (WITH UNDERSTANDING + LINGUISTIC OVERRIDE) ====================
+        # If Understanding Module has classification, use it; else fall back to linguistic override
+        if brand_understanding and should_use_understanding_classification(brand_understanding):
+            # Use Understanding Module classification (Source of Truth)
+            understanding_classification = get_classification_from_understanding(brand_understanding)
+            classification_category = understanding_classification
+            brand_classification = {
+                "category": understanding_classification,
+                "distinctiveness": "HIGH" if understanding_classification == "FANCIFUL" else "MEDIUM" if understanding_classification in ["ARBITRARY", "SUGGESTIVE"] else "LOW",
+                "protectability": "STRONG" if understanding_classification == "FANCIFUL" else "MODERATE" if understanding_classification in ["ARBITRARY", "SUGGESTIVE"] else "WEAK",
+                "understanding_source": True,
+                "tokenized_words": brand_understanding.get("brand_analysis", {}).get("tokenized", [])
+            }
+            logging.info(f"🧠 USING UNDERSTANDING CLASSIFICATION for '{brand}': {classification_category}")
+        else:
+            # Fall back to old classification with linguistic override
+            brand_classification = classify_brand_with_linguistic_override(
+                brand, 
+                request.category or "Business",
+                linguistic_analysis  # Pass linguistic data for potential override
+            )
+            classification_category = brand_classification.get("category", "DESCRIPTIVE")
         
         logging.info(f"🏷️ MASTER CLASSIFICATION for '{brand}':")
         logging.info(f"   Category: {classification_category}")
@@ -10356,13 +10376,15 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         if brand_classification.get("linguistic_override"):
             logging.info(f"   ⚡ OVERRIDE: {brand_classification.get('original_category')} → {classification_category}")
             logging.info(f"   Reason: {brand_classification.get('override_reason')}")
+        if brand_classification.get("understanding_source"):
+            logging.info(f"   🧠 SOURCE: Understanding Module (Tokenized: {brand_classification.get('tokenized_words', [])})")
         # ==================== END MASTER CLASSIFICATION ====================
         
-        # Create all tasks for this brand (pass classification to trademark research)
+        # Create all tasks for this brand (pass classification AND understanding to trademark research)
         tasks = [
             gather_domain_data(brand),
             gather_similarity_data(brand),
-            gather_trademark_data(brand, classification_category),  # Pass classification for hybrid model
+            gather_trademark_data(brand, classification_category, brand_understanding),  # Pass understanding for NICE class
             gather_visibility_data(brand),
             gather_multi_domain_data(brand),
             gather_social_data(brand)
