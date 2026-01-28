@@ -12269,6 +12269,8 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
     # Add user tracking fields (will be populated when user links report)
     doc['user_email'] = None
     doc['user_id'] = None
+    # Store Understanding Module data (Source of Truth)
+    doc['brand_understandings'] = {k: v for k, v in brand_understandings.items()} if brand_understandings else None
     await db.evaluations.insert_one(doc)
     
     # Set report_id in the evaluation object
