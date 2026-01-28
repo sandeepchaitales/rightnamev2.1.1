@@ -11060,10 +11060,10 @@ BRAND: {brand}
         # Calculate final NAMESCORE
         weighted_sum = (
             component_scores["llm_dimensions"]["weighted"] +
-            component_scores["cultural_resonance"]["weighted"] +
-            component_scores["trademark_safety"]["weighted"] +
             component_scores["business_alignment"]["weighted"] +
+            component_scores["trademark_safety"]["weighted"] +
             component_scores["dupont_safety"]["weighted"] +
+            component_scores["cultural_resonance"]["weighted"] +
             component_scores["digital_availability"]["weighted"]
         )
         
@@ -11073,13 +11073,13 @@ BRAND: {brand}
         
         # Build formula explanation
         formula_explanation = f"""
-NAMESCORE CALCULATION:
-├─ LLM Dimensions:     {component_scores['llm_dimensions']['raw']:.1f}/10 × 40% = {component_scores['llm_dimensions']['weighted']:.2f}
-├─ Cultural Resonance: {component_scores['cultural_resonance']['raw']:.1f}/10 × 15% = {component_scores['cultural_resonance']['weighted']:.2f}
-├─ Trademark Safety:   {component_scores['trademark_safety']['raw']:.1f}/10 × 20% = {component_scores['trademark_safety']['weighted']:.2f}
-├─ Business Alignment: {component_scores['business_alignment']['raw']:.1f}/10 × 10% = {component_scores['business_alignment']['weighted']:.2f}
-├─ DuPont Safety:      {component_scores['dupont_safety']['raw']:.1f}/10 × 10% = {component_scores['dupont_safety']['weighted']:.2f}
-└─ Digital Availability: {component_scores['digital_availability']['raw']:.1f}/10 × 5% = {component_scores['digital_availability']['weighted']:.2f}
+NAMESCORE CALCULATION (July 2025):
+├─ LLM Dimensions:       {component_scores['llm_dimensions']['raw']:.1f}/10 × 35% = {component_scores['llm_dimensions']['weighted']:.2f}
+├─ Business Alignment:   {component_scores['business_alignment']['raw']:.1f}/10 × 20% = {component_scores['business_alignment']['weighted']:.2f}
+├─ Trademark Safety:     {component_scores['trademark_safety']['raw']:.1f}/10 × 15% = {component_scores['trademark_safety']['weighted']:.2f}
+├─ DuPont Safety:        {component_scores['dupont_safety']['raw']:.1f}/10 × 15% = {component_scores['dupont_safety']['weighted']:.2f}
+├─ Cultural Resonance:   {component_scores['cultural_resonance']['raw']:.1f}/10 × 10% = {component_scores['cultural_resonance']['weighted']:.2f}
+└─ Digital Availability: {component_scores['digital_availability']['raw']:.1f}/10 ×  5% = {component_scores['digital_availability']['weighted']:.2f}
 ─────────────────────────────────────
 TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
 """
@@ -11092,11 +11092,11 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
             "component_scores": component_scores,
             "formula_explanation": formula_explanation.strip(),
             "weights_used": {
-                "llm_dimensions": 0.40,
-                "cultural_resonance": 0.15,
-                "trademark_safety": 0.20,
-                "business_alignment": 0.10,
-                "dupont_safety": 0.10,
+                "llm_dimensions": 0.35,
+                "business_alignment": 0.20,
+                "trademark_safety": 0.15,
+                "dupont_safety": 0.15,
+                "cultural_resonance": 0.10,
                 "digital_availability": 0.05
             }
         }
