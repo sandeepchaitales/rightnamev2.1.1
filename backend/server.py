@@ -12692,11 +12692,11 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                                     "y_coordinate": user_pos_country.get("y_coordinate", 70),
                                     "quadrant": user_pos_country.get("quadrant", "Target Segment")
                                 },
-                                # Enhanced white space with competitor context
-                                "white_space_analysis": cdata.get("white_space_analysis", "") or (
+                                # Enhanced white space with competitor context - ALWAYS show detailed version
+                                "white_space_analysis": (
                                     f"🟢 **BLUE OCEAN OPPORTUNITY**: No direct competitors identified in {country}. First-mover advantage available." 
                                     if direct_count == 0 else
-                                    f"🟡 **{direct_count} direct competitors** in {country}: {', '.join(direct_comps_list[:4])}. Differentiation through unique positioning required."
+                                    f"🟡 **COMPETITIVE MARKET**: {direct_count} direct competitor{'s' if direct_count > 1 else ''} in {country}: {', '.join(direct_comps_list[:4])}.\n\n**Opportunity**: Differentiation through unique features, pricing, or niche targeting required."
                                 ),
                                 # Enhanced strategic advantage with competitor names
                                 "strategic_advantage": (
