@@ -12686,10 +12686,34 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                                     "y_coordinate": user_pos_country.get("y_coordinate", 70),
                                     "quadrant": user_pos_country.get("quadrant", "Target Segment")
                                 },
-                                "white_space_analysis": cdata.get("white_space_analysis", gap.get("gap_description", "")),
-                                "strategic_advantage": f"Found {len(all_comps)} competitors ({gap.get('direct_count', 0)} direct, {gap.get('indirect_count', 0)} indirect).",
-                                "market_entry_recommendation": "Gap detected - first mover opportunity" if gap.get("gap_detected") else "Competitive market - differentiation required",
-                                "gap_analysis": gap
+                                # Enhanced white space with competitor context
+                                "white_space_analysis": cdata.get("white_space_analysis", "") or (
+                                    f"🟢 **BLUE OCEAN OPPORTUNITY**: No direct competitors identified in {country}. First-mover advantage available." 
+                                    if gap.get("direct_count", 0) == 0 else
+                                    f"🟡 **{gap.get('direct_count', 0)} direct competitors** in {country}: {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') == 'DIRECT'][:4])}. Differentiation through unique positioning required."
+                                ),
+                                # Enhanced strategic advantage with competitor names
+                                "strategic_advantage": self._build_detailed_strategic_advantage(all_comps, gap, country) if hasattr(self, '_build_detailed_strategic_advantage') else (
+                                    f"🟢 **BLUE OCEAN**: No direct competitors found in {country}. Excellent first-mover opportunity.\n\n**Indirect Competitors ({gap.get('indirect_count', len(all_comps))}):** {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') != 'DIRECT'][:5]) or 'None'}"
+                                    if gap.get("direct_count", 0) == 0 else
+                                    f"🟡 **COMPETITIVE MARKET**: {gap.get('direct_count', 0)} direct competitors identified.\n\n**Direct Competitors:** {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') == 'DIRECT'][:5]) or 'None'}\n\n**Indirect Competitors ({gap.get('indirect_count', 0)}):** {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') != 'DIRECT'][:5]) or 'None'}"
+                                ),
+                                # Enhanced market entry recommendation
+                                "market_entry_recommendation": (
+                                    f"🚀 **GO** - Excellent timing for {country} market entry. No direct competition detected." 
+                                    if gap.get("direct_count", 0) == 0 else
+                                    f"✅ **PROCEED WITH STRATEGY** - {country} market entry viable. Position against: {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') == 'DIRECT'][:3])}. Focus on unique value proposition."
+                                    if gap.get("direct_count", 0) <= 3 else
+                                    f"⚠️ **PROCEED WITH CAUTION** - Competitive market with {gap.get('direct_count', 0)} direct players. Strong differentiation required."
+                                ),
+                                "gap_analysis": {
+                                    "direct_count": gap.get("direct_count", 0),
+                                    "indirect_count": gap.get("indirect_count", len(all_comps) - gap.get("direct_count", 0)),
+                                    "total_competitors": len(all_comps),
+                                    "direct_competitors": ", ".join([c.get("name", "Unknown") for c in all_comps if c.get("type") == "DIRECT"][:6]) or "None identified",
+                                    "indirect_competitors": ", ".join([c.get("name", "Unknown") for c in all_comps if c.get("type") != "DIRECT"][:6]) or "None identified",
+                                    "gap_detected": gap.get("gap_detected", gap.get("direct_count", 0) == 0)
+                                }
                             })
                         
                         if formatted_country:
