@@ -11762,10 +11762,22 @@ BRAND: {brand}
     Category: {request.category}
     Product Type: {request.product_type or 'Digital'}
     USP (Unique Selling Proposition): {request.usp or 'Not specified'}
-    Brand Vibe/Personality: {request.brand_vibe or 'Not specified'}
+    Monetization Model: {request.monetization_model or 'Not specified'}
     Positioning: {request.positioning}
     Market Scope: {request.market_scope}
     Target Countries: {request.countries}
+    
+    {"" if not request.monetization_model else f'''
+    ═══════════════════════════════════════════════════════════════════════════════
+    💰 MONETIZATION CONTEXT: {request.monetization_model}
+    ═══════════════════════════════════════════════════════════════════════════════
+    This business uses "{request.monetization_model}" model. Consider:
+    - Competitor selection should match this monetization type
+    - {"B2B names should be more professional and trustworthy" if "B2B" in request.monetization_model else ""}
+    - {"Freemium/Ad-supported names can be more playful and mass-market friendly" if request.monetization_model in ["Freemium", "Ad-supported/Free"] else ""}
+    - {"Subscription implies recurring relationship - name should build trust" if "Subscription" in request.monetization_model else ""}
+    - {"Transaction-based names should convey reliability and efficiency" if "Transaction" in request.monetization_model else ""}
+    '''}
     
     {format_trademark_costs_for_prompt(request.countries)}
     
