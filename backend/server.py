@@ -7016,9 +7016,9 @@ CURRENCY: {legal_info.get('currency', 'Local currency')}
    Estimated Cost: {first_appeal.get('cost', 'Consult attorney')}
 
 ⚠️ IMPORTANT: Use {primary_country} jurisdiction terminology and costs.
-   - DO NOT use USPTO/TTAB/Federal Circuit terms for non-US countries
-   - DO NOT use USD costs for non-US single-country filings
    - Reference {legal_info.get('governing_law', 'local trademark law')} for legal basis
+   - Use {legal_info.get('currency', 'local currency')} for all cost estimates
+   - Cite {legal_info.get('trademark_office', 'local IP office')} as the authority
 ═══════════════════════════════════════════════════════════════════════════════
 """
     """Get the currency for a given country. Defaults to USD for unknown countries."""
