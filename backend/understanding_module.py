@@ -181,24 +181,80 @@ class BrandUnderstanding(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 NICE_CLASS_DATABASE = {
-    # Class 9 - Software, Electronics
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 9 - Software, Mobile Apps, Electronics (PRIMARY for booking apps)
+    # ═══════════════════════════════════════════════════════════════════════════
     "software": {"number": 9, "name": "Software & Electronics", "desc": "Computer software, mobile apps, electronic devices"},
     "app": {"number": 9, "name": "Software & Electronics", "desc": "Computer software, mobile apps, electronic devices"},
-    "saas": {"number": 42, "name": "Technology Services", "desc": "Scientific and technological services, software as a service"},
+    "mobile app": {"number": 9, "name": "Software & Electronics", "desc": "Downloadable mobile applications, software"},
     "tech": {"number": 9, "name": "Software & Electronics", "desc": "Computer software, mobile apps, electronic devices"},
     
-    # Class 35 - Business, Advertising
-    "ecommerce": {"number": 35, "name": "Advertising & Business", "desc": "Advertising, business management, retail services"},
-    "marketplace": {"number": 35, "name": "Advertising & Business", "desc": "Advertising, business management, retail services"},
-    "consulting": {"number": 35, "name": "Advertising & Business", "desc": "Business consulting, management services"},
+    # ═══════════════════════════════════════════════════════════════════════════
+    # BOOKING APPS - Class 9 (software) PRIMARY, Class 42 (SaaS) SECONDARY
+    # NOT Class 39 (travel/transport) - that's only for actual transport services
+    # ═══════════════════════════════════════════════════════════════════════════
+    "booking app": {"number": 9, "name": "Software & Electronics", "desc": "Mobile booking application software"},
+    "booking": {"number": 9, "name": "Software & Electronics", "desc": "Booking software, appointment scheduling apps"},
+    "appointment": {"number": 9, "name": "Software & Electronics", "desc": "Appointment scheduling software, booking apps"},
+    "appointment app": {"number": 9, "name": "Software & Electronics", "desc": "Appointment scheduling mobile application"},
+    "appointment booking": {"number": 9, "name": "Software & Electronics", "desc": "Appointment booking software"},
+    "scheduling app": {"number": 9, "name": "Software & Electronics", "desc": "Scheduling software, calendar apps"},
+    "scheduling": {"number": 9, "name": "Software & Electronics", "desc": "Scheduling software applications"},
+    "reservation app": {"number": 9, "name": "Software & Electronics", "desc": "Reservation booking software"},
+    "reservation": {"number": 9, "name": "Software & Electronics", "desc": "Reservation software applications"},
     
-    # Class 36 - Finance
+    # ═══════════════════════════════════════════════════════════════════════════
+    # SALON/BEAUTY BOOKING - Class 9 (app) + Class 44 (beauty services)
+    # NOT Class 39 (travel) - that's for transport, not beauty
+    # ═══════════════════════════════════════════════════════════════════════════
+    "salon": {"number": 9, "name": "Software & Electronics", "desc": "Salon booking software, beauty appointment apps"},
+    "salon app": {"number": 9, "name": "Software & Electronics", "desc": "Salon appointment booking mobile application"},
+    "salon booking": {"number": 9, "name": "Software & Electronics", "desc": "Salon appointment booking software"},
+    "salon booking app": {"number": 9, "name": "Software & Electronics", "desc": "Salon appointment booking mobile application"},
+    "beauty booking": {"number": 9, "name": "Software & Electronics", "desc": "Beauty service booking software"},
+    "beauty app": {"number": 9, "name": "Software & Electronics", "desc": "Beauty service booking mobile application"},
+    "spa booking": {"number": 9, "name": "Software & Electronics", "desc": "Spa appointment booking software"},
+    "spa app": {"number": 9, "name": "Software & Electronics", "desc": "Spa booking mobile application"},
+    "parlour": {"number": 9, "name": "Software & Electronics", "desc": "Parlour booking software"},
+    "parlor": {"number": 9, "name": "Software & Electronics", "desc": "Parlor booking software"},
+    "barber": {"number": 9, "name": "Software & Electronics", "desc": "Barber appointment booking software"},
+    "barber app": {"number": 9, "name": "Software & Electronics", "desc": "Barber booking mobile application"},
+    "grooming app": {"number": 9, "name": "Software & Electronics", "desc": "Grooming service booking application"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DOCTOR/HEALTHCARE BOOKING - Class 9 (app) + Class 44 (medical services)
+    # ═══════════════════════════════════════════════════════════════════════════
+    "doctor appointment": {"number": 9, "name": "Software & Electronics", "desc": "Doctor appointment booking software"},
+    "doctor booking": {"number": 9, "name": "Software & Electronics", "desc": "Doctor appointment scheduling software"},
+    "doctor app": {"number": 9, "name": "Software & Electronics", "desc": "Doctor appointment mobile application"},
+    "clinic booking": {"number": 9, "name": "Software & Electronics", "desc": "Clinic appointment booking software"},
+    "hospital booking": {"number": 9, "name": "Software & Electronics", "desc": "Hospital appointment booking software"},
+    "telemedicine": {"number": 9, "name": "Software & Electronics", "desc": "Telemedicine software application"},
+    "telehealth": {"number": 9, "name": "Software & Electronics", "desc": "Telehealth software application"},
+    "healthtech": {"number": 9, "name": "Software & Electronics", "desc": "Healthcare technology software"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 35 - Business, Advertising, Marketplace Platforms
+    # ═══════════════════════════════════════════════════════════════════════════
+    "ecommerce": {"number": 35, "name": "Advertising & Business", "desc": "Advertising, business management, retail services"},
+    "marketplace": {"number": 35, "name": "Advertising & Business", "desc": "Online marketplace platform services"},
+    "booking platform": {"number": 35, "name": "Advertising & Business", "desc": "Online booking platform marketplace services"},
+    "consulting": {"number": 35, "name": "Advertising & Business", "desc": "Business consulting, management services"},
+    "aggregator": {"number": 35, "name": "Advertising & Business", "desc": "Service aggregator platform"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 36 - Finance, Insurance, Banking
+    # ═══════════════════════════════════════════════════════════════════════════
     "finance": {"number": 36, "name": "Financial Services", "desc": "Insurance, financial affairs, banking, real estate"},
     "fintech": {"number": 36, "name": "Financial Services", "desc": "Insurance, financial affairs, banking, real estate"},
     "payment": {"number": 36, "name": "Financial Services", "desc": "Payment processing, financial transactions"},
     "banking": {"number": 36, "name": "Financial Services", "desc": "Insurance, financial affairs, banking, real estate"},
+    "insurance": {"number": 36, "name": "Financial Services", "desc": "Insurance services"},
+    "lending": {"number": 36, "name": "Financial Services", "desc": "Financial lending services"},
     
-    # Class 41 - Education, Entertainment
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 41 - Education, Entertainment, Content
+    # ═══════════════════════════════════════════════════════════════════════════
     "youtube": {"number": 41, "name": "Education & Entertainment", "desc": "Education, training, entertainment, sporting and cultural activities"},
     "youtube channel": {"number": 41, "name": "Education & Entertainment", "desc": "Education, training, entertainment, sporting and cultural activities"},
     "content creator": {"number": 41, "name": "Education & Entertainment", "desc": "Education, training, entertainment, sporting and cultural activities"},
@@ -211,44 +267,81 @@ NICE_CLASS_DATABASE = {
     "streaming": {"number": 41, "name": "Education & Entertainment", "desc": "Education, training, entertainment, sporting and cultural activities"},
     "influencer": {"number": 41, "name": "Education & Entertainment", "desc": "Education, training, entertainment, sporting and cultural activities"},
     "vlog": {"number": 41, "name": "Education & Entertainment", "desc": "Education, training, entertainment, sporting and cultural activities"},
+    "online course": {"number": 41, "name": "Education & Entertainment", "desc": "Online educational courses and training"},
+    "e-learning": {"number": 41, "name": "Education & Entertainment", "desc": "Electronic learning services"},
     
-    # Class 42 - Technology Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 42 - SaaS, Technology Services, Cloud Computing
+    # ═══════════════════════════════════════════════════════════════════════════
+    "saas": {"number": 42, "name": "Technology Services", "desc": "Scientific and technological services, software as a service"},
     "cloud": {"number": 42, "name": "Technology Services", "desc": "Scientific and technological services, cloud computing"},
     "ai": {"number": 42, "name": "Technology Services", "desc": "Scientific and technological services, AI/ML services"},
     "platform": {"number": 42, "name": "Technology Services", "desc": "Scientific and technological services, platform services"},
+    "software service": {"number": 42, "name": "Technology Services", "desc": "Software as a service (SaaS)"},
+    "web service": {"number": 42, "name": "Technology Services", "desc": "Web-based software services"},
     
-    # Class 43 - Hospitality
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 43 - Hospitality, Food Service, Accommodation
+    # ═══════════════════════════════════════════════════════════════════════════
     "hotel": {"number": 43, "name": "Hospitality", "desc": "Hotels, temporary accommodation, restaurant services"},
     "restaurant": {"number": 43, "name": "Hospitality", "desc": "Restaurant services, food and drink services"},
     "cafe": {"number": 43, "name": "Hospitality", "desc": "Restaurant services, cafe services"},
     "food service": {"number": 43, "name": "Hospitality", "desc": "Restaurant services, food and drink services"},
+    "hospitality": {"number": 43, "name": "Hospitality", "desc": "Hotel, restaurant, temporary accommodation services"},
+    "catering": {"number": 43, "name": "Hospitality", "desc": "Catering and food service"},
     
-    # Class 25 - Clothing
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 44 - Medical, Beauty, Wellness SERVICES (not apps)
+    # Use for actual service providers, not booking apps
+    # ═══════════════════════════════════════════════════════════════════════════
+    "healthcare": {"number": 44, "name": "Medical & Beauty Services", "desc": "Medical services, health care, veterinary services"},
+    "medical": {"number": 44, "name": "Medical & Beauty Services", "desc": "Medical services, health care"},
+    "wellness": {"number": 44, "name": "Medical & Beauty Services", "desc": "Medical services, health care, wellness"},
+    "beauty services": {"number": 44, "name": "Medical & Beauty Services", "desc": "Beauty care, salon services, hygienic care"},
+    "salon services": {"number": 44, "name": "Medical & Beauty Services", "desc": "Beauty salon services, hair care"},
+    "spa services": {"number": 44, "name": "Medical & Beauty Services", "desc": "Spa, massage, wellness services"},
+    "dental": {"number": 44, "name": "Medical & Beauty Services", "desc": "Dental services, oral care"},
+    "veterinary": {"number": 44, "name": "Medical & Beauty Services", "desc": "Veterinary services, animal care"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 25 - Clothing, Fashion, Apparel
+    # ═══════════════════════════════════════════════════════════════════════════
     "fashion": {"number": 25, "name": "Clothing & Apparel", "desc": "Clothing, footwear, headgear"},
     "clothing": {"number": 25, "name": "Clothing & Apparel", "desc": "Clothing, footwear, headgear"},
     "apparel": {"number": 25, "name": "Clothing & Apparel", "desc": "Clothing, footwear, headgear"},
     "streetwear": {"number": 25, "name": "Clothing & Apparel", "desc": "Clothing, footwear, headgear"},
+    "footwear": {"number": 25, "name": "Clothing & Apparel", "desc": "Shoes, boots, footwear"},
     
-    # Class 3 - Cosmetics, Cleaning
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 3 - Cosmetics, Cleaning Products
+    # ═══════════════════════════════════════════════════════════════════════════
     "beauty": {"number": 3, "name": "Cosmetics & Cleaning", "desc": "Cleaning preparations, cosmetics, perfumery"},
     "cosmetics": {"number": 3, "name": "Cosmetics & Cleaning", "desc": "Cleaning preparations, cosmetics, perfumery"},
     "skincare": {"number": 3, "name": "Cosmetics & Cleaning", "desc": "Cleaning preparations, cosmetics, perfumery"},
     "cleaning": {"number": 3, "name": "Cosmetics & Cleaning", "desc": "Cleaning preparations, polishing, soaps"},
+    "makeup": {"number": 3, "name": "Cosmetics & Cleaning", "desc": "Cosmetics, makeup products"},
     
-    # Class 29/30 - Food Products
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 29/30/32 - Food Products, Beverages
+    # ═══════════════════════════════════════════════════════════════════════════
     "food": {"number": 29, "name": "Food Products", "desc": "Meat, fish, preserved foods, dairy"},
     "beverages": {"number": 32, "name": "Beverages", "desc": "Beers, mineral waters, soft drinks, fruit juices"},
     "tea": {"number": 30, "name": "Food Products", "desc": "Coffee, tea, cocoa, bakery goods"},
+    "coffee": {"number": 30, "name": "Food Products", "desc": "Coffee, tea, cocoa, bakery goods"},
     
-    # Class 39 - Transport
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 39 - Transport, Travel, Logistics (ONLY for actual transport)
+    # NOT for booking apps - booking apps go to Class 9
+    # ═══════════════════════════════════════════════════════════════════════════
     "logistics": {"number": 39, "name": "Transport & Logistics", "desc": "Transport, packaging, travel arrangement"},
     "travel": {"number": 39, "name": "Transport & Logistics", "desc": "Transport, travel arrangement services"},
     "delivery": {"number": 39, "name": "Transport & Logistics", "desc": "Transport, delivery services"},
-    
-    # Class 44 - Medical
-    "healthcare": {"number": 44, "name": "Medical Services", "desc": "Medical services, health care, veterinary services"},
-    "medical": {"number": 44, "name": "Medical Services", "desc": "Medical services, health care"},
-    "wellness": {"number": 44, "name": "Medical Services", "desc": "Medical services, health care, wellness"},
+    "transport": {"number": 39, "name": "Transport & Logistics", "desc": "Transport services, freight"},
+    "shipping": {"number": 39, "name": "Transport & Logistics", "desc": "Shipping, freight transport"},
+    "cab": {"number": 39, "name": "Transport & Logistics", "desc": "Taxi, cab transportation services"},
+    "taxi": {"number": 39, "name": "Transport & Logistics", "desc": "Taxi transportation services"},
+    "ride": {"number": 39, "name": "Transport & Logistics", "desc": "Ride-hailing transportation services"},
+    "ride-hailing": {"number": 39, "name": "Transport & Logistics", "desc": "Ride-hailing transportation services"},
 }
 
 
