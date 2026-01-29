@@ -12754,6 +12754,26 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                             timeline[cost_key] = convert_in_value(old_val)
                             if old_val != timeline[cost_key]:
                                 logging.info(f"💱 Converted {cost_key}: {old_val} → {timeline[cost_key]}")
+                
+                # Convert domain_analysis costs
+                domain = bs.get("domain_analysis", {})
+                if isinstance(domain, dict):
+                    for cost_key in ["budget_estimate", "acquisition_cost_range"]:
+                        if cost_key in domain and isinstance(domain[cost_key], str):
+                            old_val = domain[cost_key]
+                            domain[cost_key] = convert_in_value(old_val)
+                
+                # Convert social media costs
+                social = bs.get("social_media_analysis", {})
+                if isinstance(social, dict):
+                    for key in ["estimated_cost", "cost"]:
+                        if key in social and isinstance(social[key], str):
+                            social[key] = convert_in_value(social[key])
+                    
+                    # Convert platform-level costs
+                    for platform in social.get("platforms", []):
+                        if isinstance(platform, dict) and "estimated_cost" in platform:
+                            platform["estimated_cost"] = convert_in_value(platform["estimated_cost"])
             
             # Apply to all brand scores
             for bs in data.get("brand_scores", []):
