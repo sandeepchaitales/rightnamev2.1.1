@@ -11257,6 +11257,8 @@ BRAND: {brand}
     Target Countries: {request.countries}
     
     {format_trademark_costs_for_prompt(request.countries)}
+    
+    {format_legal_procedures_for_prompt(request.countries)}
 
     IMPORTANT: Use the above business context to:
     1. Define the user's customer avatar accurately
