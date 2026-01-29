@@ -128,38 +128,151 @@ class TrademarkResearchResult:
 
 # Nice Classification mapping for common categories
 NICE_CLASSIFICATION = {
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 9 - Software, Mobile Apps (PRIMARY for booking/appointment apps)
+    # ═══════════════════════════════════════════════════════════════════════════
+    "software": {"class": 9, "description": "Scientific apparatus, computers, software"},
+    "technology": {"class": 9, "description": "Scientific apparatus, computers, software"},
+    "tech": {"class": 9, "description": "Scientific apparatus, computers, software"},
+    "app": {"class": 9, "description": "Scientific apparatus, computers, software, mobile apps"},
+    "mobile app": {"class": 9, "description": "Downloadable mobile applications, software"},
+    
+    # BOOKING APPS - Class 9 (not Class 39!)
+    "booking app": {"class": 9, "description": "Mobile booking application software"},
+    "booking": {"class": 9, "description": "Booking software, appointment scheduling apps"},
+    "appointment": {"class": 9, "description": "Appointment scheduling software, booking apps"},
+    "appointment app": {"class": 9, "description": "Appointment scheduling mobile application"},
+    "appointment booking": {"class": 9, "description": "Appointment booking software"},
+    "scheduling": {"class": 9, "description": "Scheduling software applications"},
+    "scheduling app": {"class": 9, "description": "Scheduling software, calendar apps"},
+    "reservation": {"class": 9, "description": "Reservation software applications"},
+    "reservation app": {"class": 9, "description": "Reservation booking software"},
+    
+    # SALON/BEAUTY BOOKING APPS - Class 9
+    "salon": {"class": 9, "description": "Salon booking software, beauty appointment apps"},
+    "salon app": {"class": 9, "description": "Salon appointment booking mobile application"},
+    "salon booking": {"class": 9, "description": "Salon appointment booking software"},
+    "salon booking app": {"class": 9, "description": "Salon appointment booking mobile application"},
+    "beauty booking": {"class": 9, "description": "Beauty service booking software"},
+    "beauty app": {"class": 9, "description": "Beauty service booking mobile application"},
+    "spa booking": {"class": 9, "description": "Spa appointment booking software"},
+    "spa app": {"class": 9, "description": "Spa booking mobile application"},
+    "parlour": {"class": 9, "description": "Parlour booking software"},
+    "parlor": {"class": 9, "description": "Parlor booking software"},
+    "barber": {"class": 9, "description": "Barber appointment booking software"},
+    "barber app": {"class": 9, "description": "Barber booking mobile application"},
+    "grooming": {"class": 9, "description": "Grooming service booking application"},
+    
+    # DOCTOR/HEALTHCARE BOOKING - Class 9
+    "doctor appointment": {"class": 9, "description": "Doctor appointment booking software"},
+    "doctor booking": {"class": 9, "description": "Doctor appointment scheduling software"},
+    "doctor app": {"class": 9, "description": "Doctor appointment mobile application"},
+    "clinic booking": {"class": 9, "description": "Clinic appointment booking software"},
+    "hospital booking": {"class": 9, "description": "Hospital appointment booking software"},
+    "telemedicine": {"class": 9, "description": "Telemedicine software application"},
+    "telehealth": {"class": 9, "description": "Telehealth software application"},
+    "healthtech": {"class": 9, "description": "Healthcare technology software"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 3 - Cosmetics, Cleaning Products
+    # ═══════════════════════════════════════════════════════════════════════════
+    "cosmetics": {"class": 3, "description": "Cosmetics, cleaning preparations"},
+    "skincare": {"class": 3, "description": "Cosmetics, cleaning preparations"},
+    "beauty": {"class": 3, "description": "Cosmetics, cleaning preparations"},
+    "cleaning": {"class": 3, "description": "Cleaning preparations, polishing, soaps"},
+    "makeup": {"class": 3, "description": "Cosmetics, makeup products"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 25 - Clothing, Fashion
+    # ═══════════════════════════════════════════════════════════════════════════
     "fashion": {"class": 25, "description": "Clothing, footwear, headgear"},
     "apparel": {"class": 25, "description": "Clothing, footwear, headgear"},
     "streetwear": {"class": 25, "description": "Clothing, footwear, headgear"},
     "clothing": {"class": 25, "description": "Clothing, footwear, headgear"},
     "footwear": {"class": 25, "description": "Clothing, footwear, headgear"},
-    "jewelry": {"class": 14, "description": "Precious metals, jewelry, watches"},
-    "cosmetics": {"class": 3, "description": "Cosmetics, cleaning preparations"},
-    "skincare": {"class": 3, "description": "Cosmetics, cleaning preparations"},
-    "beauty": {"class": 3, "description": "Cosmetics, cleaning preparations"},
-    "software": {"class": 9, "description": "Scientific apparatus, computers, software"},
-    "technology": {"class": 9, "description": "Scientific apparatus, computers, software"},
-    "tech": {"class": 9, "description": "Scientific apparatus, computers, software"},
-    "app": {"class": 9, "description": "Scientific apparatus, computers, software"},
-    "saas": {"class": 42, "description": "Scientific and technological services"},
-    "food": {"class": 29, "description": "Meat, fish, preserved foods"},
-    "restaurant": {"class": 43, "description": "Food and drink services"},
-    "cafe": {"class": 43, "description": "Food and drink services"},
-    "beverages": {"class": 32, "description": "Beers, mineral waters, soft drinks"},
-    "pharmaceutical": {"class": 5, "description": "Pharmaceuticals, medical preparations"},
-    "pharma": {"class": 5, "description": "Pharmaceuticals, medical preparations"},
-    "healthcare": {"class": 44, "description": "Medical and healthcare services"},
-    "education": {"class": 41, "description": "Education, training, entertainment"},
-    "edtech": {"class": 41, "description": "Education, training, entertainment"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 35 - Business, Advertising, Marketplace
+    # ═══════════════════════════════════════════════════════════════════════════
+    "ecommerce": {"class": 35, "description": "Advertising, business management, retail services"},
+    "marketplace": {"class": 35, "description": "Online marketplace platform services"},
+    "booking platform": {"class": 35, "description": "Online booking platform marketplace services"},
+    "aggregator": {"class": 35, "description": "Service aggregator platform"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 36 - Finance, Insurance, Banking
+    # ═══════════════════════════════════════════════════════════════════════════
     "finance": {"class": 36, "description": "Insurance, financial affairs"},
     "fintech": {"class": 36, "description": "Insurance, financial affairs"},
     "banking": {"class": 36, "description": "Insurance, financial affairs"},
+    "insurance": {"class": 36, "description": "Insurance services"},
+    "lending": {"class": 36, "description": "Financial lending services"},
     "real estate": {"class": 36, "description": "Insurance, financial affairs, real estate"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 39 - Transport, Logistics (ONLY for actual transport services)
+    # NOT for booking apps!
+    # ═══════════════════════════════════════════════════════════════════════════
+    "logistics": {"class": 39, "description": "Transport, packaging, travel arrangement"},
+    "travel": {"class": 39, "description": "Transport, travel arrangement services"},
+    "delivery": {"class": 39, "description": "Transport, delivery services"},
+    "transport": {"class": 39, "description": "Transport services, freight"},
+    "shipping": {"class": 39, "description": "Shipping, freight transport"},
+    "cab": {"class": 39, "description": "Taxi transportation services"},
+    "taxi": {"class": 39, "description": "Taxi transportation services"},
+    "ride-hailing": {"class": 39, "description": "Ride-hailing transportation services"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 41 - Education, Entertainment
+    # ═══════════════════════════════════════════════════════════════════════════
+    "education": {"class": 41, "description": "Education, training, entertainment"},
+    "edtech": {"class": 41, "description": "Education, training, entertainment"},
+    "youtube": {"class": 41, "description": "Education, training, entertainment"},
+    "youtube channel": {"class": 41, "description": "Education, training, entertainment"},
+    "content creator": {"class": 41, "description": "Education, training, entertainment"},
+    "podcast": {"class": 41, "description": "Education, training, entertainment"},
+    "gaming": {"class": 41, "description": "Education, training, entertainment"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 42 - SaaS, Technology Services
+    # ═══════════════════════════════════════════════════════════════════════════
+    "saas": {"class": 42, "description": "Scientific and technological services"},
+    "cloud": {"class": 42, "description": "Scientific and technological services, cloud computing"},
+    "ai": {"class": 42, "description": "Scientific and technological services, AI/ML"},
+    "platform": {"class": 42, "description": "Scientific and technological services, platform services"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 43 - Hospitality, Food Service
+    # ═══════════════════════════════════════════════════════════════════════════
+    "restaurant": {"class": 43, "description": "Food and drink services"},
+    "cafe": {"class": 43, "description": "Food and drink services"},
+    "hotel": {"class": 43, "description": "Hotels, temporary accommodation"},
+    "hospitality": {"class": 43, "description": "Hotels, restaurants, food services"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 44 - Medical, Beauty SERVICES (not apps)
+    # ═══════════════════════════════════════════════════════════════════════════
+    "healthcare": {"class": 44, "description": "Medical and healthcare services"},
+    "medical": {"class": 44, "description": "Medical services"},
+    "wellness": {"class": 44, "description": "Health care, wellness services"},
+    "beauty services": {"class": 44, "description": "Beauty care, salon services"},
+    "salon services": {"class": 44, "description": "Beauty salon services"},
+    "spa services": {"class": 44, "description": "Spa, massage, wellness services"},
+    "dental": {"class": 44, "description": "Dental services"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Other Classes
+    # ═══════════════════════════════════════════════════════════════════════════
+    "jewelry": {"class": 14, "description": "Precious metals, jewelry, watches"},
+    "pharmaceutical": {"class": 5, "description": "Pharmaceuticals, medical preparations"},
+    "pharma": {"class": 5, "description": "Pharmaceuticals, medical preparations"},
     "automotive": {"class": 12, "description": "Vehicles, apparatus for locomotion"},
     "toys": {"class": 28, "description": "Games, toys, sporting goods"},
-    "gaming": {"class": 28, "description": "Games, toys, sporting goods"},
     "furniture": {"class": 20, "description": "Furniture, mirrors, picture frames"},
     "home decor": {"class": 20, "description": "Furniture, mirrors, picture frames"},
+    "food": {"class": 29, "description": "Meat, fish, preserved foods"},
+    "beverages": {"class": 32, "description": "Beers, mineral waters, soft drinks"},
+    "tea": {"class": 30, "description": "Coffee, tea, cocoa, bakery goods"},
 }
 
 
