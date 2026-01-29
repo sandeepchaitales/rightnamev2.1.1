@@ -195,7 +195,7 @@ const LandingPage = () => {
     category: '',
     product_type: 'Digital',
     usp: '',
-    brand_vibe: '',
+    monetization_model: '',
     positioning: 'Premium',
     market_scope: 'Multi-Country',
     countries: '',
@@ -204,6 +204,16 @@ const LandingPage = () => {
     product_keywords: '',
     problem_statement: ''
   });
+
+  // Monetization Model options
+  const monetizationOptions = [
+    { value: "One-time Purchase", label: "One-time Purchase" },
+    { value: "Subscription (B2C)", label: "Subscription (B2C)" },
+    { value: "Subscription (B2B/Enterprise)", label: "Subscription (B2B/Enterprise)" },
+    { value: "Freemium", label: "Freemium" },
+    { value: "Transaction/Commission-based", label: "Transaction/Commission-based" },
+    { value: "Ad-supported/Free", label: "Ad-supported/Free" }
+  ];
 
   // Industry options
   const industries = [
