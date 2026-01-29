@@ -11754,9 +11754,28 @@ BRAND: {brand}
                                     "quadrant": country_data.get("positioning_opportunity", "Accessible Premium"),
                                     "rationale": f"Positioned for {country_data.get('positioning_opportunity', 'target')} segment"
                                 },
-                                "white_space_analysis": country_data.get("white_space", f"Opportunity in {country} market"),
-                                "strategic_advantage": f"Deep Market Intelligence identified {len(all_comps)} real competitors in {country}.",
-                                "market_entry_recommendation": country_data.get("format_gap", "Differentiated market entry strategy recommended")
+                                # Enhanced gap analysis with competitor names
+                                "gap_analysis": {
+                                    "direct_count": len([c for c in all_comps if c.get("quadrant") == "DIRECT" or "direct" in str(c.get("type", "")).lower()]),
+                                    "indirect_count": len([c for c in all_comps if c.get("quadrant") != "DIRECT" and "direct" not in str(c.get("type", "")).lower()]),
+                                    "total_competitors": len(all_comps),
+                                    "direct_competitors": ", ".join([c.get("name", "Unknown") for c in all_comps if c.get("quadrant") == "DIRECT" or "direct" in str(c.get("type", "")).lower()][:6]) or "None identified",
+                                    "indirect_competitors": ", ".join([c.get("name", "Unknown") for c in all_comps if c.get("quadrant") != "DIRECT" and "direct" not in str(c.get("type", "")).lower()][:6]) or "None identified",
+                                    "gap_detected": len(all_comps) <= 3
+                                },
+                                "white_space_analysis": country_data.get("white_space", "") or (
+                                    f"🟢 **BLUE OCEAN**: No direct competitors in {country}. First-mover advantage available." if len(all_comps) == 0 else
+                                    f"🟡 **MODERATE COMPETITION**: {len(all_comps)} competitors identified. Differentiation through unique positioning required."
+                                ),
+                                "strategic_advantage": self._build_strategic_advantage_text(all_comps, country) if hasattr(self, '_build_strategic_advantage_text') else (
+                                    f"🟢 **BLUE OCEAN OPPORTUNITY**: No direct competitors found in {country}." if len([c for c in all_comps if "direct" in str(c.get("type", "")).lower()]) == 0 else
+                                    f"🟡 **COMPETITIVE MARKET**: Found {len(all_comps)} competitors in {country}.\n\n**Competitors:** {', '.join([c.get('name', 'Unknown') for c in all_comps[:6]])}"
+                                ),
+                                "market_entry_recommendation": (
+                                    f"🚀 **GO** - Excellent timing for {country} market entry. Limited competition." if len(all_comps) <= 2 else
+                                    f"✅ **PROCEED WITH STRATEGY** - Viable market entry in {country}. Focus on differentiation." if len(all_comps) <= 5 else
+                                    f"⚠️ **HIGH COMPETITION** - {country} market has {len(all_comps)} competitors. Niche positioning recommended."
+                                )
                             })
                     
                     if formatted_country_competitors:
