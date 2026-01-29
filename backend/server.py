@@ -11839,6 +11839,94 @@ BRAND: {brand}
                     }
                     logging.info(f"⚠️ Using fallback global competitors (no Deep Market Intel)")
         
+        # ═══════════════════════════════════════════════════════════════════════════════
+        # 💱 POST-PROCESS: FORCE CURRENCY CONVERSION FOR SINGLE-COUNTRY REPORTS
+        # The LLM often ignores currency instructions, so we force-convert here
+        # ═══════════════════════════════════════════════════════════════════════════════
+        if len(request.countries) == 1 and request.countries[0] != "USA":
+            country = request.countries[0]
+            logging.info(f"💱 POST-PROCESSING: Force-converting USD to {country} currency...")
+            
+            # Currency conversion rates (approximate, for display purposes)
+            USD_CONVERSIONS = {
+                "India": {"symbol": "₹", "rate": 83, "name": "INR"},
+                "UK": {"symbol": "£", "rate": 0.79, "name": "GBP"},
+                "UAE": {"symbol": "AED ", "rate": 3.67, "name": "AED"},
+                "Singapore": {"symbol": "S$", "rate": 1.35, "name": "SGD"},
+                "Australia": {"symbol": "A$", "rate": 1.55, "name": "AUD"},
+                "Canada": {"symbol": "C$", "rate": 1.36, "name": "CAD"},
+                "Germany": {"symbol": "€", "rate": 0.92, "name": "EUR"},
+                "France": {"symbol": "€", "rate": 0.92, "name": "EUR"},
+                "Japan": {"symbol": "¥", "rate": 157, "name": "JPY"},
+                "China": {"symbol": "¥", "rate": 7.25, "name": "CNY"},
+            }
+            
+            if country in USD_CONVERSIONS:
+                conv = USD_CONVERSIONS[country]
+                symbol = conv["symbol"]
+                rate = conv["rate"]
+                
+                import re
+                
+                def convert_usd_to_local(text):
+                    """Convert USD amounts to local currency in a string."""
+                    if not isinstance(text, str):
+                        return text
+                    
+                    def replace_usd(match):
+                        usd_str = match.group(0)
+                        # Extract numbers (handle ranges like $500-$2,000)
+                        numbers = re.findall(r'[\d,]+', usd_str)
+                        converted = []
+                        for num_str in numbers:
+                            try:
+                                num = int(num_str.replace(',', ''))
+                                local_amount = int(num * rate)
+                                # Format with Indian numbering for India
+                                if country == "India":
+                                    if local_amount >= 100000:
+                                        formatted = f"{local_amount // 100000},{(local_amount % 100000):05d}"
+                                    elif local_amount >= 1000:
+                                        formatted = f"{local_amount:,}"
+                                    else:
+                                        formatted = str(local_amount)
+                                else:
+                                    formatted = f"{local_amount:,}"
+                                converted.append(f"{symbol}{formatted}")
+                            except:
+                                converted.append(f"{symbol}?")
+                        
+                        if len(converted) == 2:
+                            return f"{converted[0]}-{converted[1]}"
+                        elif len(converted) == 1:
+                            return converted[0]
+                        else:
+                            return usd_str  # Fallback
+                    
+                    # Match USD patterns like $500, $2,000, $500-$2,000
+                    pattern = r'\$[\d,]+(?:\s*-\s*\$[\d,]+)?'
+                    return re.sub(pattern, replace_usd, text)
+                
+                def convert_costs_in_dict(obj):
+                    """Recursively convert USD costs in a dictionary."""
+                    if isinstance(obj, dict):
+                        for key, value in obj.items():
+                            if key in ['estimated_cost', 'filing_cost', 'opposition_defense_cost', 'total_estimated_cost', 'cost']:
+                                if isinstance(value, str) and '$' in value:
+                                    obj[key] = convert_usd_to_local(value)
+                                    logging.info(f"💱 Converted {key}: {value} → {obj[key]}")
+                            elif isinstance(value, (dict, list)):
+                                convert_costs_in_dict(value)
+                    elif isinstance(obj, list):
+                        for item in obj:
+                            convert_costs_in_dict(item)
+                
+                # Apply conversion to all brand_scores
+                for brand_score in data.get("brand_scores", []):
+                    convert_costs_in_dict(brand_score)
+                
+                logging.info(f"💱 Currency conversion complete for {country}")
+        
         return {"model": f"{model_provider}/{model_name}", "data": data}
     
     # ==================== CLASSIFICATION-AWARE HELPER FUNCTIONS ====================
