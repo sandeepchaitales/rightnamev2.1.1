@@ -1438,6 +1438,7 @@ class BrandEvaluationTester:
             "category": "Salon Booking App",
             "industry": "Beauty Tech",
             "positioning": "Mid-Range",
+            "market_scope": "Single Country",
             "countries": ["India"]
         }
         
