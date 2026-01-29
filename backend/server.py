@@ -12675,6 +12675,12 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                             
                             user_pos_country = cdata.get("user_brand_position", {})
                             
+                            # Calculate competitor types for display
+                            direct_comps_list = [c.get("name", "Unknown") for c in all_comps if c.get("type") == "DIRECT"]
+                            indirect_comps_list = [c.get("name", "Unknown") for c in all_comps if c.get("type") != "DIRECT"]
+                            direct_count = gap.get("direct_count", len(direct_comps_list))
+                            indirect_count = gap.get("indirect_count", len(indirect_comps_list))
+                            
                             formatted_country.append({
                                 "country": country,
                                 "country_flag": country_flags.get(country, "🌍"),
@@ -12689,30 +12695,30 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                                 # Enhanced white space with competitor context
                                 "white_space_analysis": cdata.get("white_space_analysis", "") or (
                                     f"🟢 **BLUE OCEAN OPPORTUNITY**: No direct competitors identified in {country}. First-mover advantage available." 
-                                    if gap.get("direct_count", 0) == 0 else
-                                    f"🟡 **{gap.get('direct_count', 0)} direct competitors** in {country}: {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') == 'DIRECT'][:4])}. Differentiation through unique positioning required."
+                                    if direct_count == 0 else
+                                    f"🟡 **{direct_count} direct competitors** in {country}: {', '.join(direct_comps_list[:4])}. Differentiation through unique positioning required."
                                 ),
                                 # Enhanced strategic advantage with competitor names
-                                "strategic_advantage": self._build_detailed_strategic_advantage(all_comps, gap, country) if hasattr(self, '_build_detailed_strategic_advantage') else (
-                                    f"🟢 **BLUE OCEAN**: No direct competitors found in {country}. Excellent first-mover opportunity.\n\n**Indirect Competitors ({gap.get('indirect_count', len(all_comps))}):** {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') != 'DIRECT'][:5]) or 'None'}"
-                                    if gap.get("direct_count", 0) == 0 else
-                                    f"🟡 **COMPETITIVE MARKET**: {gap.get('direct_count', 0)} direct competitors identified.\n\n**Direct Competitors:** {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') == 'DIRECT'][:5]) or 'None'}\n\n**Indirect Competitors ({gap.get('indirect_count', 0)}):** {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') != 'DIRECT'][:5]) or 'None'}"
+                                "strategic_advantage": (
+                                    f"🟢 **BLUE OCEAN**: No direct competitors found in {country}. Excellent first-mover opportunity.\n\n**Indirect Competitors ({indirect_count}):** {', '.join(indirect_comps_list[:5]) or 'None'}"
+                                    if direct_count == 0 else
+                                    f"🟡 **COMPETITIVE MARKET**: {direct_count} direct competitors identified.\n\n**Direct Competitors:** {', '.join(direct_comps_list[:5]) or 'None'}\n\n**Indirect Competitors ({indirect_count}):** {', '.join(indirect_comps_list[:5]) or 'None'}"
                                 ),
                                 # Enhanced market entry recommendation
                                 "market_entry_recommendation": (
                                     f"🚀 **GO** - Excellent timing for {country} market entry. No direct competition detected." 
-                                    if gap.get("direct_count", 0) == 0 else
-                                    f"✅ **PROCEED WITH STRATEGY** - {country} market entry viable. Position against: {', '.join([c.get('name', 'Unknown') for c in all_comps if c.get('type') == 'DIRECT'][:3])}. Focus on unique value proposition."
-                                    if gap.get("direct_count", 0) <= 3 else
-                                    f"⚠️ **PROCEED WITH CAUTION** - Competitive market with {gap.get('direct_count', 0)} direct players. Strong differentiation required."
+                                    if direct_count == 0 else
+                                    f"✅ **PROCEED WITH STRATEGY** - {country} market entry viable. Position against: {', '.join(direct_comps_list[:3])}. Focus on unique value proposition."
+                                    if direct_count <= 3 else
+                                    f"⚠️ **PROCEED WITH CAUTION** - Competitive market with {direct_count} direct players. Strong differentiation required."
                                 ),
                                 "gap_analysis": {
-                                    "direct_count": gap.get("direct_count", 0),
-                                    "indirect_count": gap.get("indirect_count", len(all_comps) - gap.get("direct_count", 0)),
+                                    "direct_count": direct_count,
+                                    "indirect_count": indirect_count,
                                     "total_competitors": len(all_comps),
-                                    "direct_competitors": ", ".join([c.get("name", "Unknown") for c in all_comps if c.get("type") == "DIRECT"][:6]) or "None identified",
-                                    "indirect_competitors": ", ".join([c.get("name", "Unknown") for c in all_comps if c.get("type") != "DIRECT"][:6]) or "None identified",
-                                    "gap_detected": gap.get("gap_detected", gap.get("direct_count", 0) == 0)
+                                    "direct_competitors": ", ".join(direct_comps_list[:6]) or "None identified",
+                                    "indirect_competitors": ", ".join(indirect_comps_list[:6]) or "None identified",
+                                    "gap_detected": gap.get("gap_detected", direct_count == 0)
                                 }
                             })
                         
