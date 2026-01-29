@@ -11843,6 +11843,7 @@ BRAND: {brand}
         # 💱 POST-PROCESS: FORCE CURRENCY CONVERSION FOR SINGLE-COUNTRY REPORTS
         # The LLM often ignores currency instructions, so we force-convert here
         # ═══════════════════════════════════════════════════════════════════════════════
+        logging.info(f"💱 CURRENCY CHECK: countries={request.countries}, len={len(request.countries)}")
         if len(request.countries) == 1 and request.countries[0] != "USA":
             country = request.countries[0]
             logging.info(f"💱 POST-PROCESSING: Force-converting USD to {country} currency...")
