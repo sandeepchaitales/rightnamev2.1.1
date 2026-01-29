@@ -9692,6 +9692,204 @@ def check_inappropriate_name(brand_name: str) -> dict:
     return {"is_inappropriate": False}
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# PRONOUNCEABILITY CHECK - Early Gate for Gibberish Detection
+# ═══════════════════════════════════════════════════════════════════════════════
+# This check runs BEFORE expensive LLM calls to catch unpronounceable names
+# like "rcnvkjznvvjajf" that should not receive high scores.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def check_pronounceability(brand_name: str) -> dict:
+    """
+    Check if a brand name is pronounceable and readable.
+    
+    This catches gibberish/random character strings that:
+    - Have too few vowels
+    - Have long consonant clusters
+    - Cannot be broken into syllables
+    - Are essentially unpronounceable
+    
+    Returns:
+        dict with:
+        - is_pronounceable: bool
+        - score: 0-100 pronounceability score
+        - issues: list of specific problems
+        - verdict: PASS, CAUTION, or FAIL
+        - score_cap: maximum score this name should receive (if failing)
+    """
+    if not brand_name or len(brand_name) < 2:
+        return {
+            "is_pronounceable": False,
+            "score": 0,
+            "issues": ["Brand name too short"],
+            "verdict": "FAIL",
+            "score_cap": 10
+        }
+    
+    name_lower = brand_name.lower().strip()
+    
+    # Remove spaces, hyphens for analysis of core pronounceability
+    clean_name = ''.join(c for c in name_lower if c.isalpha())
+    
+    if len(clean_name) < 2:
+        return {
+            "is_pronounceable": False,
+            "score": 0,
+            "issues": ["No alphabetic characters"],
+            "verdict": "FAIL",
+            "score_cap": 10
+        }
+    
+    issues = []
+    score = 100  # Start with perfect score and deduct
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CHECK 1: VOWEL RATIO (Should be 25-55% for pronounceability)
+    # ═══════════════════════════════════════════════════════════════════════════
+    vowels = set('aeiou')
+    vowel_count = sum(1 for c in clean_name if c in vowels)
+    vowel_ratio = vowel_count / len(clean_name)
+    
+    if vowel_ratio < 0.10:  # Less than 10% vowels = gibberish
+        penalty = 60
+        score -= penalty
+        issues.append(f"CRITICAL: Only {vowel_ratio:.0%} vowels ({vowel_count}/{len(clean_name)}) - virtually unpronounceable")
+    elif vowel_ratio < 0.20:  # Less than 20% vowels = very hard
+        penalty = 40
+        score -= penalty
+        issues.append(f"SEVERE: Only {vowel_ratio:.0%} vowels ({vowel_count}/{len(clean_name)}) - extremely difficult to pronounce")
+    elif vowel_ratio < 0.25:  # Less than 25% vowels = hard
+        penalty = 25
+        score -= penalty
+        issues.append(f"LOW: Only {vowel_ratio:.0%} vowels - hard to pronounce")
+    elif vowel_ratio > 0.70:  # More than 70% vowels = odd sounding
+        penalty = 15
+        score -= penalty
+        issues.append(f"HIGH: {vowel_ratio:.0%} vowels - may sound odd")
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CHECK 2: CONSONANT CLUSTERS (More than 3 consecutive = hard to say)
+    # ═══════════════════════════════════════════════════════════════════════════
+    import re
+    consonants = 'bcdfghjklmnpqrstvwxyz'
+    
+    # Find all consonant clusters
+    consonant_pattern = f'[{consonants}]+'
+    clusters = re.findall(consonant_pattern, clean_name)
+    
+    max_cluster_length = max(len(c) for c in clusters) if clusters else 0
+    long_clusters = [c for c in clusters if len(c) >= 4]
+    very_long_clusters = [c for c in clusters if len(c) >= 6]
+    
+    if very_long_clusters:  # 6+ consonants in a row = gibberish
+        penalty = 50
+        score -= penalty
+        issues.append(f"CRITICAL: Consonant cluster '{very_long_clusters[0]}' ({len(very_long_clusters[0])} consonants) - unpronounceable")
+    elif long_clusters:  # 4-5 consonants in a row = difficult
+        penalty = 25
+        score -= penalty
+        issues.append(f"DIFFICULT: Consonant cluster '{long_clusters[0]}' ({len(long_clusters[0])} consonants)")
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CHECK 3: SYLLABLE STRUCTURE (Need vowels to form syllables)
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Estimate syllables by counting vowel groups
+    vowel_groups = re.findall(f'[{vowels}]+', clean_name)
+    estimated_syllables = len(vowel_groups)
+    
+    if estimated_syllables == 0:  # No syllables possible
+        penalty = 50
+        score -= penalty
+        issues.append("CRITICAL: No syllables can be formed - no vowel groups")
+    elif estimated_syllables == 1 and len(clean_name) > 8:  # Long name with only 1 syllable
+        penalty = 20
+        score -= penalty
+        issues.append(f"UNBALANCED: {len(clean_name)} characters but only ~1 syllable")
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CHECK 4: REPEATED CHARACTERS (Signs of keyboard mashing)
+    # ═══════════════════════════════════════════════════════════════════════════
+    repeated_pattern = r'(.)\1{2,}'  # Same character 3+ times
+    repeated = re.findall(repeated_pattern, clean_name)
+    if repeated:
+        penalty = 20
+        score -= penalty
+        issues.append(f"REPETITION: Character '{repeated[0]}' repeated excessively")
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CHECK 5: COMMON LETTER PATTERNS (Real words have common bigrams)
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Common English bigrams that appear in real words
+    common_bigrams = {'th', 'he', 'in', 'er', 'an', 'on', 'at', 'en', 'es', 'ed', 
+                      'or', 'te', 'of', 'to', 're', 'it', 'is', 'al', 'ar', 'st',
+                      'le', 'se', 'ea', 'ou', 'io', 'co', 'ca', 'ma', 'me', 'mo',
+                      'ta', 'ti', 'tr', 'pr', 'sp', 'ch', 'sh', 'wh', 'qu', 'br',
+                      'bl', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'sc',
+                      'sk', 'sl', 'sm', 'sn', 'sw', 'tw', 'wr', 'ai', 'au', 'aw',
+                      'ay', 'ee', 'ei', 'ey', 'ie', 'oa', 'oo', 'ow', 'oy', 'ue'}
+    
+    # Count how many bigrams in the name are common
+    name_bigrams = [clean_name[i:i+2] for i in range(len(clean_name)-1)]
+    common_count = sum(1 for bg in name_bigrams if bg in common_bigrams)
+    
+    if len(name_bigrams) > 0:
+        common_ratio = common_count / len(name_bigrams)
+        if common_ratio < 0.1 and len(clean_name) > 5:  # Less than 10% common bigrams
+            penalty = 30
+            score -= penalty
+            issues.append(f"UNUSUAL: Only {common_ratio:.0%} common letter patterns - looks like random characters")
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CHECK 6: LENGTH vs COMPLEXITY
+    # ═══════════════════════════════════════════════════════════════════════════
+    if len(clean_name) > 12 and estimated_syllables <= 2:
+        penalty = 15
+        score -= penalty
+        issues.append(f"IMBALANCED: {len(clean_name)} characters with only ~{estimated_syllables} syllables")
+    
+    # Ensure score stays within bounds
+    score = max(0, min(100, score))
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DETERMINE VERDICT AND SCORE CAP
+    # ═══════════════════════════════════════════════════════════════════════════
+    if score >= 70:
+        verdict = "PASS"
+        score_cap = None  # No cap for pronounceable names
+        is_pronounceable = True
+    elif score >= 40:
+        verdict = "CAUTION"
+        score_cap = 50  # Cap at 50 for difficult names
+        is_pronounceable = True
+    elif score >= 20:
+        verdict = "POOR"
+        score_cap = 35  # Cap at 35 for poor names
+        is_pronounceable = False
+    else:
+        verdict = "FAIL"
+        score_cap = 25  # Cap at 25 for gibberish
+        is_pronounceable = False
+    
+    return {
+        "is_pronounceable": is_pronounceable,
+        "score": score,
+        "vowel_ratio": vowel_ratio,
+        "max_consonant_cluster": max_cluster_length,
+        "estimated_syllables": estimated_syllables,
+        "issues": issues,
+        "verdict": verdict,
+        "score_cap": score_cap,
+        "analysis": {
+            "vowel_count": vowel_count,
+            "consonant_count": len(clean_name) - vowel_count,
+            "total_length": len(clean_name),
+            "vowel_percentage": f"{vowel_ratio:.0%}",
+            "syllable_estimate": estimated_syllables,
+            "longest_consonant_cluster": max_cluster_length
+        }
+    }
+
+
 async def google_search(query: str, num_results: int = 10) -> dict:
     """
     Search using Google Custom Search API.
