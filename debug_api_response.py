@@ -7,7 +7,7 @@ import requests
 import json
 
 def debug_api_response():
-    api_url = "https://name-validator-4.preview.emergentagent.com/api"
+    api_url = "https://namescore-hub.preview.emergentagent.com/api"
     
     payload = {
         "brand_names": ["Check My Meal"],

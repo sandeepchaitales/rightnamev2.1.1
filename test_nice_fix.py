@@ -22,7 +22,7 @@ def test_nice_class_fix():
     try:
         # Start evaluation
         response = requests.post(
-            "https://name-validator-4.preview.emergentagent.com/api/evaluate/start",
+            "https://namescore-hub.preview.emergentagent.com/api/evaluate/start",
             json=payload,
             headers={'Content-Type': 'application/json'},
             timeout=30
@@ -41,7 +41,7 @@ def test_nice_class_fix():
             time.sleep(4)
             
             status_response = requests.get(
-                f"https://name-validator-4.preview.emergentagent.com/api/evaluate/status/{job_id}",
+                f"https://namescore-hub.preview.emergentagent.com/api/evaluate/status/{job_id}",
                 timeout=10
             )
             
