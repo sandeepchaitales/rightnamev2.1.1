@@ -7438,6 +7438,76 @@ MULTI_CLASS_STRATEGY = {
         "total_recommended": 2,
         "filing_strategy": "Class 43 immediately; add product classes when launching retail"
     },
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # BOOKING/APPOINTMENT APPS - Class 9 PRIMARY (not Class 39!)
+    # These are SOFTWARE products for booking services
+    # ═══════════════════════════════════════════════════════════════════════════
+    "salon booking app": {
+        "primary": {"class_number": 9, "description": "Mobile application software for salon booking", "term": "Downloadable mobile application software for booking salon appointments"},
+        "secondary": [
+            {"class_number": 42, "description": "SaaS platform services", "rationale": "For cloud-based booking platform", "priority": "If offering SaaS to salons"},
+            {"class_number": 35, "description": "Online booking marketplace", "rationale": "For marketplace/aggregator model", "priority": "If aggregating multiple salons"},
+            {"class_number": 44, "description": "Beauty salon services", "rationale": "ONLY if you operate your own salons", "priority": "If vertically integrated"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 9 immediately for app; add Class 42 if B2B SaaS; Class 35 if marketplace"
+    },
+    "salon booking": {
+        "primary": {"class_number": 9, "description": "Mobile application software for salon booking", "term": "Downloadable mobile application software for booking salon appointments"},
+        "secondary": [
+            {"class_number": 42, "description": "SaaS platform services", "rationale": "For cloud-based booking platform", "priority": "If offering SaaS to salons"},
+            {"class_number": 35, "description": "Online booking marketplace", "rationale": "For marketplace/aggregator model", "priority": "If aggregating multiple salons"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 9 immediately for app; add Class 42 if B2B SaaS"
+    },
+    "beauty booking app": {
+        "primary": {"class_number": 9, "description": "Mobile application software for beauty service booking", "term": "Downloadable mobile application software for booking beauty services"},
+        "secondary": [
+            {"class_number": 42, "description": "SaaS platform services", "rationale": "For cloud-based platform", "priority": "If offering SaaS"},
+            {"class_number": 35, "description": "Online booking marketplace", "rationale": "For marketplace model", "priority": "If aggregating providers"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 9 immediately for app distribution"
+    },
+    "appointment app": {
+        "primary": {"class_number": 9, "description": "Mobile application software for appointment scheduling", "term": "Downloadable mobile application software for scheduling appointments"},
+        "secondary": [
+            {"class_number": 42, "description": "SaaS scheduling platform", "rationale": "For cloud-based scheduling", "priority": "If offering SaaS"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 9 immediately for app distribution"
+    },
+    "booking app": {
+        "primary": {"class_number": 9, "description": "Mobile application software for booking services", "term": "Downloadable mobile application software for booking services"},
+        "secondary": [
+            {"class_number": 42, "description": "SaaS booking platform", "rationale": "For cloud-based platform", "priority": "If offering SaaS"},
+            {"class_number": 35, "description": "Online booking marketplace", "rationale": "For marketplace model", "priority": "If aggregating services"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 9 immediately; add industry-specific class based on service type"
+    },
+    "doctor appointment app": {
+        "primary": {"class_number": 9, "description": "Mobile application software for doctor appointment booking", "term": "Downloadable mobile application software for booking doctor appointments"},
+        "secondary": [
+            {"class_number": 42, "description": "SaaS healthcare platform", "rationale": "For cloud-based healthcare platform", "priority": "If offering B2B SaaS to clinics"},
+            {"class_number": 44, "description": "Medical services", "rationale": "ONLY if providing actual medical services", "priority": "If vertically integrated"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 9 immediately for app; Class 42 if B2B platform"
+    },
+    "telemedicine": {
+        "primary": {"class_number": 9, "description": "Telemedicine software application", "term": "Downloadable mobile application software for telemedicine consultations"},
+        "secondary": [
+            {"class_number": 42, "description": "SaaS telemedicine platform", "rationale": "For cloud-based platform", "priority": "Immediate"},
+            {"class_number": 44, "description": "Medical consultation services", "rationale": "If providing actual consultations", "priority": "If doctors on payroll"}
+        ],
+        "total_recommended": 2,
+        "filing_strategy": "Class 9 + 42 for platform; add 44 if providing actual medical consultations"
+    },
+    # ═══════════════════════════════════════════════════════════════════════════
+    
     "food": {
         "primary": {"class_number": 29, "description": "Processed foods, meat, dairy", "term": "Processed foods, preserved foods, dairy products"},
         "secondary": [
