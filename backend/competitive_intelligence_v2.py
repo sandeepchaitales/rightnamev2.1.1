@@ -806,23 +806,47 @@ def _empty_result(brand_name: str, countries: List[str]) -> Dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def get_white_space_summary_v2(intel_result: Dict[str, Any]) -> str:
-    """Get formatted white space summary from v2 result."""
+    """Get formatted white space summary from v2 result with all details."""
     ws = intel_result.get("white_space_analysis", {})
     
     parts = []
     
+    # Global white space
     global_ws = ws.get("global_white_space", "")
     if global_ws:
-        parts.append(f"**Global:** {global_ws}")
+        parts.append(f"**🌍 Global Opportunity:** {global_ws}")
     
+    # Country-specific opportunities
     country_opps = ws.get("country_opportunities", {})
-    for country, opp in country_opps.items():
-        if opp and opp != "Manual analysis recommended":
-            parts.append(f"**{country}:** {opp}")
+    if country_opps:
+        country_parts = []
+        for country, opp in country_opps.items():
+            if opp and opp != "Manual analysis recommended":
+                country_parts.append(f"• **{country}:** {opp}")
+        if country_parts:
+            parts.append("**🗺️ Country Analysis:**\n" + "\n".join(country_parts))
     
+    # Positioning recommendation
+    positioning = ws.get("positioning_recommendation", "")
+    if positioning:
+        parts.append(f"**🎯 Positioning Strategy:** {positioning}")
+    
+    # Differentiation strategy
+    diff = ws.get("differentiation_strategy", "")
+    if diff:
+        parts.append(f"**⚡ Differentiation:** {diff}")
+    
+    # Unmet needs
     unmet = ws.get("unmet_needs", "")
     if unmet:
-        parts.append(f"**Unmet Needs:** {unmet}")
+        parts.append(f"**💡 Unmet Market Needs:** {unmet}")
+    
+    # Verdict
+    verdict = ws.get("overall_verdict", "")
+    if verdict:
+        verdict_emoji = "🟢" if verdict == "GREEN" else ("🟡" if verdict == "YELLOW" else "🔴")
+        verdict_text = "EXCELLENT OPPORTUNITY" if verdict == "GREEN" else ("MODERATE OPPORTUNITY" if verdict == "YELLOW" else "HIGH COMPETITION")
+        parts.append(f"**{verdict_emoji} Overall Verdict:** {verdict_text}")
     
     if parts:
         return "\n\n".join(parts)
