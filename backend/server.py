@@ -7152,6 +7152,73 @@ NICE_CLASS_MAP = {
     "juice": {"class_number": 32, "class_description": "Non-alcoholic beverages, mineral waters, fruit juices"},
     "drink": {"class_number": 32, "class_description": "Non-alcoholic beverages, mineral waters, fruit juices"},
     
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 9 - Booking/Appointment APPS (PRIORITY - must match before generic "booking")
+    # These are SOFTWARE products, not transport services!
+    # ═══════════════════════════════════════════════════════════════════════════
+    "salon booking app": {"class_number": 9, "class_description": "Mobile application software for salon appointment booking"},
+    "salon booking": {"class_number": 9, "class_description": "Mobile application software for salon appointment booking"},
+    "salon app": {"class_number": 9, "class_description": "Mobile application software for salon services"},
+    "beauty booking app": {"class_number": 9, "class_description": "Mobile application software for beauty service booking"},
+    "beauty booking": {"class_number": 9, "class_description": "Mobile application software for beauty service booking"},
+    "beauty app": {"class_number": 9, "class_description": "Mobile application software for beauty services"},
+    "spa booking app": {"class_number": 9, "class_description": "Mobile application software for spa appointment booking"},
+    "spa booking": {"class_number": 9, "class_description": "Mobile application software for spa appointment booking"},
+    "spa app": {"class_number": 9, "class_description": "Mobile application software for spa services"},
+    "barber booking app": {"class_number": 9, "class_description": "Mobile application software for barber appointment booking"},
+    "barber booking": {"class_number": 9, "class_description": "Mobile application software for barber appointment booking"},
+    "barber app": {"class_number": 9, "class_description": "Mobile application software for barber services"},
+    "grooming app": {"class_number": 9, "class_description": "Mobile application software for grooming services"},
+    "parlour booking": {"class_number": 9, "class_description": "Mobile application software for parlour appointment booking"},
+    "parlor booking": {"class_number": 9, "class_description": "Mobile application software for parlor appointment booking"},
+    "appointment app": {"class_number": 9, "class_description": "Mobile application software for appointment scheduling"},
+    "appointment booking app": {"class_number": 9, "class_description": "Mobile application software for appointment booking"},
+    "appointment booking": {"class_number": 9, "class_description": "Mobile application software for appointment scheduling"},
+    "scheduling app": {"class_number": 9, "class_description": "Mobile application software for scheduling services"},
+    "booking app": {"class_number": 9, "class_description": "Mobile application software for booking services"},
+    "reservation app": {"class_number": 9, "class_description": "Mobile application software for reservation services"},
+    
+    # Doctor/Healthcare Booking Apps (Class 9)
+    "doctor appointment app": {"class_number": 9, "class_description": "Mobile application software for doctor appointment booking"},
+    "doctor booking app": {"class_number": 9, "class_description": "Mobile application software for doctor appointment booking"},
+    "doctor booking": {"class_number": 9, "class_description": "Mobile application software for doctor appointment booking"},
+    "doctor app": {"class_number": 9, "class_description": "Mobile application software for doctor services"},
+    "clinic booking app": {"class_number": 9, "class_description": "Mobile application software for clinic appointment booking"},
+    "clinic booking": {"class_number": 9, "class_description": "Mobile application software for clinic appointment booking"},
+    "clinic app": {"class_number": 9, "class_description": "Mobile application software for clinic services"},
+    "hospital booking": {"class_number": 9, "class_description": "Mobile application software for hospital appointment booking"},
+    "healthcare app": {"class_number": 9, "class_description": "Mobile application software for healthcare services"},
+    "healthtech": {"class_number": 9, "class_description": "Mobile application software for healthcare technology"},
+    "telemedicine app": {"class_number": 9, "class_description": "Mobile application software for telemedicine services"},
+    "telemedicine": {"class_number": 9, "class_description": "Mobile application software for telemedicine services"},
+    "telehealth": {"class_number": 9, "class_description": "Mobile application software for telehealth services"},
+    
+    # Restaurant/Table Booking Apps (Class 9)
+    "table booking app": {"class_number": 9, "class_description": "Mobile application software for restaurant table booking"},
+    "table booking": {"class_number": 9, "class_description": "Mobile application software for restaurant table booking"},
+    "restaurant booking app": {"class_number": 9, "class_description": "Mobile application software for restaurant booking"},
+    "restaurant booking": {"class_number": 9, "class_description": "Mobile application software for restaurant booking"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Class 44 - Medical & Beauty SERVICES (not apps)
+    # Use this when the business PROVIDES the services, not just books them
+    # ═══════════════════════════════════════════════════════════════════════════
+    "salon services": {"class_number": 44, "class_description": "Beauty salon services, hair care, cosmetic treatment"},
+    "salon": {"class_number": 44, "class_description": "Beauty salon services, hair care, cosmetic treatment"},
+    "beauty services": {"class_number": 44, "class_description": "Beauty care services, hygienic care for human beings"},
+    "spa services": {"class_number": 44, "class_description": "Spa services, massage, wellness treatments"},
+    "spa": {"class_number": 44, "class_description": "Spa services, massage, wellness treatments"},
+    "barber services": {"class_number": 44, "class_description": "Barbershop services, hair cutting"},
+    "barber": {"class_number": 44, "class_description": "Barbershop services, hair cutting"},
+    "parlour": {"class_number": 44, "class_description": "Beauty parlour services"},
+    "parlor": {"class_number": 44, "class_description": "Beauty parlor services"},
+    "medical services": {"class_number": 44, "class_description": "Medical services, healthcare"},
+    "dental services": {"class_number": 44, "class_description": "Dental services, oral care"},
+    "dental": {"class_number": 44, "class_description": "Dental services, oral care"},
+    "veterinary": {"class_number": 44, "class_description": "Veterinary services, animal care"},
+    "wellness": {"class_number": 44, "class_description": "Wellness services, health care"},
+    
+    # ═══════════════════════════════════════════════════════════════════════════
     # Class 35 - Business services
     "advertising": {"class_number": 35, "class_description": "Advertising, business management, retail services"},
     "marketing": {"class_number": 35, "class_description": "Advertising, business management, retail services"},
