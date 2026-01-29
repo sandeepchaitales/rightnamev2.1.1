@@ -10616,8 +10616,8 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             gather_visibility_data(brand),
             gather_multi_domain_data(brand),
             gather_social_data(brand),
-            # 🆕 DEEP MARKET INTELLIGENCE - Parallel per-country competitor search
-            deep_market_intelligence(
+            # 🆕 COMPETITIVE INTELLIGENCE v2 - Funnel approach for better competitor data
+            competitive_intelligence_v2(
                 brand_name=brand,
                 category=request.category,
                 positioning=request.positioning,
