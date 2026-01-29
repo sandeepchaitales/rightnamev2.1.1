@@ -340,6 +340,7 @@ class CountryCompetitorAnalysis(BaseModel):
     white_space_analysis: Optional[str] = Field(default="Analysis pending", description="White space opportunity in this market")
     strategic_advantage: Optional[str] = Field(default="Analysis pending", description="Strategic advantage in this market")
     market_entry_recommendation: Optional[str] = Field(default=None, description="Recommendation for entering this market")
+    gap_analysis: Optional[Dict[str, Any]] = Field(default=None, description="Gap analysis with competitor counts and names")
 
 class Recommendation(BaseModel):
     title: str
