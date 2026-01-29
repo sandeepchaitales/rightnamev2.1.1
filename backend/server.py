@@ -2535,21 +2535,37 @@ def generate_dynamic_market_insights_sync(
             strategic_advantage = market_data["strategic_advantage"].replace("'", "'")
             entry_recommendation = market_data["entry_recommendation"].replace("'", "'")
         
-        # Build the analysis
+        # Build enhanced gap analysis
+        competitors = market_data["competitors"]
+        direct_comps = [c for c in competitors if c.get("type") == "DIRECT" or "direct" in str(c.get("quadrant", "")).lower()]
+        indirect_comps = [c for c in competitors if c not in direct_comps]
+        
+        direct_names = ", ".join([c.get("name", "Unknown") for c in direct_comps[:6]]) or "None identified"
+        indirect_names = ", ".join([c.get("name", "Unknown") for c in indirect_comps[:6]]) or "None identified"
+        
+        # Build the analysis with enhanced data
         result.append({
             "country": display_name,
             "country_flag": flag,
             "x_axis_label": market_data.get("axis_x", "Price: Budget → Premium"),
             "y_axis_label": market_data.get("axis_y", "Positioning: Traditional → Modern"),
-            "competitors": market_data["competitors"],
+            "competitors": competitors,
             "user_brand_position": {
                 "x_coordinate": market_data["user_position"]["x"],
                 "y_coordinate": market_data["user_position"]["y"],
                 "quadrant": market_data["user_position"]["quadrant"],
                 "rationale": f"'{brand_name}' positioned in {market_data['user_position']['quadrant']} segment to maximize market opportunity in {display_name}"
             },
+            "gap_analysis": {
+                "direct_count": len(direct_comps),
+                "indirect_count": len(indirect_comps),
+                "total_competitors": len(competitors),
+                "direct_competitors": direct_names,
+                "indirect_competitors": indirect_names,
+                "gap_detected": len(direct_comps) <= 2
+            },
             "white_space_analysis": white_space,
-            "strategic_advantage": strategic_advantage,
+            "strategic_advantage": strategic_advantage + f"\n\n**Direct Competitors ({len(direct_comps)}):** {direct_names}" + (f"\n\n**Indirect Competitors ({len(indirect_comps)}):** {indirect_names}" if indirect_comps else ""),
             "market_entry_recommendation": entry_recommendation
         })
     
