@@ -13720,6 +13720,38 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
         except Exception as e:
             logging.error(f"Failed to calculate weighted namescore: {e}")
         # ============ END WEIGHTED NAMESCORE RECALCULATION ============
+        
+        # ============ APPLY PRONOUNCEABILITY SCORE CAP ============
+        # If the name has pronounceability issues, cap the final score
+        if brand_name_for_matrix in pronounceability_caps:
+            score_cap = pronounceability_caps[brand_name_for_matrix]
+            if brand_score.namescore > score_cap:
+                original_score = brand_score.namescore
+                brand_score.namescore = float(score_cap)
+                
+                # Update verdict based on capped score
+                if score_cap >= 70:
+                    brand_score.verdict = "GO"
+                elif score_cap >= 50:
+                    brand_score.verdict = "CAUTION"
+                else:
+                    brand_score.verdict = "CAUTION"  # Use CAUTION instead of REJECT for pronounceability
+                
+                # Get the pronounceability analysis
+                p_result = pronounceability_results.get(brand_name_for_matrix, {})
+                issues = p_result.get("issues", [])
+                issues_text = "; ".join(issues[:2]) if issues else "Pronounceability issues detected"
+                
+                # Add pronounceability warning to summary
+                original_summary = brand_score.summary or ""
+                brand_score.summary = f"⚠️ PRONOUNCEABILITY CAP APPLIED: Score reduced from {original_score:.0f} to {score_cap} due to pronunciation difficulty. {issues_text}.\n\n{original_summary}"
+                
+                # Add pronounceability issue to cons
+                if brand_score.cons:
+                    brand_score.cons.insert(0, f"Pronounceability Score: {p_result.get('score', 'N/A')}/100 - {p_result.get('verdict', 'CAUTION')}")
+                
+                logging.warning(f"🗣️ PRONOUNCEABILITY CAP: '{brand_name_for_matrix}' score capped from {original_score:.0f} to {score_cap}")
+        # ============ END PRONOUNCEABILITY SCORE CAP ============
     
     # OVERRIDE: Force REJECT verdict for brands caught by dynamic search
     if all_rejections:
