@@ -10645,7 +10645,7 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
             "visibility": processed_results[3],
             "multi_domain": processed_results[4],
             "social": processed_results[5],
-            "deep_market_intel": processed_results[6],  # 🆕 Deep Market Intelligence data
+            "deep_market_intel": processed_results[6],  # 🆕 Competitive Intelligence v2 data
             "classification": brand_classification,  # Now includes linguistic override data
             "linguistic_analysis": linguistic_analysis,  # Store full linguistic analysis
             "understanding": brand_understanding  # Store understanding module data (Source of Truth)
