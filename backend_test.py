@@ -9115,6 +9115,11 @@ class BrandEvaluationTester:
             print("❌ API health check failed, stopping tests")
             return False
         
+        # CRITICAL PRIORITY: TWO CRITICAL FIXES TEST (as requested in review)
+        print("\n🔥 CRITICAL PRIORITY: TWO CRITICAL FIXES FOR WAITLESS SALON BOOKING APP")
+        print("="*80)
+        self.test_critical_fixes_waitless_salon_booking()
+        
         # PRIORITY: NEW CONFLICT RELEVANCE ANALYSIS INTEGRATION (as requested in review)
         print("\n🎯 PRIORITY TEST: NEW CONFLICT RELEVANCE ANALYSIS INTEGRATION")
         print("="*60)
