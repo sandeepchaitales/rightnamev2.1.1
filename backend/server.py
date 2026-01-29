@@ -7044,37 +7044,99 @@ def format_trademark_costs_for_prompt(countries: list) -> str:
     
     if len(countries) == 1:
         country = countries[0]
+        currency = costs['currency']
+        
+        # Get mitigation strategy costs based on country
+        mitigation_costs = {
+            "India": {
+                "trademark_search": "₹3,000-₹5,000",
+                "logo_design": "₹10,000-₹50,000",
+                "legal_consultation": "₹10,000-₹30,000",
+                "co_existence_agreement": "₹50,000-₹2,00,000",
+                "monitoring_service": "₹5,000-₹15,000/year"
+            },
+            "USA": {
+                "trademark_search": "$500-$1,500",
+                "logo_design": "$2,000-$10,000",
+                "legal_consultation": "$1,500-$5,000",
+                "co_existence_agreement": "$5,000-$50,000",
+                "monitoring_service": "$300-$1,000/year"
+            },
+            "UK": {
+                "trademark_search": "£400-£1,200",
+                "logo_design": "£1,500-£8,000",
+                "legal_consultation": "£1,000-£4,000",
+                "co_existence_agreement": "£3,000-£20,000",
+                "monitoring_service": "£250-£800/year"
+            },
+            "UAE": {
+                "trademark_search": "AED 2,000-AED 5,000",
+                "logo_design": "AED 5,000-AED 25,000",
+                "legal_consultation": "AED 5,000-AED 15,000",
+                "co_existence_agreement": "AED 10,000-AED 50,000",
+                "monitoring_service": "AED 1,500-AED 5,000/year"
+            },
+            "Singapore": {
+                "trademark_search": "S$500-S$1,500",
+                "logo_design": "S$2,000-S$8,000",
+                "legal_consultation": "S$1,500-S$5,000",
+                "co_existence_agreement": "S$5,000-S$25,000",
+                "monitoring_service": "S$400-S$1,200/year"
+            }
+        }
+        
+        mit_costs = mitigation_costs.get(country, mitigation_costs.get("USA"))
+        
         return f"""
-⚠️ COUNTRY-SPECIFIC TRADEMARK COSTS (MANDATORY - USE THESE EXACT VALUES):
+═══════════════════════════════════════════════════════════════════════════════
+⚠️ COUNTRY-SPECIFIC TRADEMARK COSTS FOR {country.upper()} (MANDATORY - USE THESE EXACT VALUES)
+═══════════════════════════════════════════════════════════════════════════════
+
 Target Country: {country}
 Trademark Office: {costs['office']}
-Currency: {costs['currency']}
+Currency: {currency}
 
-USE THESE COSTS IN YOUR RESPONSE:
-- Filing Cost: {costs['filing_cost']}
-- Opposition Defense Cost: {costs['opposition_defense_cost']}
-- Total Estimated Cost: {costs['total_estimated_cost']}
-- Trademark Search Cost: {costs['trademark_search_cost']}
-- Logo Design Cost: {costs['logo_design_cost']}
-- Legal Fees: {costs['legal_fees_cost']}
+📋 REGISTRATION COSTS (USE IN registration_timeline):
+- filing_cost: {costs['filing_cost']}
+- opposition_defense_cost: {costs['opposition_defense_cost']}
+- total_estimated_cost: {costs['total_estimated_cost']}
 
-IMPORTANT: These are ACTUAL {costs['office']} costs. Do NOT convert to other currencies.
+🛡️ MITIGATION STRATEGY COSTS (USE IN mitigation_strategies[].estimated_cost):
+- Trademark Search: {mit_costs['trademark_search']}
+- Logo Design: {mit_costs['logo_design']}
+- Legal Consultation: {mit_costs['legal_consultation']}
+- Co-existence Agreement: {mit_costs['co_existence_agreement']}
+- Monitoring Service: {mit_costs['monitoring_service']}
+
+⚠️ CRITICAL INSTRUCTIONS:
+1. ALL costs must use {currency} - DO NOT use USD ($) for {country}
+2. These are ACTUAL {costs['office']} costs
+3. mitigation_strategies[].estimated_cost MUST use {currency}
+4. DO NOT convert currencies
+═══════════════════════════════════════════════════════════════════════════════
 """
     else:
         return f"""
-⚠️ MULTI-COUNTRY TRADEMARK COSTS (USE USD AS STANDARD):
+═══════════════════════════════════════════════════════════════════════════════
+⚠️ MULTI-COUNTRY TRADEMARK COSTS (USE USD AS STANDARD)
+═══════════════════════════════════════════════════════════════════════════════
+
 Target Countries: {', '.join(countries)}
 Standard Currency: USD ($) (for multi-country comparison)
 
-USE THESE US-BASED COSTS IN YOUR RESPONSE:
-- Filing Cost: {costs['filing_cost']}
-- Opposition Defense Cost: {costs['opposition_defense_cost']}
-- Total Estimated Cost: {costs['total_estimated_cost']}
-- Trademark Search Cost: {costs['trademark_search_cost']}
-- Logo Design Cost: {costs['logo_design_cost']}
-- Legal Fees: {costs['legal_fees_cost']}
+📋 REGISTRATION COSTS:
+- filing_cost: {costs['filing_cost']}
+- opposition_defense_cost: {costs['opposition_defense_cost']}
+- total_estimated_cost: {costs['total_estimated_cost']}
 
-IMPORTANT: Use USD ($) for ALL cost estimates when multiple countries are selected.
+🛡️ MITIGATION STRATEGY COSTS:
+- Trademark Search: $500-$1,500
+- Logo Design: $2,000-$10,000
+- Legal Consultation: $1,500-$5,000
+- Co-existence Agreement: $5,000-$50,000
+
+⚠️ IMPORTANT: Use USD ($) for ALL cost estimates when multiple countries are selected.
+═══════════════════════════════════════════════════════════════════════════════
 """
 
 # NICE Classification mapping based on category/industry keywords
