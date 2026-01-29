@@ -12671,6 +12671,96 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
     # Pre-process data to fix common LLM output issues
     data = fix_llm_response_types(data)
     
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # 💱 FINAL CURRENCY CONVERSION: Force-convert USD to local currency
+    # This is the LAST RESORT fix for LLM ignoring currency instructions
+    # ═══════════════════════════════════════════════════════════════════════════════
+    logging.info(f"💱 FINAL CURRENCY CHECK: countries={request.countries}")
+    if len(request.countries) == 1 and request.countries[0] != "USA":
+        country = request.countries[0]
+        logging.info(f"💱 FINAL CURRENCY CONVERSION: Converting USD to {country} currency...")
+        
+        import re
+        
+        # Currency conversion data
+        CURRENCY_DATA = {
+            "India": {"symbol": "₹", "rate": 83},
+            "UK": {"symbol": "£", "rate": 0.79},
+            "UAE": {"symbol": "AED ", "rate": 3.67},
+            "Singapore": {"symbol": "S$", "rate": 1.35},
+            "Australia": {"symbol": "A$", "rate": 1.55},
+            "Canada": {"symbol": "C$", "rate": 1.36},
+            "Germany": {"symbol": "€", "rate": 0.92},
+            "France": {"symbol": "€", "rate": 0.92},
+            "Japan": {"symbol": "¥", "rate": 157},
+            "China": {"symbol": "¥", "rate": 7.25},
+        }
+        
+        if country in CURRENCY_DATA:
+            symbol = CURRENCY_DATA[country]["symbol"]
+            rate = CURRENCY_DATA[country]["rate"]
+            
+            def convert_usd_amount(match):
+                """Convert a USD match to local currency."""
+                usd_str = match.group(0)
+                numbers = re.findall(r'[\d,]+', usd_str)
+                converted = []
+                for num_str in numbers:
+                    try:
+                        num = int(num_str.replace(',', ''))
+                        local_amount = int(num * rate)
+                        if country == "India" and local_amount >= 100000:
+                            # Indian lakhs formatting
+                            formatted = f"{local_amount:,}"
+                        else:
+                            formatted = f"{local_amount:,}"
+                        converted.append(f"{symbol}{formatted}")
+                    except:
+                        converted.append(f"{symbol}?")
+                
+                if len(converted) == 2:
+                    return f"{converted[0]}-{converted[1]}"
+                elif len(converted) == 1:
+                    return converted[0]
+                return usd_str
+            
+            def convert_in_value(value):
+                """Convert USD to local currency in a string value."""
+                if not isinstance(value, str):
+                    return value
+                # Match $500, $2,000, $500-$2,000 patterns
+                pattern = r'\$[\d,]+(?:\s*-\s*\$[\d,]+)?'
+                return re.sub(pattern, convert_usd_amount, value)
+            
+            def process_brand_score(bs):
+                """Process a single brand score dict for currency conversion."""
+                if not isinstance(bs, dict):
+                    return
+                    
+                # Convert mitigation_strategies costs
+                for strategy in bs.get("mitigation_strategies", []):
+                    if isinstance(strategy, dict) and "estimated_cost" in strategy:
+                        old_cost = strategy["estimated_cost"]
+                        strategy["estimated_cost"] = convert_in_value(old_cost)
+                        if old_cost != strategy["estimated_cost"]:
+                            logging.info(f"💱 Converted: {old_cost} → {strategy['estimated_cost']}")
+                
+                # Convert registration_timeline costs
+                timeline = bs.get("registration_timeline", {})
+                if isinstance(timeline, dict):
+                    for cost_key in ["filing_cost", "opposition_defense_cost", "total_estimated_cost"]:
+                        if cost_key in timeline and isinstance(timeline[cost_key], str):
+                            old_val = timeline[cost_key]
+                            timeline[cost_key] = convert_in_value(old_val)
+                            if old_val != timeline[cost_key]:
+                                logging.info(f"💱 Converted {cost_key}: {old_val} → {timeline[cost_key]}")
+            
+            # Apply to all brand scores
+            for bs in data.get("brand_scores", []):
+                process_brand_score(bs)
+            
+            logging.info(f"💱 FINAL CURRENCY CONVERSION COMPLETE for {country}")
+    
     evaluation = BrandEvaluationResponse(**data)
     
     # ============ ENSURE DIMENSIONS ARE ALWAYS POPULATED ============
