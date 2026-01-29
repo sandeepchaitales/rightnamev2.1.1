@@ -403,7 +403,7 @@ async def generate_white_space_analysis(
     countries: List[str]
 ) -> Dict[str, Any]:
     """
-    Generate detailed white space analysis with LLM for actionable insights.
+    Generate SHORT, POINT-WISE white space analysis.
     """
     logger.info("🔍 Generating white space analysis...")
     
@@ -425,50 +425,38 @@ async def generate_white_space_analysis(
         country_comps = country_data.get("competitors", [])
         country_competitors[country] = {
             "direct": [c.get("name") for c in country_comps if c.get("type") == "DIRECT"][:5],
-            "indirect": [c.get("name") for c in country_comps if c.get("type") == "INDIRECT"][:5]
+            "indirect": [c.get("name") for c in country_comps if c.get("type") != "DIRECT"][:5]
         }
     
-    # Build detailed analysis context
+    # Build competitor context
     theme_str = ", ".join(theme_keywords[:3]) if theme_keywords else category
     
     competitor_context = f"""
-GLOBAL COMPETITORS:
-- Direct ({len(direct_names)}): {', '.join(direct_names) if direct_names else 'None found'}
-- Indirect ({len(indirect_names)}): {', '.join(indirect_names) if indirect_names else 'None found'}
+GLOBAL: Direct ({len(direct_names)}): {', '.join(direct_names) if direct_names else 'None'}
 """
     
     for country, comps in country_competitors.items():
-        competitor_context += f"""
-{country.upper()} COMPETITORS:
-- Direct ({len(comps['direct'])}): {', '.join(comps['direct']) if comps['direct'] else 'None found'}
-- Indirect ({len(comps['indirect'])}): {', '.join(comps['indirect']) if comps['indirect'] else 'None found'}
-"""
+        competitor_context += f"{country}: Direct ({len(comps['direct'])}): {', '.join(comps['direct']) if comps['direct'] else 'None'}\n"
     
-    prompt = f"""Analyze the competitive landscape for "{brand_name}" in "{category}" (theme: {theme_str}).
+    prompt = f"""Analyze "{brand_name}" in "{category}".
 
 {competitor_context}
 
-Provide a DETAILED WHITE SPACE ANALYSIS:
+⚠️ CRITICAL: Keep ALL responses SHORT - max 15 words per point. Use bullet format.
 
-1. **Global Market Opportunity**: What specific gap exists? Why is "{brand_name}" positioned to fill it?
-2. **Country-Specific Insights**: For each country, explain the competitive intensity and opportunity.
-3. **Differentiation Strategy**: How should "{brand_name}" differentiate from the named competitors?
-4. **Unmet Market Needs**: What specific customer needs are NOT being served by existing competitors?
-5. **Recommended Positioning**: Where exactly should the brand position (premium, value, niche)?
-
-Return JSON:
+Return JSON with SHORT bullet points only:
 {{
-  "global_white_space": "Detailed 2-3 sentence analysis of global opportunity, naming specific competitors to differentiate from",
+  "global_white_space": "• Gap: [one line max 15 words]",
   "country_opportunities": {{
-    "{countries[0] if countries else 'India'}": "Specific opportunity or competition analysis with competitor names"
+    "{countries[0] if countries else 'India'}": "• [one line max 15 words about opportunity/competition]"
   }},
-  "positioning_recommendation": "Specific actionable positioning advice mentioning competitor weaknesses",
-  "unmet_needs": "Specific customer needs not addressed by named competitors",
-  "differentiation_strategy": "How to stand out from [specific competitor names]",
-  "overall_verdict": "GREEN (big gap) / YELLOW (some gap) / RED (saturated)"
+  "positioning_recommendation": "• [one line max 15 words]",
+  "unmet_needs": "• [one line max 15 words]",
+  "differentiation_strategy": "• [one line max 15 words]",
+  "overall_verdict": "GREEN/YELLOW/RED"
 }}
 
-Return ONLY JSON, no markdown."""
+Return ONLY JSON. NO long paragraphs. MAX 15 words per field."""
 
     if LlmChat and EMERGENT_KEY:
         try:
