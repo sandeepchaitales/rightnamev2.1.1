@@ -1431,6 +1431,244 @@ class BrandEvaluationTester:
             self.log_test("Understanding Module - Exception", False, str(e))
             return False
 
+    def test_competitive_intelligence_v2(self):
+        """Test NEW COMPETITIVE INTELLIGENCE v2 feature for RIGHTNAME brand evaluation API"""
+        payload = {
+            "brand_names": ["FailedFounders"],
+            "category": "YouTube Channel",
+            "industry": "Education/Entertainment",
+            "positioning": "Mid-Range",
+            "market_scope": "Multi-Country",
+            "countries": ["India", "USA"]
+        }
+        
+        try:
+            print(f"\n🎯 Testing NEW COMPETITIVE INTELLIGENCE v2 Feature...")
+            print(f"CRITICAL TEST CASE:")
+            print(f"  Brand: FailedFounders")
+            print(f"  Category: YouTube Channel")
+            print(f"  Countries: India + USA")
+            print(f"  Expected: Real YouTube creators per country")
+            
+            start_time = time.time()
+            
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # 120 second timeout as specified
+            )
+            
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Competitive Intelligence v2 - HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                # VERIFICATION 1: Response Time (should complete within 120 seconds)
+                if response_time > 120:
+                    self.log_test("Competitive Intelligence v2 - Response Time", False, f"Response took {response_time:.2f}s (>120s limit)")
+                    return False
+                
+                # Check if we have brand_scores
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Competitive Intelligence v2 - Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                
+                # VERIFICATION 2: Understanding Module - NICE Class should be 41 (Entertainment), NOT 35 (Business)
+                nice_class_found = False
+                nice_class_value = None
+                
+                # Check in trademark_research
+                if "trademark_research" in brand and brand["trademark_research"]:
+                    tm_research = brand["trademark_research"]
+                    nice_class = tm_research.get("nice_classification", {})
+                    if nice_class and "class_number" in nice_class:
+                        nice_class_value = nice_class["class_number"]
+                        nice_class_found = True
+                
+                if nice_class_found:
+                    if nice_class_value != 41:
+                        self.log_test("Competitive Intelligence v2 - NICE Class", False, f"Expected Class 41 (Entertainment) for YouTube Channel, got Class {nice_class_value}")
+                        return False
+                    print(f"✅ NICE Class: {nice_class_value} (Entertainment) - CORRECT")
+                else:
+                    print(f"⚠️ NICE Class not found in response")
+                
+                # VERIFICATION 3: Response Structure - competitor_analysis with real YouTube creators
+                competitor_analysis_found = False
+                if "competitor_analysis" in brand:
+                    competitor_analysis = brand["competitor_analysis"]
+                    if competitor_analysis and "competitors" in competitor_analysis:
+                        competitors = competitor_analysis["competitors"]
+                        if len(competitors) > 0:
+                            competitor_analysis_found = True
+                            print(f"✅ Found competitor_analysis with {len(competitors)} competitors")
+                            
+                            # Check for real YouTube creator names
+                            competitor_names = [c.get("name", "").lower() for c in competitors if isinstance(c, dict)]
+                            print(f"Competitor names found: {competitor_names[:5]}...")  # Show first 5
+                        else:
+                            self.log_test("Competitive Intelligence v2 - Competitor Analysis Empty", False, "competitor_analysis.competitors is empty")
+                            return False
+                    else:
+                        self.log_test("Competitive Intelligence v2 - Competitor Analysis Structure", False, "competitor_analysis missing competitors field")
+                        return False
+                else:
+                    print(f"⚠️ competitor_analysis not found in brand response")
+                
+                # VERIFICATION 4: Country-specific competitor analysis
+                country_competitor_analysis_found = False
+                if "country_competitor_analysis" in brand:
+                    country_analysis = brand["country_competitor_analysis"]
+                    if isinstance(country_analysis, list) and len(country_analysis) > 0:
+                        country_competitor_analysis_found = True
+                        print(f"✅ Found country_competitor_analysis with {len(country_analysis)} countries")
+                        
+                        # Check for India and USA specific competitors
+                        india_found = False
+                        usa_found = False
+                        
+                        for country_data in country_analysis:
+                            if isinstance(country_data, dict):
+                                country_name = country_data.get("country", "").lower()
+                                competitors = country_data.get("competitors", [])
+                                
+                                if "india" in country_name:
+                                    india_found = True
+                                    print(f"✅ India competitors found: {len(competitors)} competitors")
+                                    # Check for expected Indian creators
+                                    competitor_names = [c.get("name", "").lower() for c in competitors if isinstance(c, dict)]
+                                    expected_indian = ["ankur warikoo", "ranveer allahbadia", "warikoo", "allahbadia"]
+                                    found_indian = any(any(expected in name for expected in expected_indian) for name in competitor_names)
+                                    if found_indian:
+                                        print(f"✅ Found expected Indian creators in analysis")
+                                    else:
+                                        print(f"⚠️ Expected Indian creators not found. Got: {competitor_names[:3]}")
+                                
+                                elif "usa" in country_name or "united states" in country_name:
+                                    usa_found = True
+                                    print(f"✅ USA competitors found: {len(competitors)} competitors")
+                                    # Check for expected US creators
+                                    competitor_names = [c.get("name", "").lower() for c in competitors if isinstance(c, dict)]
+                                    expected_us = ["gary vee", "graham stephan", "gary vaynerchuk"]
+                                    found_us = any(any(expected in name for expected in expected_us) for name in competitor_names)
+                                    if found_us:
+                                        print(f"✅ Found expected US creators in analysis")
+                                    else:
+                                        print(f"⚠️ Expected US creators not found. Got: {competitor_names[:3]}")
+                        
+                        if not india_found:
+                            self.log_test("Competitive Intelligence v2 - India Analysis", False, "India country analysis not found")
+                            return False
+                        
+                        if not usa_found:
+                            self.log_test("Competitive Intelligence v2 - USA Analysis", False, "USA country analysis not found")
+                            return False
+                    else:
+                        self.log_test("Competitive Intelligence v2 - Country Analysis Structure", False, "country_competitor_analysis is not a valid array")
+                        return False
+                else:
+                    print(f"⚠️ country_competitor_analysis not found in brand response")
+                
+                # VERIFICATION 5: Coordinates verification (famous brands should have Y >= 8)
+                coordinates_check_passed = True
+                if competitor_analysis_found:
+                    competitors = brand["competitor_analysis"]["competitors"]
+                    for competitor in competitors:
+                        if isinstance(competitor, dict):
+                            name = competitor.get("name", "").lower()
+                            y_coord = competitor.get("y_coordinate")
+                            
+                            # Check for famous brands
+                            famous_brands = ["gary vee", "gary vaynerchuk", "graham stephan"]
+                            if any(famous in name for famous in famous_brands):
+                                if y_coord is not None and y_coord < 8:
+                                    print(f"⚠️ Famous brand '{name}' has Y coordinate {y_coord} (expected >= 8)")
+                                    coordinates_check_passed = False
+                                else:
+                                    print(f"✅ Famous brand '{name}' has Y coordinate {y_coord} (>= 8)")
+                
+                # VERIFICATION 6: Gap detection (should show gap analysis per country)
+                gap_analysis_found = False
+                if "gap_analysis" in brand or "white_space_analysis" in brand:
+                    gap_analysis_found = True
+                    print(f"✅ Gap/White space analysis found")
+                else:
+                    print(f"⚠️ Gap analysis not found in response")
+                
+                # VERIFICATION 7: Classification should be DESCRIPTIVE (not FANCIFUL)
+                classification_correct = False
+                response_text = json.dumps(data).lower()
+                if "descriptive" in response_text and "fanciful" not in response_text:
+                    classification_correct = True
+                    print(f"✅ Brand classified as DESCRIPTIVE (correct)")
+                elif "fanciful" in response_text:
+                    print(f"⚠️ Brand classified as FANCIFUL (should be DESCRIPTIVE)")
+                else:
+                    print(f"⚠️ Classification not clearly found in response")
+                
+                # VERIFICATION 8: Business type should be content_media
+                business_type_correct = False
+                if "content_media" in response_text or "content" in response_text:
+                    business_type_correct = True
+                    print(f"✅ Business type includes content/media")
+                else:
+                    print(f"⚠️ Business type content_media not found")
+                
+                # Summary of verifications
+                verifications_passed = 0
+                total_verifications = 8
+                
+                if response_time <= 120:
+                    verifications_passed += 1
+                if nice_class_found and nice_class_value == 41:
+                    verifications_passed += 1
+                if competitor_analysis_found:
+                    verifications_passed += 1
+                if country_competitor_analysis_found:
+                    verifications_passed += 1
+                if coordinates_check_passed:
+                    verifications_passed += 1
+                if gap_analysis_found:
+                    verifications_passed += 1
+                if classification_correct:
+                    verifications_passed += 1
+                if business_type_correct:
+                    verifications_passed += 1
+                
+                success_rate = (verifications_passed / total_verifications) * 100
+                
+                if verifications_passed >= 6:  # At least 75% success rate
+                    self.log_test("Competitive Intelligence v2 - Complete", True, 
+                                f"Passed {verifications_passed}/{total_verifications} verifications ({success_rate:.1f}%). Response time: {response_time:.2f}s")
+                    return True
+                else:
+                    self.log_test("Competitive Intelligence v2 - Complete", False, 
+                                f"Only passed {verifications_passed}/{total_verifications} verifications ({success_rate:.1f}%)")
+                    return False
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Competitive Intelligence v2 - JSON Parse", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Competitive Intelligence v2 - Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Competitive Intelligence v2 - Exception", False, str(e))
+            return False
+
     def test_admin_evaluations_stats(self):
         """Test GET /api/admin/evaluations/stats endpoint"""
         if not self.admin_token:
