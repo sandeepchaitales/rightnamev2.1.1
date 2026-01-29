@@ -756,16 +756,6 @@ def _format_matrix_for_output(
         "strategic_advantage": "\n".join(strategic_advantage_parts),
         "market_entry_recommendation": market_entry
     }
-        "y_axis_label": "Quality: Basic → High Production",
-        "gap_analysis": {
-            "direct_count": gap.get("direct_count", 0),
-            "indirect_count": gap.get("indirect_count", 0),
-            "gap_detected": gap.get("gap_detected", False),
-            "gap_description": gap.get("gap_description", "")
-        },
-        "white_space_analysis": gap.get("gap_description", "Analysis pending"),
-        "strategic_advantage": f"Found {len(formatted_competitors)} competitors via Competitive Intelligence v2"
-    }
 
 
 def _empty_result(brand_name: str, countries: List[str]) -> Dict[str, Any]:
