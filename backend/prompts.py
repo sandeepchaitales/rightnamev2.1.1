@@ -804,21 +804,21 @@ Return ONLY valid JSON.
       "mitigation_strategies": [
           {
               "priority": "HIGH",
-              "action": "Conduct formal trademark search with [USPTO/IP India/EUIPO based on target country] before filing",
+              "action": "Conduct formal trademark search with appropriate IP Office before filing",
               "rationale": "Identify all potential conflicts before investment",
-              "estimated_cost": "[USE CORRECT CURRENCY - e.g., $500-1,500 for USA, ₹3,000-5,000 for India]"
+              "estimated_cost": "USE_MITIGATION_COST_SEARCH"
           },
           {
               "priority": "HIGH", 
               "action": "Develop distinctive visual identity/logo",
               "rationale": "Strong design can offset wordmark similarity",
-              "estimated_cost": "[USE CORRECT CURRENCY - e.g., $2,000-10,000 for USA, ₹10,000-50,000 for India]"
+              "estimated_cost": "USE_MITIGATION_COST_LOGO"
           },
           {
               "priority": "MEDIUM",
               "action": "Consider co-existence agreement with similar mark holders",
               "rationale": "Negotiate market/geographic boundaries",
-              "estimated_cost": "[USE CORRECT CURRENCY - e.g., $5,000-50,000 for USA, ₹50,000-200,000 for India]"
+              "estimated_cost": "USE_MITIGATION_COST_COEXIST"
           }
       ],
 
