@@ -10933,6 +10933,95 @@ async def evaluate_brands_internal(request: BrandEvaluationRequest, job_id: str 
         return response_data
     # ==================== END INAPPROPRIATE CHECK ====================
     
+    # ==================== NEW: PRONOUNCEABILITY CHECK ====================
+    # Catches gibberish/random character strings BEFORE expensive LLM calls
+    # Names like "rcnvkjznvvjajf" should not receive high scores
+    # =====================================================================
+    pronounceability_results = {}
+    pronounceability_caps = {}  # Store score caps for later use
+    
+    for brand in request.brand_names:
+        pronounce_check = check_pronounceability(brand)
+        pronounceability_results[brand] = pronounce_check
+        
+        if pronounce_check["verdict"] == "FAIL":
+            logging.warning(f"🗣️ PRONOUNCEABILITY FAIL: '{brand}' - Score: {pronounce_check['score']}/100")
+            for issue in pronounce_check["issues"]:
+                logging.warning(f"   └─ {issue}")
+            pronounceability_caps[brand] = pronounce_check["score_cap"]
+        elif pronounce_check["verdict"] == "POOR":
+            logging.warning(f"🗣️ PRONOUNCEABILITY POOR: '{brand}' - Score: {pronounce_check['score']}/100")
+            pronounceability_caps[brand] = pronounce_check["score_cap"]
+        elif pronounce_check["verdict"] == "CAUTION":
+            logging.info(f"🗣️ PRONOUNCEABILITY CAUTION: '{brand}' - Score: {pronounce_check['score']}/100")
+            pronounceability_caps[brand] = pronounce_check["score_cap"]
+        else:
+            logging.info(f"🗣️ PRONOUNCEABILITY PASS: '{brand}' - Score: {pronounce_check['score']}/100")
+    
+    # If ALL names fail pronounceability severely (score < 20), return early with low scores
+    severe_fails = {brand: result for brand, result in pronounceability_results.items() 
+                    if result["score"] < 20}
+    
+    if severe_fails and len(severe_fails) == len(request.brand_names):
+        logging.info(f"⚠️ ALL NAMES FAIL PRONOUNCEABILITY - Returning early with capped scores")
+        
+        brand_scores = []
+        for brand in request.brand_names:
+            p_result = pronounceability_results[brand]
+            score_cap = p_result["score_cap"]
+            issues = p_result["issues"]
+            
+            # Create detailed issue summary
+            issues_text = "; ".join(issues[:3])
+            
+            brand_scores.append(BrandScore(
+                brand_name=brand,
+                namescore=float(score_cap),
+                verdict="CAUTION" if score_cap >= 20 else "REJECT",
+                summary=f"⚠️ PRONOUNCEABILITY ISSUE: '{brand}' is extremely difficult to pronounce or remember. {issues_text}. A brand name must be speakable and memorable to succeed.",
+                strategic_classification="UNPRONOUNCEABLE - Consider a different name",
+                pros=["Unique/original" if p_result.get("analysis", {}).get("vowel_count", 0) > 0 else "None identified"],
+                cons=[
+                    f"Vowel ratio: {p_result.get('analysis', {}).get('vowel_percentage', 'N/A')} (optimal: 25-50%)",
+                    f"Consonant cluster: {p_result.get('analysis', {}).get('longest_consonant_cluster', 'N/A')} consecutive (max recommended: 3)",
+                    f"Syllables: ~{p_result.get('analysis', {}).get('syllable_estimate', 0)} (minimum needed: 1-2)",
+                    "Cannot be easily spoken or remembered",
+                    "Would fail in word-of-mouth marketing",
+                    "Difficult for customers to search or spell"
+                ],
+                dimensions=[
+                    DimensionScore(name="Distinctiveness", score=min(40, score_cap + 15), reasoning="Unique but unusable - distinctiveness requires pronounceability"),
+                    DimensionScore(name="Memorability", score=score_cap, reasoning=f"Cannot be remembered if it cannot be pronounced. {issues[0] if issues else ''}"),
+                    DimensionScore(name="Pronounceability", score=p_result["score"], reasoning=f"FAILED: {issues_text}"),
+                    DimensionScore(name="Trademark Safety", score=50, reasoning="May be registrable but poor commercial viability"),
+                    DimensionScore(name="Domain Availability", score=70, reasoning="Likely available (no one wants unpronounceable domains)"),
+                    DimensionScore(name="Cultural Safety", score=30, reasoning="Gibberish names can sound like offensive words in other languages"),
+                ],
+                trademark_risk={"overall_risk": "LOW", "reason": "Unique but commercially unviable"},
+                positioning_fit=f"POOR - Pronounceability score: {p_result['score']}/100"
+            ))
+        
+        report_id = f"report_{uuid.uuid4().hex[:16]}"
+        response_data = BrandEvaluationResponse(
+            executive_summary=f"⚠️ PRONOUNCEABILITY WARNING: The submitted brand name(s) are extremely difficult to pronounce. A successful brand must be speakable and memorable. Consider names with balanced vowels and consonants.",
+            brand_scores=brand_scores,
+            comparison_verdict="CAUTION - Pronounceability issues detected",
+            report_id=report_id
+        )
+        
+        doc = response_data.model_dump()
+        doc['report_id'] = report_id
+        doc['created_at'] = datetime.now(timezone.utc).isoformat()
+        doc['request'] = request.model_dump()
+        doc['early_stopped'] = True
+        doc['rejection_reason'] = "pronounceability_fail"
+        doc['pronounceability_analysis'] = {brand: result for brand, result in pronounceability_results.items()}
+        doc['processing_time_seconds'] = time_module.time() - start_time
+        await db.evaluations.insert_one(doc)
+        
+        return response_data
+    # ==================== END PRONOUNCEABILITY CHECK ====================
+    
     # ==================== SINGLE LAYER: DYNAMIC COMPETITOR SEARCH ====================
     # NO STATIC LIST - Everything is dynamic!
     # 1. Search for competitors in the user's category
