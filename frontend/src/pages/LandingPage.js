@@ -847,17 +847,17 @@ const LandingPage = () => {
                                 </div>
                             </div>
 
-                            {/* Brand Vibe & Positioning Row */}
+                            {/* Monetization Model & Positioning Row */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Brand Vibe</Label>
-                                    <Select onValueChange={(val) => handleSelectChange('brand_vibe', val)} value={formData.brand_vibe}>
+                                    <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Monetization Model *</Label>
+                                    <Select onValueChange={(val) => handleSelectChange('monetization_model', val)} value={formData.monetization_model}>
                                         <SelectTrigger className="h-12 bg-slate-50 border-2 border-slate-200 rounded-xl font-medium hover:border-violet-300 transition-colors">
-                                            <SelectValue placeholder="Select..." />
+                                            <SelectValue placeholder="How will you make money?" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {brandVibes.map((vibe) => (
-                                                <SelectItem key={vibe.value} value={vibe.value}>{vibe.label}</SelectItem>
+                                            {monetizationOptions.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
