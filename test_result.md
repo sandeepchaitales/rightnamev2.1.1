@@ -487,11 +487,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "POST /api/evaluate - Brand Evaluation Endpoint"
-    - "Dashboard - Display Results"
-    - "Landing Page Form"
+    - "POST /api/evaluate - Competitive Intelligence v2"
+    - "Understanding Module Integration"
+    - "NICE Class Detection"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
