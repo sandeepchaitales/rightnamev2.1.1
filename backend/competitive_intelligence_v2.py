@@ -642,22 +642,64 @@ def _format_matrix_for_output(
     brand_name: str,
     user_position: Dict[str, int]
 ) -> Dict[str, Any]:
-    """Format matrix for API output."""
+    """Format matrix for API output with detailed competitor insights."""
     competitors = matrix_data.get("competitors", [])
     
     # Format competitors with scaled coordinates (1-10 → 10-100)
     formatted_competitors = []
+    direct_competitors = []
+    indirect_competitors = []
+    
     for comp in competitors:
-        formatted_competitors.append({
+        comp_data = {
             "name": comp.get("name", "Unknown"),
             "x_coordinate": float(comp.get("x", 5)) * 10,
             "y_coordinate": float(comp.get("y", 5)) * 10,
             "quadrant": comp.get("tier", "Competitor"),
             "type": comp.get("type", "INDIRECT"),
             "reasoning": comp.get("reasoning", "")
-        })
+        }
+        formatted_competitors.append(comp_data)
+        
+        # Categorize for detailed analysis
+        if comp.get("type") == "DIRECT":
+            direct_competitors.append(comp.get("name", "Unknown"))
+        else:
+            indirect_competitors.append(comp.get("name", "Unknown"))
     
     gap = matrix_data.get("gap_analysis", {})
+    
+    # Build detailed strategic advantage text
+    direct_count = len(direct_competitors)
+    indirect_count = len(indirect_competitors)
+    total = direct_count + indirect_count
+    
+    # Create competitor list strings
+    direct_list = ", ".join(direct_competitors[:6]) if direct_competitors else "None identified"
+    indirect_list = ", ".join(indirect_competitors[:6]) if indirect_competitors else "None identified"
+    
+    # Generate strategic advantage with competitor names
+    strategic_advantage_parts = []
+    
+    if direct_count == 0:
+        strategic_advantage_parts.append(f"🟢 **BLUE OCEAN OPPORTUNITY**: No direct competitors found in this specific segment. This represents a significant first-mover advantage.")
+    elif direct_count <= 3:
+        strategic_advantage_parts.append(f"🟡 **MODERATE COMPETITION**: {direct_count} direct competitors identified ({direct_list}). Market entry is viable with differentiation.")
+    else:
+        strategic_advantage_parts.append(f"🔴 **COMPETITIVE MARKET**: {direct_count} direct competitors ({direct_list}). Strong differentiation strategy required.")
+    
+    if indirect_count > 0:
+        strategic_advantage_parts.append(f"\n\n**Indirect Competitors ({indirect_count})**: {indirect_list}")
+    
+    # Generate market entry recommendation
+    if direct_count == 0 and indirect_count <= 2:
+        market_entry = "🚀 **GO** - Excellent timing for market entry. Limited competition allows for brand building and market share capture."
+    elif direct_count <= 2:
+        market_entry = f"✅ **PROCEED WITH STRATEGY** - Viable market entry. Position against: {direct_list}. Focus on unique value proposition."
+    elif direct_count <= 5:
+        market_entry = f"⚠️ **PROCEED WITH CAUTION** - Competitive market with {direct_count} direct players. Differentiation required in: pricing, features, or niche targeting."
+    else:
+        market_entry = f"🛑 **HIGH COMPETITION** - Saturated market with {direct_count}+ direct competitors. Consider niche positioning or geographic focus."
     
     return {
         "competitors": formatted_competitors,
@@ -668,6 +710,20 @@ def _format_matrix_for_output(
             "brand_name": brand_name
         },
         "x_axis_label": "Price: Budget → Premium",
+        "y_axis_label": "Quality: Basic → High Production",
+        "gap_analysis": {
+            "direct_count": direct_count,
+            "indirect_count": indirect_count,
+            "total_competitors": total,
+            "direct_competitors": direct_list,
+            "indirect_competitors": indirect_list,
+            "gap_detected": gap.get("gap_detected", direct_count == 0),
+            "gap_description": gap.get("gap_description", "")
+        },
+        "white_space_analysis": gap.get("gap_description", "") or f"{'Significant opportunity - no direct competition' if direct_count == 0 else f'{direct_count} direct competitors exist. Look for positioning gaps.'}",
+        "strategic_advantage": "\n".join(strategic_advantage_parts),
+        "market_entry_recommendation": market_entry
+    }
         "y_axis_label": "Quality: Basic → High Production",
         "gap_analysis": {
             "direct_count": gap.get("direct_count", 0),
