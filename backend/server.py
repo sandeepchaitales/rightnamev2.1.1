@@ -69,6 +69,12 @@ from deep_market_intelligence import (
     get_white_space_summary
 )
 
+# Import Competitive Intelligence v2 (FUNNEL APPROACH)
+from competitive_intelligence_v2 import (
+    competitive_intelligence_v2,
+    get_white_space_summary_v2
+)
+
 # Import Payment Routes
 from payment_routes import payment_router, set_db as set_payment_db
 
