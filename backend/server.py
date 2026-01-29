@@ -11932,67 +11932,82 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
     
     logging.info(f"Successfully generated report with model {winning_model}")
     
-    # ============ DEEP MARKET INTELLIGENCE OVERRIDE ============
+    # ============ COMPETITIVE INTELLIGENCE v2 OVERRIDE ============
     # Apply REAL competitor data regardless of LLM or Fallback mode
-    logging.info("🎯 APPLYING DEEP MARKET INTELLIGENCE OVERRIDE...")
+    logging.info("🎯 APPLYING COMPETITIVE INTELLIGENCE v2 OVERRIDE...")
     
     for brand_name in request.brand_names:
         deep_intel = all_brand_data.get(brand_name, {}).get("deep_market_intel")
         
         if deep_intel and deep_intel.get("global_matrix", {}).get("competitors"):
-            logging.info(f"🎯 Found {len(deep_intel['global_matrix']['competitors'])} REAL competitors for '{brand_name}'")
+            global_comps = deep_intel['global_matrix']['competitors']
+            logging.info(f"🎯 Found {len(global_comps)} REAL competitors for '{brand_name}'")
             
             # Find the brand_score in data
             brand_scores = data.get("brand_scores", [])
             for bs in brand_scores:
                 if bs.get("brand_name", "").lower() == brand_name.lower() or len(brand_scores) == 1:
-                    # Override competitor_analysis with REAL data
+                    # Override competitor_analysis with REAL data from v2
                     global_matrix = deep_intel.get("global_matrix", {})
                     competitors_data = global_matrix.get("competitors", [])
-                    user_pos = global_matrix.get("user_position", {})
+                    user_pos = global_matrix.get("user_brand_position", {})
                     
+                    # Format competitors - v2 already has x_coordinate, y_coordinate
                     formatted_competitors = []
                     for comp in competitors_data[:10]:
                         formatted_competitors.append({
                             "name": comp.get("name", "Unknown"),
-                            "x_coordinate": float(comp.get("x", 5)) * 10,
-                            "y_coordinate": float(comp.get("y", 5)) * 10,
-                            "quadrant": comp.get("type", "Competitor"),
+                            "x_coordinate": comp.get("x_coordinate", 50),
+                            "y_coordinate": comp.get("y_coordinate", 50),
+                            "quadrant": comp.get("quadrant", comp.get("tier", "Competitor")),
+                            "type": comp.get("type", "INDIRECT"),
+                            "reasoning": comp.get("reasoning", ""),
                             "price_axis": None,
                             "modernity_axis": None
                         })
                     
+                    # Get white space from v2
+                    white_space = deep_intel.get("white_space_analysis", {})
+                    white_space_text = get_white_space_summary_v2(deep_intel)
+                    
                     bs["competitor_analysis"] = {
-                        "x_axis_label": "Price: Budget → Premium",
-                        "y_axis_label": "Quality: Basic → High Production",
+                        "x_axis_label": global_matrix.get("x_axis_label", "Price: Budget → Premium"),
+                        "y_axis_label": global_matrix.get("y_axis_label", "Quality: Basic → High Production"),
                         "competitors": formatted_competitors,
                         "user_brand_position": {
-                            "x_coordinate": float(user_pos.get("x", 5)) * 10,
-                            "y_coordinate": float(user_pos.get("y", 7)) * 10,
+                            "x_coordinate": user_pos.get("x_coordinate", 50),
+                            "y_coordinate": user_pos.get("y_coordinate", 70),
                             "quadrant": user_pos.get("quadrant", "Accessible Premium"),
-                            "rationale": f"'{brand_name}' positioned in {user_pos.get('quadrant', 'target')} segment"
+                            "rationale": f"'{brand_name}' target position"
                         },
-                        "white_space_analysis": get_white_space_summary_v2(deep_intel),
-                        "strategic_advantage": "Real competitor data from Deep Market Intelligence."
+                        "white_space_analysis": white_space_text,
+                        "strategic_advantage": f"Competitive Intelligence v2: Found {len(formatted_competitors)} real competitors via funnel approach."
                     }
                     
                     logging.info(f"✅ OVERRIDE COMPLETE: competitor_analysis now has {len(formatted_competitors)} REAL competitors")
                     
-                    # Also override country_competitor_analysis
+                    # Override country_competitor_analysis from v2
                     country_analysis = deep_intel.get("country_analysis", {})
                     if country_analysis:
                         formatted_country = []
                         country_flags = {"India": "🇮🇳", "USA": "🇺🇸", "UK": "🇬🇧", "UAE": "🇦🇪", "Singapore": "🇸🇬", "Australia": "🇦🇺", "Canada": "🇨🇦", "Germany": "🇩🇪", "Japan": "🇯🇵", "China": "🇨🇳"}
                         
                         for country, cdata in country_analysis.items():
+                            # v2 structure: cdata.competitors[], cdata.gap_analysis
+                            country_comps = cdata.get("competitors", [])
+                            gap = cdata.get("gap_analysis", {})
+                            
                             all_comps = []
-                            for c in (cdata.get("direct_competitors", []) + cdata.get("market_leaders", []))[:6]:
+                            for c in country_comps[:6]:
                                 all_comps.append({
                                     "name": c.get("name", "Unknown"),
-                                    "x_coordinate": float(c.get("x", 5)) * 10,
-                                    "y_coordinate": float(c.get("y", 5)) * 10,
-                                    "quadrant": c.get("type", "Competitor")
+                                    "x_coordinate": c.get("x_coordinate", 50),
+                                    "y_coordinate": c.get("y_coordinate", 50),
+                                    "quadrant": c.get("quadrant", c.get("type", "Competitor")),
+                                    "type": c.get("type", "INDIRECT")
                                 })
+                            
+                            user_pos_country = cdata.get("user_brand_position", {})
                             
                             formatted_country.append({
                                 "country": country,
@@ -12000,10 +12015,15 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                                 "x_axis_label": "Price: Budget → Premium",
                                 "y_axis_label": "Quality: Basic → High Production",
                                 "competitors": all_comps,
-                                "user_brand_position": {"x_coordinate": 50, "y_coordinate": 70, "quadrant": cdata.get("positioning_opportunity", "Target Segment")},
-                                "white_space_analysis": cdata.get("white_space", ""),
-                                "strategic_advantage": f"Found {len(all_comps)} real competitors.",
-                                "market_entry_recommendation": cdata.get("format_gap", "")
+                                "user_brand_position": {
+                                    "x_coordinate": user_pos_country.get("x_coordinate", 50),
+                                    "y_coordinate": user_pos_country.get("y_coordinate", 70),
+                                    "quadrant": user_pos_country.get("quadrant", "Target Segment")
+                                },
+                                "white_space_analysis": cdata.get("white_space_analysis", gap.get("gap_description", "")),
+                                "strategic_advantage": f"Found {len(all_comps)} competitors ({gap.get('direct_count', 0)} direct, {gap.get('indirect_count', 0)} indirect).",
+                                "market_entry_recommendation": "Gap detected - first mover opportunity" if gap.get("gap_detected") else "Competitive market - differentiation required",
+                                "gap_analysis": gap
                             })
                         
                         if formatted_country:
@@ -12012,10 +12032,10 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                     
                     break
         else:
-            logging.warning(f"⚠️ No Deep Market Intel for '{brand_name}' - using default competitors")
+            logging.warning(f"⚠️ No Competitive Intel v2 for '{brand_name}' - using default")
     
-    logging.info("🎯 DEEP MARKET INTELLIGENCE OVERRIDE COMPLETE")
-    # ============ END DEEP MARKET INTELLIGENCE OVERRIDE ============
+    logging.info("🎯 COMPETITIVE INTELLIGENCE v2 OVERRIDE COMPLETE")
+    # ============ END COMPETITIVE INTELLIGENCE v2 OVERRIDE ============
     
     # Pre-process data to fix common LLM output issues
     data = fix_llm_response_types(data)
