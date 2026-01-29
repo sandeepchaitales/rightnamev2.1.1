@@ -403,52 +403,72 @@ async def generate_white_space_analysis(
     countries: List[str]
 ) -> Dict[str, Any]:
     """
-    Generate white space analysis based on gap detection across all matrices.
+    Generate detailed white space analysis with LLM for actionable insights.
     """
     logger.info("🔍 Generating white space analysis...")
     
-    # Collect gap info from all matrices
-    global_gaps = matrices.get("GLOBAL", {}).get("gap_analysis", {})
+    # Collect gap info and competitor names from all matrices
+    global_matrix = matrices.get("GLOBAL", {})
+    global_gaps = global_matrix.get("gap_analysis", {})
+    global_competitors = global_matrix.get("competitors", [])
+    
+    # Get competitor names for context
+    direct_names = [c.get("name") for c in global_competitors if c.get("type") == "DIRECT"][:6]
+    indirect_names = [c.get("name") for c in global_competitors if c.get("type") == "INDIRECT"][:6]
+    
     country_gaps = {}
+    country_competitors = {}
     
     for country in countries:
         country_data = matrices.get(country, {})
         country_gaps[country] = country_data.get("gap_analysis", {})
+        country_comps = country_data.get("competitors", [])
+        country_competitors[country] = {
+            "direct": [c.get("name") for c in country_comps if c.get("type") == "DIRECT"][:5],
+            "indirect": [c.get("name") for c in country_comps if c.get("type") == "INDIRECT"][:5]
+        }
     
-    # Build analysis prompt
-    gap_summary = f"GLOBAL: {global_gaps.get('direct_count', 0)} direct competitors\n"
-    for country, gap in country_gaps.items():
-        gap_summary += f"{country}: {gap.get('local_direct_count', 0)} local direct competitors\n"
-    
+    # Build detailed analysis context
     theme_str = ", ".join(theme_keywords[:3]) if theme_keywords else category
     
-    prompt = f"""Based on competitive analysis for "{brand_name}" in "{category}" (theme: {theme_str}):
+    competitor_context = f"""
+GLOBAL COMPETITORS:
+- Direct ({len(direct_names)}): {', '.join(direct_names) if direct_names else 'None found'}
+- Indirect ({len(indirect_names)}): {', '.join(indirect_names) if indirect_names else 'None found'}
+"""
+    
+    for country, comps in country_competitors.items():
+        competitor_context += f"""
+{country.upper()} COMPETITORS:
+- Direct ({len(comps['direct'])}): {', '.join(comps['direct']) if comps['direct'] else 'None found'}
+- Indirect ({len(comps['indirect'])}): {', '.join(comps['indirect']) if comps['indirect'] else 'None found'}
+"""
+    
+    prompt = f"""Analyze the competitive landscape for "{brand_name}" in "{category}" (theme: {theme_str}).
 
-GAP ANALYSIS:
-{gap_summary}
+{competitor_context}
 
-Countries analyzed: {', '.join(countries)}
+Provide a DETAILED WHITE SPACE ANALYSIS:
 
-Provide WHITE SPACE ANALYSIS:
-
-1. GLOBAL OPPORTUNITY: Is there a gap globally for this theme?
-2. COUNTRY-SPECIFIC OPPORTUNITIES: Which countries have NO direct competitors?
-3. POSITIONING RECOMMENDATION: Where should the brand position?
-4. UNMET NEEDS: What specific content/format gap exists?
+1. **Global Market Opportunity**: What specific gap exists? Why is "{brand_name}" positioned to fill it?
+2. **Country-Specific Insights**: For each country, explain the competitive intensity and opportunity.
+3. **Differentiation Strategy**: How should "{brand_name}" differentiate from the named competitors?
+4. **Unmet Market Needs**: What specific customer needs are NOT being served by existing competitors?
+5. **Recommended Positioning**: Where exactly should the brand position (premium, value, niche)?
 
 Return JSON:
 {{
-  "global_white_space": "Analysis of global opportunity",
+  "global_white_space": "Detailed 2-3 sentence analysis of global opportunity, naming specific competitors to differentiate from",
   "country_opportunities": {{
-    "India": "Specific opportunity or 'Market has competition'",
-    "USA": "..."
+    "{countries[0] if countries else 'India'}": "Specific opportunity or competition analysis with competitor names"
   }},
-  "positioning_recommendation": "Specific positioning advice",
-  "unmet_needs": "What's missing in the market",
+  "positioning_recommendation": "Specific actionable positioning advice mentioning competitor weaknesses",
+  "unmet_needs": "Specific customer needs not addressed by named competitors",
+  "differentiation_strategy": "How to stand out from [specific competitor names]",
   "overall_verdict": "GREEN (big gap) / YELLOW (some gap) / RED (saturated)"
 }}
 
-Return ONLY JSON."""
+Return ONLY JSON, no markdown."""
 
     if LlmChat and EMERGENT_KEY:
         try:
@@ -457,7 +477,7 @@ Return ONLY JSON."""
             
             response = await asyncio.wait_for(
                 chat.send_message(user_msg),
-                timeout=15
+                timeout=20
             )
             
             response_text = str(response).strip()
@@ -469,18 +489,30 @@ Return ONLY JSON."""
             if response_text.endswith("```"):
                 response_text = response_text[:-3]
             
-            return json.loads(response_text.strip())
+            result = json.loads(response_text.strip())
+            logger.info(f"✅ White space analysis generated successfully")
+            return result
             
         except Exception as e:
             logger.error(f"❌ White space analysis failed: {e}")
     
-    # Fallback
+    # Enhanced fallback with competitor names
+    fallback_global = f"Market has {len(direct_names)} direct competitors"
+    if direct_names:
+        fallback_global += f" ({', '.join(direct_names[:3])})"
+    fallback_global += ". Differentiation required through unique value proposition, pricing strategy, or niche focus."
+    
     return {
-        "global_white_space": "Analysis unavailable",
-        "country_opportunities": {c: "Manual analysis recommended" for c in countries},
-        "positioning_recommendation": "Differentiated positioning recommended",
-        "unmet_needs": "Further research needed",
-        "overall_verdict": "YELLOW"
+        "global_white_space": fallback_global,
+        "country_opportunities": {
+            c: f"{len(country_competitors.get(c, {}).get('direct', []))} direct competitors. " + 
+               ("Market entry viable." if len(country_competitors.get(c, {}).get('direct', [])) <= 3 else "Differentiation required.")
+            for c in countries
+        },
+        "positioning_recommendation": "Focus on underserved segment or unique value proposition",
+        "unmet_needs": "Further market research recommended",
+        "differentiation_strategy": f"Differentiate from {', '.join(direct_names[:3]) if direct_names else 'existing players'} through unique features or positioning",
+        "overall_verdict": "GREEN" if len(direct_names) == 0 else ("YELLOW" if len(direct_names) <= 3 else "RED")
     }
 
 
