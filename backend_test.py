@@ -8982,6 +8982,10 @@ class BrandEvaluationTester:
         print("\n🎯 PRIORITY TEST: Testing POSITIONING-AWARE competitor search fix...")
         self.test_positioning_aware_competitor_search()
         
+        # PRIORITY: Test NEW COMPETITIVE INTELLIGENCE v2 feature (as per review request)
+        print("\n🎯 PRIORITY TEST: Testing NEW COMPETITIVE INTELLIGENCE v2 feature...")
+        self.test_competitive_intelligence_v2()
+        
         # Test main evaluate endpoint
         self.test_evaluate_endpoint_structure()
         
