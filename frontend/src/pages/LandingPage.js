@@ -270,18 +270,7 @@ const LandingPage = () => {
     { value: "No Hassle", label: "No Hassle - Convenience first" }
   ];
 
-  const brandVibes = [
-    { value: "Serious", label: "Serious & Professional" },
-    { value: "Playful", label: "Playful & Fun" },
-    { value: "Luxurious", label: "Luxurious & Premium" },
-    { value: "Minimalist", label: "Minimalist & Clean" },
-    { value: "Bold", label: "Bold & Edgy" },
-    { value: "Warm", label: "Warm & Friendly" },
-    { value: "Innovative", label: "Innovative & Futuristic" },
-    { value: "Traditional", label: "Traditional & Classic" },
-    { value: "Youthful", label: "Youthful & Energetic" },
-    { value: "Trustworthy", label: "Trustworthy & Reliable" }
-  ];
+  // brandVibes removed - replaced by monetizationOptions
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
