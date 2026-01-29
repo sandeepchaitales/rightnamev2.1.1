@@ -321,7 +321,7 @@ const LandingPage = () => {
         category: formData.category || 'General',
         product_type: formData.product_type || 'Digital',
         usp: formData.usp || '',
-        brand_vibe: formData.brand_vibe || '',
+        monetization_model: formData.monetization_model || null,
         positioning: formData.positioning || 'Premium',
         market_scope: formData.market_scope || 'Multi-Country',
         countries: countries.length > 0 ? countries : ['India'],
