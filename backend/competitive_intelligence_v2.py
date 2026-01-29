@@ -784,52 +784,48 @@ def _empty_result(brand_name: str, countries: List[str]) -> Dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def get_white_space_summary_v2(intel_result: Dict[str, Any]) -> str:
-    """Get formatted white space summary from v2 result with all details."""
+    """Get SHORT, POINT-WISE white space summary."""
     ws = intel_result.get("white_space_analysis", {})
     
     parts = []
     
-    # Global white space
+    # Global white space - keep short
     global_ws = ws.get("global_white_space", "")
     if global_ws:
-        parts.append(f"**🌍 Global Opportunity:** {global_ws}")
+        parts.append(f"🌍 **Global:** {global_ws}")
     
-    # Country-specific opportunities
+    # Country-specific - one line each
     country_opps = ws.get("country_opportunities", {})
     if country_opps:
-        country_parts = []
         for country, opp in country_opps.items():
             if opp and opp != "Manual analysis recommended":
-                country_parts.append(f"• **{country}:** {opp}")
-        if country_parts:
-            parts.append("**🗺️ Country Analysis:**\n" + "\n".join(country_parts))
+                parts.append(f"🗺️ **{country}:** {opp}")
     
-    # Positioning recommendation
+    # Positioning - one line
     positioning = ws.get("positioning_recommendation", "")
     if positioning:
-        parts.append(f"**🎯 Positioning Strategy:** {positioning}")
+        parts.append(f"🎯 **Position:** {positioning}")
     
-    # Differentiation strategy
+    # Differentiation - one line
     diff = ws.get("differentiation_strategy", "")
     if diff:
-        parts.append(f"**⚡ Differentiation:** {diff}")
+        parts.append(f"⚡ **Differentiate:** {diff}")
     
-    # Unmet needs
+    # Unmet needs - one line
     unmet = ws.get("unmet_needs", "")
     if unmet:
-        parts.append(f"**💡 Unmet Market Needs:** {unmet}")
+        parts.append(f"💡 **Gap:** {unmet}")
     
-    # Verdict
+    # Verdict - simple
     verdict = ws.get("overall_verdict", "")
     if verdict:
-        verdict_emoji = "🟢" if verdict == "GREEN" else ("🟡" if verdict == "YELLOW" else "🔴")
-        verdict_text = "EXCELLENT OPPORTUNITY" if verdict == "GREEN" else ("MODERATE OPPORTUNITY" if verdict == "YELLOW" else "HIGH COMPETITION")
-        parts.append(f"**{verdict_emoji} Overall Verdict:** {verdict_text}")
+        verdict_emoji = "🟢" if "GREEN" in verdict else ("🟡" if "YELLOW" in verdict else "🔴")
+        parts.append(f"{verdict_emoji} **Verdict:** {verdict}")
     
     if parts:
-        return "\n\n".join(parts)
+        return "\n".join(parts)
     
-    return "Market opportunity analysis pending."
+    return "Analysis pending."
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
