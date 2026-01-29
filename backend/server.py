@@ -11274,7 +11274,7 @@ BRAND: {brand}
                             "quadrant": user_pos.get("quadrant", "Accessible Premium"),
                             "rationale": f"'{brand_name_for_fallback}' positioned in {user_pos.get('quadrant', 'target')} segment"
                         },
-                        "white_space_analysis": get_white_space_summary(deep_intel),
+                        "white_space_analysis": get_white_space_summary_v2(deep_intel),
                         "strategic_advantage": "Real competitor data from Deep Market Intelligence enables precise positioning strategy."
                     }
                     logging.info(f"🎯 OVERRIDE: Using Deep Market Intel for competitor_analysis: {len(formatted_competitors)} REAL competitors")
@@ -11972,7 +11972,7 @@ TOTAL: {weighted_sum:.2f} × 10 = {namescore}/100
                             "quadrant": user_pos.get("quadrant", "Accessible Premium"),
                             "rationale": f"'{brand_name}' positioned in {user_pos.get('quadrant', 'target')} segment"
                         },
-                        "white_space_analysis": get_white_space_summary(deep_intel),
+                        "white_space_analysis": get_white_space_summary_v2(deep_intel),
                         "strategic_advantage": "Real competitor data from Deep Market Intelligence."
                     }
                     
