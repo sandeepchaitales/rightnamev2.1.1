@@ -11468,6 +11468,25 @@ BRAND: {brand}
     
     {format_legal_procedures_for_prompt(request.countries)}
 
+    ⛔⛔⛔ ABSOLUTE MANDATORY: CURRENCY ENFORCEMENT FOR {request.countries[0] if len(request.countries) == 1 else 'MULTI-COUNTRY'} ⛔⛔⛔
+    {"" if len(request.countries) != 1 else f'''
+    YOU ARE GENERATING A REPORT FOR {request.countries[0].upper()} ONLY.
+    
+    FORBIDDEN ACTIONS:
+    - ❌ DO NOT use "$" or "USD" anywhere in costs - this is {request.countries[0]}, not USA
+    - ❌ DO NOT use US legal terms like "TTAB", "USPTO", "Federal Circuit"
+    - ❌ DO NOT default to American examples
+    
+    MANDATORY ACTIONS:
+    - ✅ ALL costs in mitigation_strategies[].estimated_cost MUST use {get_country_trademark_costs([request.countries[0]])['currency']}
+    - ✅ Use {request.countries[0]} trademark office ({get_country_trademark_costs([request.countries[0]])['office']})
+    - ✅ Reference {request.countries[0]} trademark law
+    
+    EXAMPLE (FOR INDIA):
+    - ❌ WRONG: "estimated_cost": "$500-$2,000" 
+    - ✅ CORRECT: "estimated_cost": "₹3,000-₹5,000"
+    '''}
+
     IMPORTANT: Use the above business context to:
     1. Define the user's customer avatar accurately
     2. Define the user's product intent accurately
