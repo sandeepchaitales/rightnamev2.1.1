@@ -543,7 +543,14 @@ class BrandEvaluationRequest(BaseModel):
     category: str
     product_type: Optional[str] = Field(default="Digital", description="Physical, Digital, Service, Hybrid")
     usp: Optional[str] = Field(default=None, description="Unique Selling Proposition")
-    brand_vibe: Optional[str] = Field(default=None, description="Brand personality/vibe")
+    monetization_model: Optional[Literal[
+        "One-time Purchase",
+        "Subscription (B2C)",
+        "Subscription (B2B/Enterprise)",
+        "Freemium",
+        "Transaction/Commission-based",
+        "Ad-supported/Free"
+    ]] = Field(default=None, description="How the product/service will be monetized")
     positioning: Literal["Budget", "Mid-Range", "Premium", "Luxury", "Mass", "Ultra-Premium"]
     market_scope: Literal["Single Country", "Multi-Country", "Global"]
     countries: List[str]
