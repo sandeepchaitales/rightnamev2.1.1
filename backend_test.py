@@ -1431,6 +1431,193 @@ class BrandEvaluationTester:
             self.log_test("Understanding Module - Exception", False, str(e))
             return False
 
+    def test_critical_fixes_waitless_salon_booking(self):
+        """Test TWO CRITICAL FIXES for RIGHTNAME.AI brand evaluation API with Waitless Salon Booking App"""
+        payload = {
+            "brand_names": ["Waitless"],
+            "category": "Salon Booking App",
+            "industry": "Beauty Tech",
+            "positioning": "Mid-Range",
+            "countries": ["India"]
+        }
+        
+        try:
+            print(f"\n🔥 Testing TWO CRITICAL FIXES - Waitless Salon Booking App in India...")
+            print(f"FIX 1: NICE Class Mapping - Should show Class 9 (Software/Mobile Apps), NOT Class 39 (Travel/Transport)")
+            print(f"FIX 2: India-Specific Legal Procedures - Should use INR (₹), mention IP India, Trade Marks Act 1999")
+            
+            start_time = time.time()
+            response = requests.post(
+                f"{self.api_url}/evaluate", 
+                json=payload, 
+                headers={'Content-Type': 'application/json'},
+                timeout=120  # Should complete within 120 seconds
+            )
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Time: {response_time:.2f} seconds")
+            
+            if response.status_code != 200:
+                error_msg = f"HTTP {response.status_code}: {response.text[:300]}"
+                self.log_test("Critical Fixes - Waitless HTTP Error", False, error_msg)
+                return False
+            
+            try:
+                data = response.json()
+                
+                if not data.get("brand_scores") or len(data["brand_scores"]) == 0:
+                    self.log_test("Critical Fixes - Waitless Structure", False, "No brand scores returned")
+                    return False
+                
+                brand = data["brand_scores"][0]
+                fix_issues = []
+                
+                # ========== FIX 1 VERIFICATION: NICE CLASS MAPPING ==========
+                print(f"\n🔍 VERIFYING FIX 1: NICE Class Mapping...")
+                
+                if "trademark_research" not in brand:
+                    fix_issues.append("FIX 1 FAILED: trademark_research field missing")
+                else:
+                    tm_research = brand["trademark_research"]
+                    if not tm_research:
+                        fix_issues.append("FIX 1 FAILED: trademark_research is null/empty")
+                    else:
+                        nice_class = tm_research.get("nice_classification", {})
+                        if not nice_class:
+                            fix_issues.append("FIX 1 FAILED: nice_classification missing from trademark_research")
+                        else:
+                            class_number = nice_class.get("class_number")
+                            print(f"Found NICE Class: {class_number}")
+                            
+                            # CRITICAL: Must be Class 9 (Software/Mobile Apps), NOT Class 39 (Travel/Transport)
+                            if class_number == 9:
+                                print(f"✅ FIX 1 PASSED: Correctly shows Class 9 (Software/Mobile Apps)")
+                            elif class_number == 39:
+                                fix_issues.append("FIX 1 FAILED: Shows Class 39 (Travel/Transport) instead of Class 9 (Software/Mobile Apps)")
+                            else:
+                                fix_issues.append(f"FIX 1 FAILED: Shows Class {class_number} instead of Class 9 (Software/Mobile Apps)")
+                
+                # Check backend logs for 'matched: salon booking app'
+                print(f"Note: Check backend logs for 'matched: salon booking app' message")
+                
+                # ========== FIX 2 VERIFICATION: INDIA-SPECIFIC LEGAL PROCEDURES ==========
+                print(f"\n🇮🇳 VERIFYING FIX 2: India-Specific Legal Procedures...")
+                
+                # Test 2.1: Check for INR (₹) currency in ALL cost fields
+                currency_checks = []
+                
+                # Check registration_timeline costs
+                if "registration_timeline" in brand and brand["registration_timeline"]:
+                    timeline = brand["registration_timeline"]
+                    
+                    filing_cost = timeline.get("filing_cost", "")
+                    if filing_cost:
+                        print(f"Found filing_cost: {filing_cost}")
+                        if "₹" not in filing_cost and "inr" not in filing_cost.lower():
+                            currency_checks.append(f"filing_cost should use INR (₹), got: {filing_cost}")
+                        if "$" in filing_cost:
+                            currency_checks.append(f"filing_cost uses USD ($) instead of INR (₹): {filing_cost}")
+                    
+                    defense_cost = timeline.get("opposition_defense_cost", "")
+                    if defense_cost:
+                        print(f"Found opposition_defense_cost: {defense_cost}")
+                        if "₹" not in defense_cost and "inr" not in defense_cost.lower():
+                            currency_checks.append(f"opposition_defense_cost should use INR (₹), got: {defense_cost}")
+                        if "$" in defense_cost:
+                            currency_checks.append(f"opposition_defense_cost uses USD ($) instead of INR (₹): {defense_cost}")
+                        
+                        # Check for expected INR range: ₹20,000-₹75,000 (NOT $15,000-$50,000)
+                        if "₹" in defense_cost:
+                            import re
+                            amounts = re.findall(r'₹[\d,]+', defense_cost)
+                            if amounts:
+                                print(f"Found INR amounts in opposition costs: {amounts}")
+                
+                # Check mitigation_strategies costs
+                if "mitigation_strategies" in brand and brand["mitigation_strategies"]:
+                    for i, strategy in enumerate(brand["mitigation_strategies"]):
+                        if isinstance(strategy, dict) and "estimated_cost" in strategy:
+                            cost = strategy["estimated_cost"]
+                            if cost:
+                                print(f"Found mitigation strategy {i} cost: {cost}")
+                                if "₹" not in cost and "inr" not in cost.lower():
+                                    currency_checks.append(f"mitigation_strategies[{i}].estimated_cost should use INR (₹), got: {cost}")
+                                if "$" in cost:
+                                    currency_checks.append(f"mitigation_strategies[{i}].estimated_cost uses USD ($) instead of INR (₹): {cost}")
+                
+                if currency_checks:
+                    fix_issues.extend([f"FIX 2 CURRENCY FAILED: {check}" for check in currency_checks])
+                else:
+                    print(f"✅ FIX 2 CURRENCY PASSED: All costs correctly in INR (₹)")
+                
+                # Test 2.2: Check for India-specific legal references
+                response_text = json.dumps(data).lower()
+                legal_checks = []
+                
+                # Must mention "IP India" or "Controller General" (NOT USPTO)
+                if "ip india" not in response_text and "controller general" not in response_text:
+                    legal_checks.append("Should mention 'IP India' or 'Controller General' (Indian trademark office)")
+                if "uspto" in response_text:
+                    legal_checks.append("Should NOT mention 'USPTO' (US trademark office) for India")
+                
+                # Must mention "Trade Marks Act, 1999" (NOT Lanham Act)
+                if "trade marks act" not in response_text and "trademark act" not in response_text:
+                    legal_checks.append("Should mention 'Trade Marks Act, 1999' (Indian trademark law)")
+                if "lanham act" in response_text:
+                    legal_checks.append("Should NOT mention 'Lanham Act' (US trademark law) for India")
+                
+                # Must NOT mention US-specific terms
+                us_terms = ["ttab", "federal circuit", "federal court"]
+                found_us_terms = [term for term in us_terms if term in response_text]
+                if found_us_terms:
+                    legal_checks.append(f"Should NOT mention US-specific terms: {found_us_terms}")
+                
+                if legal_checks:
+                    fix_issues.extend([f"FIX 2 LEGAL FAILED: {check}" for check in legal_checks])
+                else:
+                    print(f"✅ FIX 2 LEGAL PASSED: India-specific legal procedures mentioned")
+                
+                # ========== SECONDARY VERIFICATIONS ==========
+                print(f"\n📋 VERIFYING SECONDARY REQUIREMENTS...")
+                
+                # Check for secondary class recommendations
+                secondary_checks = []
+                if "Class 42" in json.dumps(data) or "class 42" in response_text:
+                    print(f"✅ Found Class 42 (SaaS) as secondary recommendation")
+                else:
+                    secondary_checks.append("Should recommend Class 42 (SaaS) as secondary")
+                
+                if "Class 35" in json.dumps(data) or "class 35" in response_text:
+                    print(f"✅ Found Class 35 (Marketplace) as secondary recommendation")
+                
+                # Check response time (should complete within 120 seconds)
+                if response_time > 120:
+                    fix_issues.append(f"FIX PERFORMANCE FAILED: Response time {response_time:.2f}s exceeds 120s limit")
+                else:
+                    print(f"✅ PERFORMANCE PASSED: Response time {response_time:.2f}s within 120s limit")
+                
+                # ========== FINAL ASSESSMENT ==========
+                if fix_issues:
+                    self.log_test("Critical Fixes - Waitless Salon Booking", False, "; ".join(fix_issues))
+                    return False
+                
+                self.log_test("Critical Fixes - Waitless Salon Booking", True, 
+                            f"Both critical fixes working correctly. Class 9 (not 39), INR currency, India-specific legal procedures. Response time: {response_time:.2f}s")
+                return True
+                
+            except json.JSONDecodeError as e:
+                self.log_test("Critical Fixes - Waitless JSON", False, f"Invalid JSON response: {str(e)}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Critical Fixes - Waitless Timeout", False, "Request timed out after 120 seconds")
+            return False
+        except Exception as e:
+            self.log_test("Critical Fixes - Waitless Exception", False, str(e))
+            return False
+
     def test_competitive_intelligence_v2(self):
         """Test NEW COMPETITIVE INTELLIGENCE v2 feature for RIGHTNAME brand evaluation API"""
         payload = {
