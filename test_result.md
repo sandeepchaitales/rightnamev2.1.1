@@ -584,3 +584,21 @@ agent_communication:
     message: "✅ NEW USER REPORTS FEATURE TESTING COMPLETED: Successfully tested the NEW User Reports feature endpoints as requested in review. RESULTS: ✅ GET /api/user/reports Endpoint: WORKING PERFECTLY - Returns 401 Unauthorized when not authenticated (correct security), returns 200 OK with proper JSON structure when authenticated including 'reports' array and 'pagination' object with page, limit, total, total_pages fields. Query parameters (page=1, limit=10, sort=newest) work correctly. ✅ POST /api/user/reports/link Endpoint: WORKING PERFECTLY - Returns 401 Unauthorized when not authenticated (correct security), returns 200 OK when authenticated with valid report_id. Successfully tested linking a real generated report (report_6229d6cb9c7448e0) to authenticated user. ✅ Authentication Integration: Both endpoints properly integrate with session-based authentication system using cookies. ✅ Response Structure: All expected fields present and properly formatted. ✅ Security: Proper 401 responses for unauthenticated requests as expected. ✅ Error Handling: Returns 404 when report_id doesn't exist in database (proper validation). Both NEW User Reports endpoints are production-ready and working correctly with proper authentication and response structures. 100% test success rate (7/7 tests passed)."
   - agent: "testing"
     message: "✅ NEW UNDERSTANDING MODULE INTEGRATION TESTING COMPLETED: Successfully tested the NEW Understanding Module integration for RIGHTNAME brand evaluation API with FailedFounders YouTube Channel test case as requested in review. CRITICAL FINDINGS: ✅ NICE Class Detection: WORKING PERFECTLY - Correctly returned Class 41 (Education & Entertainment) instead of Class 35 (Business Services) for YouTube Channel category, confirming Understanding Module's category mapping is functional. ✅ Linguistic Classification: WORKING CORRECTLY - Brand classified as DESCRIPTIVE (not FANCIFUL) indicating proper dictionary word detection and classification override. ✅ Word Tokenization: WORKING - Found evidence of 'Failed' and 'Founders' as separate dictionary words in analysis. ✅ Response Performance: ACCEPTABLE - Completed in 71-95 seconds within 120s timeout limit. ⚠️ Business Type Detection: UNCLEAR - Could not verify content_media business type in response (may be in different section or field name). ❌ 'Truly Coined' Override: ISSUE DETECTED - Still found 'truly coined' text in response despite dictionary words being present, suggesting the Understanding Module's linguistic override may not be fully working. SUMMARY: Core Understanding Module functionality is working (4/6 verifications passed) with correct NICE Class mapping and classification, but the 'Truly Coined' text override needs investigation to ensure complete integration."
+  - agent: "main"
+    message: "🔧 IMPLEMENTED TWO CRITICAL FIXES FOR WAITLESS REPORT: 
+
+FIX 1 - NICE CLASS MAPPING FOR BOOKING APPS:
+- Added 30+ new mappings for salon/beauty/doctor/appointment booking apps → Class 9 (Software)
+- Removed generic 'booking' → Class 39 (was causing salon booking app to get travel class)
+- Files modified: understanding_module.py, trademark_research.py, server.py (NICE_CLASS_MAP)
+- Test: 'Salon Booking App' now correctly maps to Class 9, not Class 39
+
+FIX 2 - COUNTRY-SPECIFIC LEGAL PROCEDURES:
+- Created COUNTRY_LEGAL_PROCEDURES dictionary with India, USA, UK, UAE, Singapore
+- Each country has: trademark_office, governing_law, examination_process, opposition_process, appeal_process
+- India now shows: IP India, Trade Marks Act 1999, ₹20,000-₹75,000 opposition costs
+- USA shows: USPTO, TTAB, Lanham Act, $15,000-$50,000 opposition costs
+- Added format_legal_procedures_for_prompt() function injected into LLM prompt
+- NO US terms (TTAB/USPTO/Federal Circuit) appear for non-US countries
+
+PLEASE TEST: Evaluate 'Waitless' for 'Salon Booking App' category in India - should show Class 9 and India-specific legal procedures."
