@@ -6707,7 +6707,320 @@ COUNTRY_TRADEMARK_COSTS = {
     }
 }
 
-def get_country_currency(country: str) -> str:
+# ═══════════════════════════════════════════════════════════════════════════════
+# COUNTRY-SPECIFIC LEGAL PROCEDURES AND OPPOSITION PROCESSES
+# This section provides jurisdiction-accurate legal information
+# ═══════════════════════════════════════════════════════════════════════════════
+
+COUNTRY_LEGAL_PROCEDURES = {
+    "India": {
+        "trademark_office": "Controller General of Patents, Designs and Trade Marks (IP India)",
+        "governing_law": "Trade Marks Act, 1999 and Trade Marks Rules, 2017",
+        "filing_basis": "Proposed to be Used / Used basis",
+        "examination_process": [
+            {"stage": "Filing & Formalities Check", "duration": "1-2 months", "description": "Application reviewed for completeness"},
+            {"stage": "Examination Report", "duration": "3-6 months", "description": "Examiner reviews distinctiveness, prior marks"},
+            {"stage": "Response to Examination Report", "duration": "1 month deadline", "description": "Respond to objections if any"},
+            {"stage": "Publication in Trade Marks Journal", "duration": "Upon passing examination", "description": "Published for public notice"},
+            {"stage": "Opposition Period", "duration": "4 months", "description": "Third parties can file opposition"},
+            {"stage": "Registration", "duration": "1-2 months after opposition period", "description": "Certificate issued if no opposition"}
+        ],
+        "opposition_process": {
+            "forum": "Registrar of Trade Marks / IP India",
+            "opposition_filing_fee": "₹2,500 (physical) / ₹2,250 (e-filing)",
+            "counter_statement_fee": "₹2,500",
+            "timeline": "4 months from publication to file opposition",
+            "stages": [
+                {"stage": "Notice of Opposition", "action": "File within 4 months of publication", "cost": "₹2,500"},
+                {"stage": "Counter Statement", "action": "Applicant responds within 2 months", "cost": "₹2,500"},
+                {"stage": "Evidence Stage", "action": "Both parties file evidence", "cost": "₹5,000-₹20,000 (includes affidavits)"},
+                {"stage": "Hearing", "action": "Oral hearing before Registrar", "cost": "₹10,000-₹50,000 (attorney fees)"},
+                {"stage": "Decision", "action": "Registrar's order", "cost": "Included in hearing"}
+            ],
+            "total_opposition_cost": "₹20,000-₹75,000 (if straightforward)",
+            "complex_opposition_cost": "₹75,000-₹2,00,000 (if heavily contested)"
+        },
+        "appeal_process": {
+            "first_appeal": {
+                "forum": "Intellectual Property Appellate Board (IPAB) / High Court (post-2021)",
+                "timeline": "3 months from Registrar's decision",
+                "cost": "₹10,000-₹50,000 (court fees + attorney)"
+            },
+            "final_appeal": {
+                "forum": "Supreme Court of India",
+                "timeline": "90 days from High Court decision",
+                "cost": "₹1,00,000-₹5,00,000+"
+            }
+        },
+        "currency": "INR (₹)",
+        "use_requirement": "No strict use requirement before registration, but 'proposed to be used' declaration required",
+        "renewal": "Every 10 years, fee ₹9,000 per class",
+        "key_precedents": [
+            "Cadila Healthcare Ltd. v. Cadila Pharmaceuticals Ltd. (2001) - Deceptive similarity test",
+            "Amritdhara Pharmacy v. Satyadeo Gupta (1963) - Phonetic similarity in pharma",
+            "Corn Products Refining Co. v. Shangrila Food Products (1960) - 'Glucovita' vs 'Gluvita'"
+        ]
+    },
+    "USA": {
+        "trademark_office": "United States Patent and Trademark Office (USPTO)",
+        "governing_law": "Lanham Act (15 U.S.C. §§ 1051-1127)",
+        "filing_basis": "Intent-to-Use (Section 1(b)) or Use in Commerce (Section 1(a))",
+        "examination_process": [
+            {"stage": "Filing & Application Receipt", "duration": "Immediate", "description": "Serial number assigned"},
+            {"stage": "Examination Assignment", "duration": "3-4 months", "description": "Assigned to examining attorney"},
+            {"stage": "Office Action (if any)", "duration": "Within 6 months of filing", "description": "Objections on descriptiveness, likelihood of confusion"},
+            {"stage": "Response to Office Action", "duration": "6 month deadline", "description": "Address examiner's concerns"},
+            {"stage": "Publication for Opposition", "duration": "30 days", "description": "Published in Official Gazette"},
+            {"stage": "Notice of Allowance (ITU)", "duration": "If no opposition filed", "description": "Statement of Use required"},
+            {"stage": "Registration", "duration": "Upon SOU acceptance", "description": "Certificate issued"}
+        ],
+        "opposition_process": {
+            "forum": "Trademark Trial and Appeal Board (TTAB)",
+            "opposition_filing_fee": "$600-$800 per class",
+            "extension_of_time": "$200 per 30-day extension (up to 120 days)",
+            "timeline": "30 days from publication (extendable)",
+            "stages": [
+                {"stage": "Notice of Opposition", "action": "File within 30 days + extensions", "cost": "$600-$800"},
+                {"stage": "Answer", "action": "Applicant responds within 40 days", "cost": "$0 (filing) + attorney fees"},
+                {"stage": "Discovery", "action": "Interrogatories, document requests, depositions", "cost": "$5,000-$30,000"},
+                {"stage": "Trial Period", "action": "Submit evidence and testimony", "cost": "$10,000-$50,000"},
+                {"stage": "Briefs", "action": "Legal arguments filed", "cost": "Included in attorney fees"},
+                {"stage": "Oral Hearing (optional)", "action": "Argue before TTAB panel", "cost": "$2,000-$5,000 additional"},
+                {"stage": "TTAB Decision", "action": "Board ruling", "cost": "Included"}
+            ],
+            "total_opposition_cost": "$15,000-$50,000 (straightforward)",
+            "complex_opposition_cost": "$50,000-$250,000 (heavily contested with discovery)"
+        },
+        "appeal_process": {
+            "first_appeal": {
+                "forum": "U.S. Court of Appeals for the Federal Circuit OR U.S. District Court",
+                "timeline": "63 days from TTAB decision",
+                "cost": "$35,000-$100,000"
+            },
+            "final_appeal": {
+                "forum": "U.S. Supreme Court (certiorari, rarely granted)",
+                "timeline": "90 days from Federal Circuit decision",
+                "cost": "$100,000-$500,000+"
+            }
+        },
+        "currency": "USD ($)",
+        "use_requirement": "Use in commerce required before registration (or within extensions for ITU)",
+        "renewal": "Between 5th and 6th year (Section 8), then every 10 years",
+        "key_precedents": [
+            "Polaroid Corp. v. Polarad Elecs. Corp. (1961) - 8-factor likelihood of confusion test",
+            "AMF Inc. v. Sleekcraft Boats (1979) - 8-factor test for consumer confusion",
+            "In re E.I. DuPont DeNemours & Co. (1973) - 13-factor test for trademark registration"
+        ]
+    },
+    "UK": {
+        "trademark_office": "UK Intellectual Property Office (UKIPO)",
+        "governing_law": "Trade Marks Act 1994 (as amended post-Brexit)",
+        "filing_basis": "Intent to use (no proof required at filing)",
+        "examination_process": [
+            {"stage": "Filing & Formalities Check", "duration": "1-2 weeks", "description": "Application completeness review"},
+            {"stage": "Examination", "duration": "4-8 weeks", "description": "Examiner checks absolute/relative grounds"},
+            {"stage": "Publication", "duration": "Upon passing examination", "description": "Published in Trade Marks Journal"},
+            {"stage": "Opposition Period", "duration": "2 months (extendable by 1 month)", "description": "Third parties can oppose"},
+            {"stage": "Registration", "duration": "1 month after opposition period", "description": "Certificate issued"}
+        ],
+        "opposition_process": {
+            "forum": "UKIPO Tribunal",
+            "opposition_filing_fee": "£100-£200",
+            "timeline": "2 months from publication (+ 1 month extension)",
+            "stages": [
+                {"stage": "Notice of Opposition (TM7)", "action": "File within 2-3 months of publication", "cost": "£100-£200"},
+                {"stage": "Counter-Statement (TM8)", "action": "Applicant responds within 2 months", "cost": "£0"},
+                {"stage": "Evidence Rounds", "action": "Exchange evidence", "cost": "£2,000-£10,000"},
+                {"stage": "Hearing", "action": "Tribunal hearing (if requested)", "cost": "£3,000-£15,000"},
+                {"stage": "Decision", "action": "Tribunal ruling", "cost": "Included"}
+            ],
+            "total_opposition_cost": "£5,000-£25,000 (straightforward)",
+            "complex_opposition_cost": "£25,000-£100,000 (complex cases)"
+        },
+        "appeal_process": {
+            "first_appeal": {
+                "forum": "Appointed Person OR High Court (Chancery Division)",
+                "timeline": "28 days from Tribunal decision",
+                "cost": "£10,000-£40,000"
+            },
+            "final_appeal": {
+                "forum": "Court of Appeal / Supreme Court",
+                "timeline": "21 days from High Court decision",
+                "cost": "£50,000-£200,000+"
+            }
+        },
+        "currency": "GBP (£)",
+        "use_requirement": "No use requirement at filing; can be challenged for non-use after 5 years",
+        "renewal": "Every 10 years, fee £200 per class",
+        "key_precedents": [
+            "Sabel BV v. Puma AG (1997) - Global appreciation of similarity",
+            "Canon Kabushiki Kaisha v. Metro-Goldwyn-Mayer (1998) - Interdependence principle",
+            "Reed Executive plc v. Reed Business Information (2004) - Likelihood of confusion factors"
+        ]
+    },
+    "UAE": {
+        "trademark_office": "UAE Ministry of Economy - Trademark Office",
+        "governing_law": "Federal Law No. 36 of 2021 on Trademarks",
+        "filing_basis": "First-to-file, no use requirement",
+        "examination_process": [
+            {"stage": "Filing & Formalities", "duration": "1-2 weeks", "description": "Arabic translation required"},
+            {"stage": "Examination", "duration": "3-6 months", "description": "Examiner reviews distinctiveness"},
+            {"stage": "Publication", "duration": "Upon approval", "description": "Published for 30 days"},
+            {"stage": "Opposition Period", "duration": "30 days", "description": "Third parties can oppose"},
+            {"stage": "Registration", "duration": "1-2 months", "description": "Certificate issued"}
+        ],
+        "opposition_process": {
+            "forum": "UAE Ministry of Economy / Grievance Committee",
+            "timeline": "30 days from publication",
+            "stages": [
+                {"stage": "Notice of Opposition", "action": "File within 30 days", "cost": "AED 1,000-2,000"},
+                {"stage": "Response", "action": "Applicant responds", "cost": "AED 500-1,000"},
+                {"stage": "Decision", "action": "Ministry decision", "cost": "Included"}
+            ],
+            "total_opposition_cost": "AED 10,000-30,000"
+        },
+        "appeal_process": {
+            "first_appeal": {
+                "forum": "Grievance Committee / Civil Court",
+                "timeline": "30 days from Ministry decision",
+                "cost": "AED 20,000-50,000"
+            }
+        },
+        "currency": "AED (د.إ)",
+        "use_requirement": "No use requirement; registration valid for 10 years",
+        "renewal": "Every 10 years",
+        "special_requirements": [
+            "Arabic translation of mark mandatory",
+            "Power of Attorney must be notarized and legalized",
+            "Religious symbols/terms prohibited"
+        ]
+    },
+    "Singapore": {
+        "trademark_office": "Intellectual Property Office of Singapore (IPOS)",
+        "governing_law": "Trade Marks Act (Cap. 332)",
+        "filing_basis": "First-to-file, no use requirement",
+        "examination_process": [
+            {"stage": "Filing", "duration": "Immediate", "description": "Online filing via IPOS Digital Hub"},
+            {"stage": "Formalities Check", "duration": "1-2 weeks", "description": "Completeness review"},
+            {"stage": "Examination", "duration": "4-6 months", "description": "Registrar examination"},
+            {"stage": "Publication", "duration": "Upon acceptance", "description": "Published for 2 months"},
+            {"stage": "Opposition Period", "duration": "2 months", "description": "Third parties can oppose"},
+            {"stage": "Registration", "duration": "1 month", "description": "Certificate issued"}
+        ],
+        "opposition_process": {
+            "forum": "IPOS Tribunal",
+            "timeline": "2 months from publication",
+            "stages": [
+                {"stage": "Notice of Opposition", "action": "File within 2 months", "cost": "S$374"},
+                {"stage": "Counter-Statement", "action": "Applicant responds within 2 months", "cost": "S$36"},
+                {"stage": "Evidence", "action": "Exchange statutory declarations", "cost": "S$2,000-S$10,000"},
+                {"stage": "Hearing", "action": "Tribunal hearing", "cost": "S$3,000-S$15,000"}
+            ],
+            "total_opposition_cost": "S$5,000-S$25,000"
+        },
+        "appeal_process": {
+            "first_appeal": {
+                "forum": "High Court of Singapore",
+                "timeline": "28 days from Tribunal decision",
+                "cost": "S$20,000-S$80,000"
+            }
+        },
+        "currency": "SGD (S$)",
+        "use_requirement": "No use requirement at filing",
+        "renewal": "Every 10 years, fee S$380 per class"
+    },
+    "default": {
+        "trademark_office": "National Intellectual Property Office",
+        "governing_law": "Local Trademark Law",
+        "filing_basis": "Varies by jurisdiction",
+        "examination_process": [
+            {"stage": "Filing", "duration": "Immediate", "description": "Application submitted"},
+            {"stage": "Examination", "duration": "3-12 months", "description": "Examiner review"},
+            {"stage": "Publication", "duration": "Upon acceptance", "description": "Published for opposition"},
+            {"stage": "Opposition Period", "duration": "1-4 months", "description": "Third parties can oppose"},
+            {"stage": "Registration", "duration": "1-3 months", "description": "Certificate issued"}
+        ],
+        "opposition_process": {
+            "forum": "IP Office / Trademark Registry",
+            "timeline": "Varies by jurisdiction",
+            "total_opposition_cost": "Varies - consult local IP attorney"
+        },
+        "appeal_process": {
+            "first_appeal": {
+                "forum": "IP Appeals Board / Courts",
+                "timeline": "Varies by jurisdiction",
+                "cost": "Varies - consult local IP attorney"
+            }
+        },
+        "currency": "Local currency",
+        "use_requirement": "Varies by jurisdiction"
+    }
+}
+
+def get_country_legal_procedures(country: str) -> dict:
+    """Get country-specific legal procedures for trademark registration and opposition."""
+    return COUNTRY_LEGAL_PROCEDURES.get(country, COUNTRY_LEGAL_PROCEDURES["default"])
+
+def format_legal_procedures_for_prompt(countries: list) -> str:
+    """Format country-specific legal procedures for LLM prompt."""
+    if not countries:
+        return ""
+    
+    primary_country = countries[0] if isinstance(countries[0], str) else countries[0].get('name', 'default')
+    legal_info = get_country_legal_procedures(primary_country)
+    
+    # Build opposition stages text
+    opposition = legal_info.get("opposition_process", {})
+    opposition_stages = opposition.get("stages", [])
+    stages_text = ""
+    for stage in opposition_stages:
+        stages_text += f"   - {stage.get('stage', 'Stage')}: {stage.get('action', '')} (Cost: {stage.get('cost', 'N/A')})\n"
+    
+    # Build examination process text
+    exam_process = legal_info.get("examination_process", [])
+    exam_text = ""
+    for stage in exam_process:
+        exam_text += f"   - {stage.get('stage', 'Stage')}: {stage.get('duration', 'N/A')} - {stage.get('description', '')}\n"
+    
+    # Build appeal process text
+    appeal = legal_info.get("appeal_process", {})
+    first_appeal = appeal.get("first_appeal", {})
+    
+    return f"""
+═══════════════════════════════════════════════════════════════════════════════
+⚖️ COUNTRY-SPECIFIC LEGAL PROCEDURES FOR {primary_country.upper()}
+═══════════════════════════════════════════════════════════════════════════════
+
+TRADEMARK OFFICE: {legal_info.get('trademark_office', 'National IP Office')}
+GOVERNING LAW: {legal_info.get('governing_law', 'Local Trademark Law')}
+FILING BASIS: {legal_info.get('filing_basis', 'Varies')}
+CURRENCY: {legal_info.get('currency', 'Local currency')}
+
+📋 REGISTRATION PROCESS:
+{exam_text}
+
+⚔️ OPPOSITION PROCESS:
+   Forum: {opposition.get('forum', 'IP Office')}
+   Timeline: {opposition.get('timeline', 'Varies')}
+   
+   STAGES:
+{stages_text}
+   
+   ESTIMATED COSTS:
+   - Simple Opposition: {opposition.get('total_opposition_cost', 'Consult attorney')}
+   - Complex Opposition: {opposition.get('complex_opposition_cost', 'Consult attorney')}
+
+📤 APPEAL PROCESS:
+   First Appeal Forum: {first_appeal.get('forum', 'Appeals Board')}
+   Timeline: {first_appeal.get('timeline', 'Varies')}
+   Estimated Cost: {first_appeal.get('cost', 'Consult attorney')}
+
+⚠️ IMPORTANT: Use {primary_country} jurisdiction terminology and costs.
+   - DO NOT use USPTO/TTAB/Federal Circuit terms for non-US countries
+   - DO NOT use USD costs for non-US single-country filings
+   - Reference {legal_info.get('governing_law', 'local trademark law')} for legal basis
+═══════════════════════════════════════════════════════════════════════════════
+"""
     """Get the currency for a given country. Defaults to USD for unknown countries."""
     costs = COUNTRY_TRADEMARK_COSTS.get(country, COUNTRY_TRADEMARK_COSTS["Global"])
     return costs["currency"]
